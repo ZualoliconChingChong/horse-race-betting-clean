@@ -244,30 +244,111 @@
                     if (mapData.muds) gameWindow.mapDef.muds = mapData.muds;
                     if (mapData.ices) gameWindow.mapDef.ices = mapData.ices;
                     
-                    // Apply saved settings (override URL params if saved config exists)
-                    if (mapData.hpSystemEnabled !== undefined) {
-                        gameWindow.mapDef.hpSystemEnabled = mapData.hpSystemEnabled;
-                        console.log('[Launcher] ✅ Applied HP System:', mapData.hpSystemEnabled);
+                    // Apply ALL saved settings (override URL params if saved config exists)
+                    const applySetting = (key, value, target = 'mapDef', logName = null) => {
+                        if (value !== undefined) {
+                            try {
+                                if (target === 'window') {
+                                    gameWindow[key] = value;
+                                } else {
+                                    gameWindow.mapDef[key] = value;
+                                }
+                                console.log(`[Launcher] ✅ Applied ${logName || key}:`, value);
+                            } catch (err) {
+                                console.warn(`[Launcher] ⚠️ Cannot apply ${logName || key}:`, err.message);
+                            }
+                        }
+                    };
+                    
+                    // Game mode settings
+                    applySetting('lastHorseWins', mapData.lastHorseWins, 'mapDef', 'Last Horse Wins');
+                    
+                    // HP System
+                    applySetting('hpSystemEnabled', mapData.hpSystemEnabled, 'mapDef', 'HP System');
+                    applySetting('horseMaxHP', mapData.horseMaxHP, 'mapDef', 'Horse Max HP');
+                    applySetting('showHPNumbers', mapData.showHPNumbers, 'mapDef', 'Show HP Numbers');
+                    
+                    // Damage settings
+                    applySetting('wallDamageEnabled', mapData.wallDamageEnabled, 'mapDef', 'Wall Damage');
+                    applySetting('wallDamageAmount', mapData.wallDamageAmount, 'mapDef', 'Wall Damage Amount');
+                    applySetting('borderDamageEnabled', mapData.borderDamageEnabled, 'mapDef', 'Border Damage');
+                    applySetting('borderDamageAmount', mapData.borderDamageAmount, 'mapDef', 'Border Damage Amount');
+                    applySetting('brushDamageEnabled', mapData.brushDamageEnabled, 'mapDef', 'Brush Damage');
+                    applySetting('brushDamageAmount', mapData.brushDamageAmount, 'mapDef', 'Brush Damage Amount');
+                    
+                    // Visual & UI settings
+                    applySetting('showHorseSpeed', mapData.showHorseSpeed, 'mapDef', 'Show Horse Speed');
+                    applySetting('autoRotateHorseSprite', mapData.autoRotateHorseSprite, 'mapDef', 'Auto Rotate Sprite');
+                    applySetting('trailEnabled', mapData.trailEnabled, 'mapDef', 'Trail Enabled');
+                    applySetting('trailColor', mapData.trailColor, 'mapDef', 'Trail Color');
+                    applySetting('trailIntensity', mapData.trailIntensity, 'mapDef', 'Trail Intensity');
+                    applySetting('hideHorseNames', mapData.hideHorseNames, 'window', 'Hide Horse Names');
+                    applySetting('nameFontScale', mapData.nameFontScale, 'window', 'Name Font Scale');
+                    
+                    // Luck system
+                    applySetting('luckEnabled', mapData.luckEnabled, 'window', 'Luck Enabled');
+                    applySetting('luckIntervalSec', mapData.luckInterval, 'window', 'Luck Interval');
+                    
+                    // Audio & effects
+                    applySetting('collisionSfxEnabled', mapData.collisionSfx, 'window', 'Collision SFX');
+                    
+                    // Physics
+                    applySetting('preventCollisionSpeedChange', mapData.preventCollisionSpeedChange, 'window', 'Prevent Collision Speed Change');
+                    
+                    // Race settings
+                    applySetting('countdown', mapData.countdown, 'window', 'Countdown');
+                    
+                    // Map physics
+                    applySetting('horseRadius', mapData.horseRadius, 'mapDef', 'Horse Radius');
+                    applySetting('carrotRadius', mapData.carrotRadius, 'mapDef', 'Carrot Radius');
+                    applySetting('maxVel', mapData.maxVel, 'mapDef', 'Max Velocity');
+                    applySetting('minCruise', mapData.minCruise, 'mapDef', 'Min Cruise');
+                    applySetting('horseHitScale', mapData.horseHitScale, 'mapDef', 'Horse Hit Scale');
+                    applySetting('horseHitInset', mapData.horseHitInset, 'mapDef', 'Horse Hit Inset');
+                    
+                    // Power-up settings (objects)
+                    if (mapData.magnetSettings) {
+                        gameWindow.mapDef.magnetSettings = mapData.magnetSettings;
+                        console.log('[Launcher] ✅ Applied Magnet Settings:', mapData.magnetSettings);
                     }
-                    if (mapData.lastHorseWins !== undefined) {
-                        gameWindow.mapDef.lastHorseWins = mapData.lastHorseWins;
-                        console.log('[Launcher] ✅ Applied Last Horse Wins:', mapData.lastHorseWins);
+                    if (mapData.turboSettings) {
+                        gameWindow.mapDef.turboSettings = mapData.turboSettings;
+                        console.log('[Launcher] ✅ Applied Turbo Settings:', mapData.turboSettings);
                     }
-                    if (mapData.wallDamageEnabled !== undefined) {
-                        gameWindow.mapDef.wallDamageEnabled = mapData.wallDamageEnabled;
-                        console.log('[Launcher] ✅ Applied Wall Damage:', mapData.wallDamageEnabled);
+                    if (mapData.shieldSettings) {
+                        gameWindow.mapDef.shieldSettings = mapData.shieldSettings;
+                        console.log('[Launcher] ✅ Applied Shield Settings:', mapData.shieldSettings);
                     }
-                    if (mapData.wallDamageAmount !== undefined) {
-                        gameWindow.mapDef.wallDamageAmount = mapData.wallDamageAmount;
-                        console.log('[Launcher] ✅ Applied Wall Damage Amount:', mapData.wallDamageAmount);
+                    if (mapData.poisonSettings) {
+                        gameWindow.mapDef.poisonSettings = mapData.poisonSettings;
+                        console.log('[Launcher] ✅ Applied Poison Settings:', mapData.poisonSettings);
                     }
-                    if (mapData.borderDamageEnabled !== undefined) {
-                        gameWindow.mapDef.borderDamageEnabled = mapData.borderDamageEnabled;
-                        console.log('[Launcher] ✅ Applied Border Damage:', mapData.borderDamageEnabled);
+                    if (mapData.timeFreezeSettings) {
+                        gameWindow.mapDef.timeFreezeSettings = mapData.timeFreezeSettings;
+                        console.log('[Launcher] ✅ Applied Time Freeze Settings:', mapData.timeFreezeSettings);
                     }
-                    if (mapData.borderDamageAmount !== undefined) {
-                        gameWindow.mapDef.borderDamageAmount = mapData.borderDamageAmount;
-                        console.log('[Launcher] ✅ Applied Border Damage Amount:', mapData.borderDamageAmount);
+                    if (mapData.teleportSettings) {
+                        gameWindow.mapDef.teleportSettings = mapData.teleportSettings;
+                        console.log('[Launcher] ✅ Applied Teleport Settings:', mapData.teleportSettings);
+                    }
+                    if (mapData.warpzoneSettings) {
+                        gameWindow.mapDef.warpzoneSettings = mapData.warpzoneSettings;
+                        console.log('[Launcher] ✅ Applied Warp Zone Settings:', mapData.warpzoneSettings);
+                    }
+                    if (mapData.quantumdashSettings) {
+                        gameWindow.mapDef.quantumdashSettings = mapData.quantumdashSettings;
+                        console.log('[Launcher] ✅ Applied Quantum Dash Settings:', mapData.quantumdashSettings);
+                    }
+                    
+                    // Weather system
+                    if (mapData.weather) {
+                        gameWindow.mapDef.weather = mapData.weather;
+                        console.log('[Launcher] ✅ Applied Weather Settings:', mapData.weather);
+                    }
+                    
+                    // Trail system (update window variable too)
+                    if (mapData.trailEnabled !== undefined) {
+                        gameWindow.horseMotionTrailEnabled = mapData.trailEnabled;
                     }
                     
                     console.log('[Launcher] ✅ Applied saved map config');
@@ -295,13 +376,35 @@
                     gameWindow.mapDef.borderDamageAmount = settings.borderDamageAmount;
                 }
                 
-                console.log('[Launcher] ✅ Final game settings:', {
-                    hpSystemEnabled: gameWindow.mapDef.hpSystemEnabled,
-                    lastHorseWins: gameWindow.mapDef.lastHorseWins,
-                    wallDamageEnabled: gameWindow.mapDef.wallDamageEnabled,
-                    wallDamageAmount: gameWindow.mapDef.wallDamageAmount,
-                    borderDamageEnabled: gameWindow.mapDef.borderDamageEnabled,
-                    borderDamageAmount: gameWindow.mapDef.borderDamageAmount
+                console.log('[Launcher] ✅ Final game settings:');
+                console.log('  🎮 Game Mode:', { lastHorseWins: gameWindow.mapDef.lastHorseWins });
+                console.log('  ❤️ HP System:', {
+                    enabled: gameWindow.mapDef.hpSystemEnabled,
+                    maxHP: gameWindow.mapDef.horseMaxHP,
+                    showNumbers: gameWindow.mapDef.showHPNumbers
+                });
+                console.log('  💥 Damage:', {
+                    wallDamage: gameWindow.mapDef.wallDamageEnabled,
+                    wallAmount: gameWindow.mapDef.wallDamageAmount,
+                    borderDamage: gameWindow.mapDef.borderDamageEnabled,
+                    borderAmount: gameWindow.mapDef.borderDamageAmount,
+                    brushDamage: gameWindow.mapDef.brushDamageEnabled,
+                    brushAmount: gameWindow.mapDef.brushDamageAmount
+                });
+                console.log('  🗺️ Map:', {
+                    horseRadius: gameWindow.mapDef.horseRadius,
+                    carrotRadius: gameWindow.mapDef.carrotRadius,
+                    maxVel: gameWindow.mapDef.maxVel,
+                    minCruise: gameWindow.mapDef.minCruise
+                });
+                console.log('  🎨 Visual:', {
+                    showSpeed: gameWindow.mapDef.showHorseSpeed,
+                    trail: gameWindow.mapDef.trailEnabled,
+                    hideNames: gameWindow.hideHorseNames
+                });
+                console.log('  🍀 Luck:', {
+                    enabled: gameWindow.luckEnabled,
+                    interval: gameWindow.luckIntervalSec
                 });
                 
                 // Hook race completion

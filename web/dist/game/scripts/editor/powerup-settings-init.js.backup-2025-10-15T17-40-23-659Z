@@ -1,0 +1,178 @@
+/**
+ * Power-up Settings Initialization
+ * Loads power-up settings from localStorage and initializes mapDef
+ * 
+ * Public API:
+ * - window.PowerupSettingsInit (module object)
+ * 
+ * Dependencies:
+ * - window.mapDef
+ * - localStorage
+ */
+
+(function() {
+  'use strict';
+
+  // Wait for mapDef to be available
+  function initWhenReady() {
+    if (typeof window.mapDef === 'undefined') {
+      console.log('[PowerupSettingsInit] Waiting for mapDef...');
+      setTimeout(initWhenReady, 10);
+      return;
+    }
+    
+    initAllSettings();
+  }
+
+  // ===== Magnet Settings Initialization =====
+  function initMagnetSettings() {
+    if (!window.mapDef.magnetSettings) {
+      window.mapDef.magnetSettings = { range: 100, durationMs: 3000, attractAll: false, power: 350 };
+    }
+    if (!window.mapDef.firetrap) window.mapDef.firetrap = [];
+    if (!window.mapDef.fireaura) window.mapDef.fireaura = [];
+    if (!window.mapDef.healingzones) window.mapDef.healingzones = [];
+    
+    try {
+      const lsRange = parseInt(localStorage.getItem('magnetRange') || '');
+      const lsDur = parseInt(localStorage.getItem('magnetDuration') || '');
+      const lsAll = JSON.parse(localStorage.getItem('magnetAttractAll') || 'false');
+      const lsPow = parseInt(localStorage.getItem('magnetPower') || '');
+      
+      if (!Number.isNaN(lsRange)) window.mapDef.magnetSettings.range = Math.max(50, Math.min(400, lsRange));
+      if (!Number.isNaN(lsDur)) window.mapDef.magnetSettings.durationMs = Math.max(500, Math.min(20000, lsDur));
+      window.mapDef.magnetSettings.attractAll = !!lsAll;
+      if (!Number.isNaN(lsPow)) window.mapDef.magnetSettings.power = Math.max(50, Math.min(1000, lsPow));
+    } catch {}
+
+    // Wire UI controls to magnet settings
+    const magnetRangeEl = document.getElementById('magnetRange');
+    const magnetRangeVal = document.getElementById('magnetRangeVal');
+    const magnetDurationEl = document.getElementById('magnetDuration');
+    const magnetDurationVal = document.getElementById('magnetDurationVal');
+    const magnetPowerEl = document.getElementById('magnetPower');
+    const magnetPowerVal = document.getElementById('magnetPowerVal');
+    const magnetAttractAllEl = document.getElementById('magnetAttractAll');
+
+    if (magnetRangeEl) {
+      magnetRangeEl.value = String(window.mapDef.magnetSettings.range);
+      magnetRangeVal.textContent = window.mapDef.magnetSettings.range + ' px';
+      magnetRangeEl.addEventListener('input', () => {
+        const v = parseInt(magnetRangeEl.value, 10) || 100;
+        window.mapDef.magnetSettings.range = v;
+        magnetRangeVal.textContent = v + ' px';
+        try { localStorage.setItem('magnetRange', String(v)); } catch {}
+      });
+    }
+    
+    if (magnetDurationEl) {
+      magnetDurationEl.value = String(window.mapDef.magnetSettings.durationMs);
+      magnetDurationVal.textContent = window.mapDef.magnetSettings.durationMs + ' ms';
+      magnetDurationEl.addEventListener('input', () => {
+        const v = parseInt(magnetDurationEl.value, 10) || 3000;
+        window.mapDef.magnetSettings.durationMs = v;
+        magnetDurationVal.textContent = v + ' ms';
+        try { localStorage.setItem('magnetDuration', String(v)); } catch {}
+      });
+    }
+    
+    if (magnetPowerEl) {
+      magnetPowerEl.value = String(window.mapDef.magnetSettings.power);
+      magnetPowerVal.textContent = String(window.mapDef.magnetSettings.power);
+      magnetPowerEl.addEventListener('input', () => {
+        const v = parseInt(magnetPowerEl.value, 10) || 350;
+        window.mapDef.magnetSettings.power = v;
+        magnetPowerVal.textContent = String(v);
+        try { localStorage.setItem('magnetPower', String(v)); } catch {}
+      });
+    }
+    
+    if (magnetAttractAllEl) {
+      magnetAttractAllEl.checked = !!window.mapDef.magnetSettings.attractAll;
+      magnetAttractAllEl.addEventListener('change', () => {
+        window.mapDef.magnetSettings.attractAll = !!magnetAttractAllEl.checked;
+        try { localStorage.setItem('magnetAttractAll', JSON.stringify(window.mapDef.magnetSettings.attractAll)); } catch {}
+      });
+    }
+  }
+
+  // ===== Other Global Power-up Settings =====
+  function initOtherGlobalSettings() {
+    try {
+      const tDur = parseInt(localStorage.getItem('turboDuration') || '');
+      const tMul = parseFloat(localStorage.getItem('turboMultiplier') || '');
+      if (!Number.isNaN(tDur)) window.mapDef.turboSettings.durationMs = Math.max(500, Math.min(20000, tDur));
+      if (!Number.isNaN(tMul)) window.mapDef.turboSettings.multiplier = Math.max(1.1, Math.min(5.0, tMul));
+    } catch {}
+    
+    try {
+      const fDur = parseInt(localStorage.getItem('timeFreezeDuration') || '');
+      const fSelf = JSON.parse(localStorage.getItem('timeFreezeAffectSelf') || 'false');
+      if (!Number.isNaN(fDur)) window.mapDef.timeFreezeSettings.durationMs = Math.max(500, Math.min(20000, fDur));
+      window.mapDef.timeFreezeSettings.affectSelf = !!fSelf;
+    } catch {}
+    
+    try {
+      const iceDur = parseInt(localStorage.getItem('iceFreezerDuration') || '');
+      const iceSlow = parseFloat(localStorage.getItem('iceFreezerSlowMultiplier') || '');
+      if (!Number.isNaN(iceDur)) {
+        window.mapDef.icefreezerSettings.freezeDurationMs = Math.max(500, Math.min(5000, iceDur));
+        window.mapDef.icefreezerSettings.durationMs = window.mapDef.icefreezerSettings.freezeDurationMs;
+      }
+      if (!Number.isNaN(iceSlow)) window.mapDef.icefreezerSettings.slowMultiplier = Math.max(0.1, Math.min(1.0, iceSlow));
+    } catch {}
+    
+    try {
+      const tpSafe = parseInt(localStorage.getItem('teleportSafeMargin') || '');
+      const tpMin = parseInt(localStorage.getItem('teleportMinDistance') || '');
+      if (!Number.isNaN(tpSafe)) window.mapDef.teleportSettings.safeMargin = Math.max(0, Math.min(200, tpSafe));
+      if (!Number.isNaN(tpMin)) window.mapDef.teleportSettings.minDistance = Math.max(0, Math.min(2000, tpMin));
+    } catch {}
+    
+    try {
+      // Break Wall defaults
+      const bhp = parseInt(localStorage.getItem('breakHp') || '');
+      const bon = localStorage.getItem('breakOn');
+      window.mapDef.breakWallSettings = window.mapDef.breakWallSettings || { hp: 8, on: 'shards' };
+      if (!Number.isNaN(bhp)) window.mapDef.breakWallSettings.hp = Math.max(1, Math.min(50, bhp));
+      if (bon === 'remove' || bon === 'shards') window.mapDef.breakWallSettings.on = bon;
+    } catch {}
+    
+    try {
+      // Soft Wall defaults
+      const st = parseFloat(localStorage.getItem('softStiff') || '');
+      const md = parseInt(localStorage.getItem('softMaxDef') || '');
+      const rc = localStorage.getItem('softRecover');
+      window.mapDef.softWallSettings = window.mapDef.softWallSettings || { stiffness: 0.25, maxDeform: 18, recover: 24 };
+      if (!Number.isNaN(st)) window.mapDef.softWallSettings.stiffness = Math.max(0.05, Math.min(999, st));
+      if (!Number.isNaN(md)) window.mapDef.softWallSettings.maxDeform = Math.max(4, Math.min(999, md));
+      if (rc !== null && rc !== '') {
+        const rcNum = parseInt(rc, 10);
+        if (!Number.isNaN(rcNum)) window.mapDef.softWallSettings.recover = Math.max(0, Math.min(120, rcNum));
+      }
+    } catch {}
+  }
+
+  // ===== Initialize All Settings =====
+  function initAllSettings() {
+    initMagnetSettings();
+    initOtherGlobalSettings();
+    console.log('[PowerupSettingsInit] Initialized successfully');
+  }
+
+  // ===== Public API =====
+  const PowerupSettingsInit = {
+    initWhenReady
+  };
+
+  if (typeof window !== 'undefined') {
+    window.PowerupSettingsInit = Object.freeze(PowerupSettingsInit);
+  }
+
+  // Start initialization when ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWhenReady);
+  } else {
+    initWhenReady();
+  }
+})();

@@ -1,0 +1,128 @@
+/**
+ * Power-up System
+ * Configuration and helper functions for power-ups in the game
+ * 
+ * Public API:
+ * - window.PowerupSystem (module object)
+ * - window.POWERUP_TYPES (configuration object)
+ * - window.createPowerupObject(type, x, y)
+ * - window.addPowerupToLive(type, obj)
+ * - window.getPowerupName(type)
+ */
+
+(function() {
+  'use strict';
+
+  // ===== Power-up Type Definitions =====
+  
+  /**
+   * Power-up configuration with visual properties
+   */
+  const POWERUP_TYPES = {
+    boost: { name: 'Boost', r: 15, color: '#ffd54f' },
+    ghost: { name: 'Ghost', r: 15, color: '#9c27b0' },
+    ram: { name: 'Ram', r: 15, color: '#ff5722' },
+    turbo: { name: 'Turbo', r: 15, color: '#ff7043' },
+    shield: { name: 'Shield', r: 15, color: '#80cbc4' },
+    teleport: { name: 'Teleport', r: 18, color: '#00bcd4' },
+    magnet: { name: 'Magnet', r: 20, color: '#ffeb3b' },
+    timefreeze: { name: 'Time Freeze', r: 16, color: '#e1f5fe' },
+    icefreezer: { name: 'Ice Freezer', r: 15, color: '#b3e5fc' },};
+
+  // ===== Helper Functions =====
+
+  /**
+   * Create a power-up object with position and type
+   * @param {string} type - Power-up type
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @returns {Object|null} Power-up object or null if type invalid
+   */
+  function createPowerupObject(type, x, y) {
+    const config = POWERUP_TYPES[type];
+    if (!config) return null;
+    return { x, y, r: config.r, type };
+  }
+
+  /**
+   * Add a power-up object to the appropriate live array
+   * @param {string} type - Power-up type
+   * @param {Object} obj - Power-up object to add
+   */
+  function addPowerupToLive(type, obj) {
+    switch(type) {
+      case 'boost': 
+        if (window.liveBoosts) window.liveBoosts.push(obj);
+        break;
+      case 'ghost': 
+        if (window.liveGhosts) window.liveGhosts.push(obj);
+        break;
+      case 'ram': 
+        if (window.liveRams) window.liveRams.push(obj);
+        break;
+      case 'lightning': 
+        if (window.liveLightnings) window.liveLightnings.push(obj);
+        break;
+      case 'volcano': 
+        if (window.liveVolcanos) window.liveVolcanos.push(obj);
+        break;
+      case 'turbo': 
+        if (window.liveTurbos) window.liveTurbos.push(obj);
+        break;
+      case 'shield': 
+        if (window.liveShields) window.liveShields.push(obj);
+        break;
+      case 'teleport': 
+        if (window.liveTeleports) window.liveTeleports.push(obj);
+        break;
+      case 'magnet': 
+        if (window.liveMagnets) window.liveMagnets.push(obj);
+        break;
+      case 'timefreeze': 
+        if (window.liveTimeFreezes) window.liveTimeFreezes.push(obj);
+        break;
+      case 'icefreezer': 
+        if (window.liveIceFreezers) window.liveIceFreezers.push(obj);
+        break;
+      case 'testdamage': 
+        if (window.liveTestdamages) window.liveTestdamages.push(obj);
+        break;case 'poison': 
+        if (window.livePoisons) window.livePoisons.push(obj);
+        break;
+    }
+  }
+
+  /**
+   * Get the display name for a power-up type
+   * @param {string} type - Power-up type
+   * @returns {string} Display name
+   */
+  function getPowerupName(type) {
+    return POWERUP_TYPES[type]?.name || type;
+  }
+
+  // ===== Public API =====
+  
+  const PowerupSystem = {
+    POWERUP_TYPES,
+    createPowerupObject,
+    addPowerupToLive,
+    getPowerupName,
+    testdamage: { name: 'Testdamage', r: 15, color: '#ffffff' }
+  };
+
+  // Expose to global scope
+  if (typeof window !== 'undefined') {
+    window.PowerupSystem = Object.freeze(PowerupSystem);
+    
+    // Backward compatibility - expose individual items
+    window.POWERUP_TYPES = POWERUP_TYPES;
+    window.createPowerupObject = createPowerupObject;
+    window.addPowerupToLive = addPowerupToLive;
+    window.getPowerupName = getPowerupName;
+  }
+
+  try {
+    console.log('[PowerupSystem] Loaded successfully');
+  } catch {}
+})();
