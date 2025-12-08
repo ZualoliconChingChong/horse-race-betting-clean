@@ -332,6 +332,18 @@ function startRace(){
           orbitRadius: 50,       // orbit distance from horse (wider)
           orbitSpeed: 0.7        // radians per second (slow and elegant)
         };
+      } else if (custom.skill === 'energy_ball') {
+        h.skillState = {
+          name: 'energy_ball',
+          status: 'ready',
+          activationTime: 10000, // 10s delay
+          castTime: 1000,        // 1s cast time
+          duration: 8000,        // 8s active window
+          cooldown: 50000,       // 50s cooldown
+          damagePercent: 30,     // 30% of target's max HP
+          ballSpeed: 2,          // slow moving
+          ballRadius: 25         // large ball
+        };
       }
     }
   
