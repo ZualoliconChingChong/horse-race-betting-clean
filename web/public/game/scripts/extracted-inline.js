@@ -5454,7 +5454,7 @@ const skillDescriptions = {
   oguri_fat: { vi: "x2 tốc độ, x1.5 sát thương va chạm, aura lửa 5s. CD: 60s", en: "x2 speed, x1.5 collision damage, fire aura 5s. CD: 60s" },
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
   fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
-  energy_ball: { vi: "Sau 1s tích sức, bắn quả cầu năng lượng lớn di chuyển chậm gây 30% HP đối phương. CD: 35s", en: "After 1s cast, fires large slow energy ball dealing 30% of target's HP. CD: 35s" }
+  energy_ball: { vi: "Bắn quả cầu năng lượng nảy trong map, đẩy lùi và gây -1 HP liên tục. CD: 35s", en: "Fires bouncing energy ball, pushes and deals -1 HP continuously. CD: 35s" }
 };
 
 // Skill description auto-update (always visible)
@@ -9058,13 +9058,8 @@ function spawnRandomLuckItem(){
               break;
             case 'energy_ball':
               {
-                const castTime = h.skillState.castTime || 1000;
-                const castElapsed = now - (h.skillState.castStartTime || now);
-                
-                // Phase 1: Casting (1 second charge)
-                if (!h.skillState.castComplete && castElapsed >= castTime) {
-                  h.skillState.castComplete = true;
-                  
+                // Create energy ball immediately (no charging)
+                if (!h.energyBall) {
                   // Calculate direction based on horse's current velocity or last movement
                   let dirX = 1, dirY = 0;
                   if (h.vx !== 0 || h.vy !== 0) {
@@ -9079,17 +9074,16 @@ function spawnRandomLuckItem(){
                     else if (h.dir === 'D') { dirX = 0; dirY = 1; }
                   }
                   
-                  // Create the energy ball projectile
-                  const ballSpeed = h.skillState.ballSpeed || 2;
-                  const ballRadius = h.skillState.ballRadius || 25;
+                  // Create the energy ball projectile immediately
+                  const ballRadius = h.skillState.ballRadius || 30;
                   h.energyBall = {
                     x: h.x + dirX * (h.r + ballRadius + 5),
                     y: h.y + dirY * (h.r + ballRadius + 5),
-                    vx: dirX * ballSpeed,
-                    vy: dirY * ballSpeed,
+                    vx: dirX,
+                    vy: dirY,
                     radius: ballRadius,
                     damagePercent: h.skillState.damagePercent || 30,
-                    lastDamageTime: {}, // Track damage cooldown per horse
+                    lastDamageTime: {},
                     createdAt: now
                   };
                   
@@ -9100,8 +9094,8 @@ function spawnRandomLuckItem(){
                   try { playSfx('powerup'); } catch {}
                 }
                 
-                // Phase 2: Ball is moving
-                if (h.skillState.castComplete && h.energyBall) {
+                // Ball is moving
+                if (h.energyBall) {
                   const ball = h.energyBall;
                   // Use fixed movement speed
                   const moveSpeed = 2.5; // Faster speed
@@ -9179,46 +9173,40 @@ function spawnRandomLuckItem(){
                     }
                   }
                   
-                  // Check if ball is out of map bounds or expired
+                  // Constrain ball to map bounds (same as horses)
                   const mapBounds = mapDef.mapBounds || { x: 0, y: 0, w: 1920, h: 1080 };
-                  const minX = mapBounds.x || 0;
-                  const minY = mapBounds.y || 0;
-                  const maxX = minX + (mapBounds.w || 1920);
-                  const maxY = minY + (mapBounds.h || 1080);
+                  const minX = (mapBounds.x || 0) + ball.radius;
+                  const minY = (mapBounds.y || 0) + ball.radius;
+                  const maxX = (mapBounds.x || 0) + (mapBounds.w || 1920) - ball.radius;
+                  const maxY = (mapBounds.y || 0) + (mapBounds.h || 1080) - ball.radius;
                   const ballAge = now - ball.createdAt;
                   const maxBallDuration = 15000; // Ball lasts max 15 seconds
                   
-                  // Bounce off map walls instead of disappearing
-                  if (ball.x - ball.radius < minX) {
-                    ball.x = minX + ball.radius;
-                    ball.vx = Math.abs(ball.vx); // Bounce right
-                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
-                  } else if (ball.x + ball.radius > maxX) {
-                    ball.x = maxX - ball.radius;
-                    ball.vx = -Math.abs(ball.vx); // Bounce left
-                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  // Strict clamp to map bounds + bounce
+                  if (ball.x < minX) {
+                    ball.x = minX;
+                    ball.vx = Math.abs(ball.vx);
+                  } else if (ball.x > maxX) {
+                    ball.x = maxX;
+                    ball.vx = -Math.abs(ball.vx);
                   }
-                  if (ball.y - ball.radius < minY) {
-                    ball.y = minY + ball.radius;
-                    ball.vy = Math.abs(ball.vy); // Bounce down
-                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
-                  } else if (ball.y + ball.radius > maxY) {
-                    ball.y = maxY - ball.radius;
-                    ball.vy = -Math.abs(ball.vy); // Bounce up
-                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  if (ball.y < minY) {
+                    ball.y = minY;
+                    ball.vy = Math.abs(ball.vy);
+                  } else if (ball.y > maxY) {
+                    ball.y = maxY;
+                    ball.vy = -Math.abs(ball.vy);
                   }
                   
-                  // Only expire by time, not by leaving bounds
+                  // Expire by time
                   if (ballAge > maxBallDuration) {
-                    h.energyBall = null; // Ball expired
+                    h.energyBall = null;
                     floatingTexts.push({ x: ball.x, y: ball.y, t: performance.now(), life: 800, text: 'Energy Faded', color: '#87CEEB' });
                   }
                 }
                 
                 // Skill duration ended - only go to cooldown when ball is gone or expired
                 if (now >= h.skillState.endTime && !h.energyBall) {
-                  h.skillState.castComplete = false;
-                  h.skillState.castStartTime = null;
                   h.skillState.status = 'cooldown';
                   h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
                   h._lastLuckCheck = now;
