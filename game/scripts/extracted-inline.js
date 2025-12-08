@@ -9148,25 +9148,19 @@ function spawnRandomLuckItem(){
                         o.y += ny * overlap * 0.5;
                       }
                       
-                      // Damage on interval (every 500ms while touching)
+                      // Continuous damage: -1 HP per frame while pushing
+                      const targetMaxHP = o.maxHP || mapDef.horseMaxHP || 100;
+                      if (typeof o.hp !== 'number') o.hp = targetMaxHP;
+                      o.hp = Math.max(0, o.hp - 1); // -1 HP per frame
+                      o.damageImpactUntil = now + 100;
+                      
+                      // Show damage text occasionally (not every frame)
                       if (!ball.lastDamageTime) ball.lastDamageTime = {};
                       const horseKey = o.i !== undefined ? o.i : o.idx;
                       const lastDmg = ball.lastDamageTime[horseKey] || 0;
-                      
-                      if (now - lastDmg >= 500) { // Damage every 0.5 seconds
+                      if (now - lastDmg >= 300) { // Show text every 0.3s
                         ball.lastDamageTime[horseKey] = now;
-                        
-                        // Calculate 30% of target's MAX HP as damage
-                        const targetMaxHP = o.maxHP || mapDef.horseMaxHP || 100;
-                        const damage = Math.round(targetMaxHP * (ball.damagePercent / 100));
-                        
-                        if (typeof o.hp !== 'number') o.hp = targetMaxHP;
-                        o.hp = Math.max(0, o.hp - damage);
-                        o.damageImpactUntil = now + 300;
-                        
-                        // Visual effects
-                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 600, text: `-${damage} HP`, color: '#00BFFF' });
-                        createExplosion(ball.x, ball.y, '#87CEEB', 15);
+                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 400, text: `-1 HP`, color: '#00BFFF' });
                       }
                       
                       // Continuous energy sparks while pushing
