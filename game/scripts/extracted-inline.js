@@ -9089,7 +9089,7 @@ function spawnRandomLuckItem(){
                     vy: dirY * ballSpeed,
                     radius: ballRadius,
                     damagePercent: h.skillState.damagePercent || 30,
-                    hitTargets: new Set(),
+                    lastDamageTime: {}, // Track damage cooldown per horse
                     createdAt: now
                   };
                   
@@ -9110,10 +9110,9 @@ function spawnRandomLuckItem(){
                   ball.x += ball.vx * moveSpeed;
                   ball.y += ball.vy * moveSpeed;
                   
-                  // Check for collision with horses
+                  // Check for collision with horses - CONTINUOUS PUSH like a physical object
                   for (const o of horses) {
                     if (!o || o === h || o.eliminated) continue;
-                    if (ball.hitTargets.has(o.i || o.idx)) continue; // Already hit this target
                     
                     const dx = o.x - ball.x;
                     const dy = o.y - ball.y;
@@ -9121,43 +9120,68 @@ function spawnRandomLuckItem(){
                     const hitDist = ball.radius + (o.r || 8);
                     
                     if (dist < hitDist) {
-                      ball.hitTargets.add(o.i || o.idx);
-                      
                       // Divine Guardian shield blocks energy ball
                       if (o.hasShield) {
+                        // Shield absorbs the ball completely
                         o.hasShield = false;
                         o.guardianShieldActive = false;
                         o.shieldUntil = 0;
-                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 800, text: 'SHIELD BROKEN!', color: '#FFD700' });
-                        createExplosion(o.x, o.y, '#FFD700', 15);
-                        continue;
+                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 800, text: 'SHIELD BLOCKED!', color: '#FFD700' });
+                        createExplosion(o.x, o.y, '#FFD700', 20);
+                        h.energyBall = null; // Ball is destroyed by shield
+                        break;
                       }
                       
-                      // Calculate 30% of target's MAX HP as damage
-                      const targetMaxHP = o.maxHP || mapDef.horseMaxHP || 100;
-                      const damage = Math.round(targetMaxHP * (ball.damagePercent / 100));
+                      // CONTINUOUS PUSH - push horse away from ball center
+                      const pushForce = 1.2; // Strong push force
+                      const nx = dist > 0.1 ? dx / dist : 1;
+                      const ny = dist > 0.1 ? dy / dist : 0;
                       
-                      if (typeof o.hp !== 'number') o.hp = targetMaxHP;
-                      o.hp = Math.max(0, o.hp - damage);
-                      o.damageImpactUntil = now + 300;
+                      // Apply velocity push
+                      o.vx += nx * pushForce;
+                      o.vy += ny * pushForce;
                       
-                      // Visual effects
-                      floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 800, text: `-${damage} HP (30%)`, color: '#00BFFF' });
-                      createExplosion(ball.x, ball.y, '#87CEEB', 18);
+                      // Also nudge position to prevent overlap
+                      const overlap = hitDist - dist;
+                      if (overlap > 0) {
+                        o.x += nx * overlap * 0.5;
+                        o.y += ny * overlap * 0.5;
+                      }
                       
-                      // Energy particles on impact
-                      try {
-                        for (let k = 0; k < 8; k++) {
+                      // Damage on interval (every 500ms while touching)
+                      if (!ball.lastDamageTime) ball.lastDamageTime = {};
+                      const horseKey = o.i !== undefined ? o.i : o.idx;
+                      const lastDmg = ball.lastDamageTime[horseKey] || 0;
+                      
+                      if (now - lastDmg >= 500) { // Damage every 0.5 seconds
+                        ball.lastDamageTime[horseKey] = now;
+                        
+                        // Calculate 30% of target's MAX HP as damage
+                        const targetMaxHP = o.maxHP || mapDef.horseMaxHP || 100;
+                        const damage = Math.round(targetMaxHP * (ball.damagePercent / 100));
+                        
+                        if (typeof o.hp !== 'number') o.hp = targetMaxHP;
+                        o.hp = Math.max(0, o.hp - damage);
+                        o.damageImpactUntil = now + 300;
+                        
+                        // Visual effects
+                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 600, text: `-${damage} HP`, color: '#00BFFF' });
+                        createExplosion(ball.x, ball.y, '#87CEEB', 15);
+                      }
+                      
+                      // Continuous energy sparks while pushing
+                      if (Math.random() < 0.3) {
+                        try {
                           particles.push({
-                            x: ball.x,
-                            y: ball.y,
-                            vx: (Math.random() - 0.5) * 3,
-                            vy: (Math.random() - 0.5) * 3,
-                            life: 20 + Math.random() * 15,
-                            color: Math.random() > 0.5 ? '#00BFFF' : '#87CEEB'
+                            x: ball.x + nx * ball.radius,
+                            y: ball.y + ny * ball.radius,
+                            vx: nx * 2 + (Math.random() - 0.5),
+                            vy: ny * 2 + (Math.random() - 0.5),
+                            life: 10 + Math.random() * 8,
+                            color: Math.random() > 0.5 ? '#00BFFF' : '#FFFFFF'
                           });
-                        }
-                      } catch {}
+                        } catch {}
+                      }
                     }
                   }
                   
