@@ -9098,11 +9098,37 @@ function spawnRandomLuckItem(){
                 if (h.energyBall) {
                   const ball = h.energyBall;
                   // Use fixed movement speed
-                  const moveSpeed = 2.5; // Faster speed
+                  const moveSpeed = 2.5;
                   
-                  // Move the ball slowly
-                  ball.x += ball.vx * moveSpeed;
-                  ball.y += ball.vy * moveSpeed;
+                  // Get map bounds from canvas (guaranteed to exist)
+                  const canvas = document.getElementById('cv') || document.getElementById('canvas');
+                  const mapW = canvas?.width || 1920;
+                  const mapH = canvas?.height || 1080;
+                  const padding = ball.radius + 2; // Stay inside by radius + small buffer
+                  
+                  // Calculate next position
+                  let nextX = ball.x + ball.vx * moveSpeed;
+                  let nextY = ball.y + ball.vy * moveSpeed;
+                  
+                  // Bounce BEFORE moving if would go out of bounds
+                  if (nextX < padding) {
+                    nextX = padding;
+                    ball.vx = Math.abs(ball.vx);
+                  } else if (nextX > mapW - padding) {
+                    nextX = mapW - padding;
+                    ball.vx = -Math.abs(ball.vx);
+                  }
+                  if (nextY < padding) {
+                    nextY = padding;
+                    ball.vy = Math.abs(ball.vy);
+                  } else if (nextY > mapH - padding) {
+                    nextY = mapH - padding;
+                    ball.vy = -Math.abs(ball.vy);
+                  }
+                  
+                  // Apply clamped position
+                  ball.x = nextX;
+                  ball.y = nextY;
                   
                   // Check for collision with horses - CONTINUOUS PUSH like a physical object
                   for (const o of horses) {
@@ -9173,30 +9199,9 @@ function spawnRandomLuckItem(){
                     }
                   }
                   
-                  // Constrain ball to map bounds (same as horses)
-                  const mapBounds = mapDef.mapBounds || { x: 0, y: 0, w: 1920, h: 1080 };
-                  const minX = (mapBounds.x || 0) + ball.radius;
-                  const minY = (mapBounds.y || 0) + ball.radius;
-                  const maxX = (mapBounds.x || 0) + (mapBounds.w || 1920) - ball.radius;
-                  const maxY = (mapBounds.y || 0) + (mapBounds.h || 1080) - ball.radius;
+                  // Check ball expiration
                   const ballAge = now - ball.createdAt;
                   const maxBallDuration = 15000; // Ball lasts max 15 seconds
-                  
-                  // Strict clamp to map bounds + bounce
-                  if (ball.x < minX) {
-                    ball.x = minX;
-                    ball.vx = Math.abs(ball.vx);
-                  } else if (ball.x > maxX) {
-                    ball.x = maxX;
-                    ball.vx = -Math.abs(ball.vx);
-                  }
-                  if (ball.y < minY) {
-                    ball.y = minY;
-                    ball.vy = Math.abs(ball.vy);
-                  } else if (ball.y > maxY) {
-                    ball.y = maxY;
-                    ball.vy = -Math.abs(ball.vy);
-                  }
                   
                   // Expire by time
                   if (ballAge > maxBallDuration) {
