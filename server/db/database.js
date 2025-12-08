@@ -48,6 +48,14 @@ async function initDatabase() {
         if (!colNames.includes('avatar')) {
             db.run('ALTER TABLE users ADD COLUMN avatar TEXT');
         }
+        if (!colNames.includes('facebook_url')) {
+            db.run('ALTER TABLE users ADD COLUMN facebook_url TEXT');
+            console.log('✅ Added facebook_url column to users table');
+        }
+        if (!colNames.includes('facebook_name')) {
+            db.run('ALTER TABLE users ADD COLUMN facebook_name TEXT');
+            console.log('✅ Added facebook_name column to users table');
+        }
     } catch (e) {
         console.error('Migration error:', e);
     }
@@ -163,8 +171,24 @@ async function initDatabase() {
             db.run('ALTER TABLE races ADD COLUMN preview_image TEXT DEFAULT NULL');
             console.log('✅ Added preview_image column to races table');
         }
+        if (!raceColNames.includes('game_mode')) {
+            db.run("ALTER TABLE races ADD COLUMN game_mode TEXT DEFAULT 'carrot'");
+            console.log('✅ Added game_mode column to races table');
+        }
+        if (!raceColNames.includes('max_players')) {
+            db.run('ALTER TABLE races ADD COLUMN max_players INTEGER DEFAULT 6');
+            console.log('✅ Added max_players column to races table');
+        }
+        if (!raceColNames.includes('name')) {
+            db.run('ALTER TABLE races ADD COLUMN name TEXT DEFAULT NULL');
+            console.log('✅ Added name column to races table');
+        }
+        if (!raceColNames.includes('serial')) {
+            db.run('ALTER TABLE races ADD COLUMN serial TEXT');
+            console.log('✅ Added serial column to races table');
+        }
     } catch (e) {
-        console.error('Races preview_image migration error:', e);
+        console.error('Races migration error:', e);
     }
     
     // Save periodically
