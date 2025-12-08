@@ -450,8 +450,8 @@
 
           if (distance < horse.r + powerUp.r) {
             console.log(`[DEBUG] Collision detected: Horse at (${horse.x}, ${horse.y}) with ${type} at (${powerUp.x}, ${powerUp.y}), distance: ${distance.toFixed(2)}`);
-            // Check for warp cooldown to prevent immediate re-warp
-            if (type === 'warpzone' && horse.effects?.warpCooldown) {
+            // Check for warp cooldown to prevent immediate re-warp (time-based)
+            if (type === 'warpzone' && horse.warpCooldownUntil && performance.now() < horse.warpCooldownUntil) {
               continue; // Skip this warp zone if horse is on cooldown
             }
             
@@ -673,21 +673,18 @@
         // Choose random target warp zone
         const target = targetWarpzones[Math.floor(Math.random() * targetWarpzones.length)];
         
-        // Teleport horse to target with small offset to avoid immediate re-trigger
+        // Teleport horse OUTSIDE the target warp zone to prevent re-trigger
         const angle = Math.random() * Math.PI * 2;
-        const offset = 25; // Distance from warp zone center
+        const offset = (target.r || 20) + (horse.r || 8) + 10; // Outside target zone
         horse.x = target.x + Math.cos(angle) * offset;
         horse.y = target.y + Math.sin(angle) * offset;
         
-        // Reduce velocity slightly
-        horse.vx *= 0.8;
-        horse.vy *= 0.8;
+        // Reduce velocity more to prevent immediate re-entry
+        horse.vx *= 0.5;
+        horse.vy *= 0.5;
 
-        // Add cooldown to prevent immediate re-warp
-        if (!horse.effects) horse.effects = {};
-        horse.effects.warpCooldown = {
-          duration: config.powerUps?.warpzone?.cooldown || 500
-        };
+        // Add 2 second cooldown to prevent ping-pong loop
+        horse.warpCooldownUntil = performance.now() + 2000;
 
         console.log('[GameLogic] Horse warped from', currentWarpzone.x, currentWarpzone.y, 'to', target.x, target.y);
       }

@@ -10910,20 +10910,20 @@ function spawnRandomLuckItem(){
           // Choose random target warp zone
           const target = targetWarpzones[Math.floor(Math.random() * targetWarpzones.length)];
           
-          // Teleport horse to target with offset to avoid re-trigger
+          // Teleport horse OUTSIDE the target warp zone radius to prevent re-trigger
           const angle = Math.random() * Math.PI * 2;
-          const offset = 25;
+          const offset = (target.r || 20) + h.r + 10; // Outside the target zone radius
           h.x = target.x + Math.cos(angle) * offset;
           h.y = target.y + Math.sin(angle) * offset;
           
-          // Reduce velocity and add cooldown
-          h.vx *= 0.8;
-          h.vy *= 0.8;
-          h.warpCooldownUntil = performance.now() + 500; // 0.5s cooldown
+          // Reduce velocity and add cooldown (2 seconds to prevent ping-pong)
+          h.vx *= 0.5;
+          h.vy *= 0.5;
+          h.warpCooldownUntil = performance.now() + 2000; // 2s cooldown
           
           // Visual effects
-          try { createExplosion(warpzone.x, warpzone.y, '#9C27B0', 25); } catch {}
-          try { createExplosion(h.x, h.y, '#9C27B0', 20); } catch {}
+          try { createExplosion(warpzone.x, warpzone.y, '#9C27B0', 20); } catch {}
+          try { createExplosion(h.x, h.y, '#9C27B0', 15); } catch {}
           floatingTexts.push({ 
             x: h.x, y: h.y - h.r - 6, 
             t: performance.now(), life: 1200, 
@@ -10962,20 +10962,20 @@ function spawnRandomLuckItem(){
           // Choose random target warp zone
           const target = targetWarpzones[Math.floor(Math.random() * targetWarpzones.length)];
           
-          // Teleport horse to target with offset to avoid re-trigger
+          // Teleport horse OUTSIDE the target warp zone radius to prevent re-trigger
           const angle = Math.random() * Math.PI * 2;
-          const offset = 25;
+          const offset = (target.r || 20) + h.r + 10; // Outside the target zone radius
           h.x = target.x + Math.cos(angle) * offset;
           h.y = target.y + Math.sin(angle) * offset;
           
-          // Reduce velocity and add cooldown
-          h.vx *= 0.8;
-          h.vy *= 0.8;
-          h.warpCooldownUntil = performance.now() + 500; // 0.5s cooldown
+          // Reduce velocity and add cooldown (2 seconds to prevent ping-pong)
+          h.vx *= 0.5;
+          h.vy *= 0.5;
+          h.warpCooldownUntil = performance.now() + 2000; // 2s cooldown
           
           // Visual effects
-          try { createExplosion(warpzone.x, warpzone.y, '#9C27B0', 25); } catch {}
-          try { createExplosion(h.x, h.y, '#9C27B0', 20); } catch {}
+          try { createExplosion(warpzone.x, warpzone.y, '#9C27B0', 20); } catch {}
+          try { createExplosion(h.x, h.y, '#9C27B0', 15); } catch {}
           floatingTexts.push({ 
             x: h.x, y: h.y - h.r - 6, 
             t: performance.now(), life: 1200, 
