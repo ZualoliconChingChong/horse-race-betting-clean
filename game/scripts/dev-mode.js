@@ -212,7 +212,8 @@
    * Toggle fullscreen mode
    */
   function toggleFullscreen() {
-    const gameContainer = document.getElementById('gameWrapper') || document.documentElement;
+    // Target the .wrap container which holds the canvas and HUD
+    const gameContainer = document.querySelector('.wrap') || document.documentElement;
     
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       // Enter fullscreen
