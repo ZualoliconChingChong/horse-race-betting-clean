@@ -20,6 +20,7 @@
   let currentFPS = 60;
 
   // ===== FPS Update Function =====
+  // NOTE: HUD update disabled here - extracted-inline.js handles it at 5Hz for smoother display
   function updateFPS() {
     fpsFrames++;
     const now = performance.now();
@@ -27,13 +28,7 @@
       currentFPS = Math.round((fpsFrames * 1000) / (now - fpsLastTime));
       fpsFrames = 0;
       fpsLastTime = now;
-      
-      // Use DOMCache for better performance
-      try {
-        if (window.DOMCache && window.DOMCache.setText && window.DOMCache.elements.fpsHud) {
-          window.DOMCache.setText(window.DOMCache.elements.fpsHud, currentFPS);
-        }
-      } catch {}
+      // HUD update removed - handled by extracted-inline.js to prevent flickering
     }
   }
 
