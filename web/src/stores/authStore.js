@@ -36,10 +36,15 @@ const useAuthStore = create(
       },
 
       // Register
-      register: async (username, password) => {
+      register: async (username, password, facebookUrl = '', facebookName = '') => {
         set({ isLoading: true, error: null })
         try {
-          const response = await api.post('/auth/register', { username, password })
+          const response = await api.post('/auth/register', { 
+            username, 
+            password,
+            facebookUrl: facebookUrl || null,
+            facebookName: facebookName || null
+          })
           const { token, user, message } = response.data
           
           set({ 
@@ -84,6 +89,12 @@ const useAuthStore = create(
       updateCoins: (newAmount) => {
         set(state => ({
           user: state.user ? { ...state.user, coins: newAmount } : null
+        }))
+      },
+
+      updateAvatar: (avatar) => {
+        set(state => ({
+          user: state.user ? { ...state.user, avatar } : null
         }))
       },
 

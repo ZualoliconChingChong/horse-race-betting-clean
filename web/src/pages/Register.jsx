@@ -1,15 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { UserPlus, Eye, EyeOff, Gift } from 'lucide-react'
+import { UserPlus, Eye, EyeOff, Gift, Facebook, Info } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 
 function Register() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [facebookUrl, setFacebookUrl] = useState('')
+  const [facebookName, setFacebookName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [localError, setLocalError] = useState('')
+  const [showFbTip, setShowFbTip] = useState(false)
   
   const { register, isLoading, error, clearError } = useAuthStore()
   const navigate = useNavigate()
@@ -34,8 +37,14 @@ function Register() {
       setLocalError('Mật khẩu phải có ít nhất 4 ký tự')
       return
     }
+
+    // Validate Facebook URL if provided
+    if (facebookUrl && !facebookUrl.includes('facebook.com')) {
+      setLocalError('URL Facebook không hợp lệ')
+      return
+    }
     
-    const result = await register(username, password)
+    const result = await register(username, password, facebookUrl, facebookName)
     if (result.success) {
       setShowSuccess(true)
       setTimeout(() => {
@@ -122,6 +131,56 @@ function Register() {
                 placeholder="Nhập lại mật khẩu"
                 required
               />
+            </div>
+
+            {/* Facebook Info Section */}
+            <div className="border-t border-dark-700 pt-4 mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Facebook size={20} className="text-blue-500" />
+                <span className="font-medium">Thông tin Facebook</span>
+                <button
+                  type="button"
+                  onClick={() => setShowFbTip(!showFbTip)}
+                  className="ml-auto text-dark-400 hover:text-blue-400"
+                  title="Xem hướng dẫn"
+                >
+                  <Info size={18} />
+                </button>
+              </div>
+              
+              {showFbTip && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-3 text-sm">
+                  <p className="font-bold text-blue-400 mb-2">📱 Cách lấy URL Facebook:</p>
+                  <div className="space-y-2 text-dark-300">
+                    <p><strong>🖥️ PC:</strong> Vào trang cá nhân → Copy URL từ thanh địa chỉ</p>
+                    <p><strong>📱 Mobile:</strong> Vào trang cá nhân → Chọn <strong>...</strong> → Sao chép liên kết trang cá nhân</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tên Facebook</label>
+                  <input
+                    type="text"
+                    value={facebookName}
+                    onChange={(e) => setFacebookName(e.target.value)}
+                    className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                    placeholder="VD: Nguyễn Văn A"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">URL Facebook</label>
+                  <input
+                    type="url"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    className="w-full px-4 py-3 bg-dark-800 border border-dark-700 rounded-lg focus:outline-none focus:border-blue-500 transition"
+                    placeholder="https://facebook.com/..."
+                  />
+                </div>
+              </div>
             </div>
 
             <button

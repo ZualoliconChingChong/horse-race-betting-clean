@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dev Mode Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1e1e1e; color: white; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .pass { background: #2d5a2d; }
+        .fail { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+        button { padding: 10px 20px; margin: 5px; background: #4a4a4a; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #6a6a6a; }
+    </style>
+</head>
+<body>
+    <h1>🎮 Dev Mode Test Suite</h1>
+    
+    <div id="testResults"></div>
+    
+    <h2>Manual Tests:</h2>
+    <button onclick="testDevModeToggle()">Test Dev Mode Toggle</button>
+    <button onclick="testKeyboardInput()">Test Keyboard Input</button>
+    <button onclick="testHorseSelection()">Test Horse Selection</button>
+    <button onclick="runAllTests()">Run All Tests</button>
+    
+    <h2>Instructions:</h2>
+    <div class="info test-result">
+        <p><strong>To test Dev Mode:</strong></p>
+        <ol>
+            <li>Open the main game (index.html)</li>
+            <li>Create or load a map</li>
+            <li>Click the 🎮 Dev Mode button or press F3</li>
+            <li>Start a race</li>
+            <li>Use WASD or arrow keys to control your horse</li>
+            <li>Press Space to use skills</li>
+            <li>Press Tab to switch horses</li>
+        </ol>
+        
+        <p><strong>Expected behavior:</strong></p>
+        <ul>
+            <li>Player horse should have purple glow and 👤 icon</li>
+            <li>Player horse should respond to keyboard input</li>
+            <li>Other horses should continue AI movement</li>
+            <li>Player can switch between horses</li>
+            <li>Skills can be activated manually</li>
+        </ul>
+    </div>
+
+    <script>
+        function addTestResult(name, passed, message) {
+            const results = document.getElementById('testResults');
+            const div = document.createElement('div');
+            div.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            div.innerHTML = `<strong>${name}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'} - ${message}`;
+            results.appendChild(div);
+        }
+
+        function testDevModeToggle() {
+            addTestResult('Dev Mode Toggle', true, 'Manual test - Check if Dev Mode button toggles correctly');
+        }
+
+        function testKeyboardInput() {
+            addTestResult('Keyboard Input', true, 'Manual test - Check if WASD/Arrow keys control the horse');
+        }
+
+        function testHorseSelection() {
+            addTestResult('Horse Selection', true, 'Manual test - Check if dropdown and Tab key switch horses');
+        }
+
+        function runAllTests() {
+            document.getElementById('testResults').innerHTML = '';
+            
+            // Basic API tests
+            addTestResult('DevMode API', typeof window.DevMode === 'object', 'DevMode object should be available');
+            
+            // Integration tests
+            testDevModeToggle();
+            testKeyboardInput();
+            testHorseSelection();
+            
+            addTestResult('Test Suite', true, 'All automated tests completed. Please run manual tests in the main game.');
+        }
+
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ const INITIAL_COINS = 500;
 // Register new user
 router.post('/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, facebookUrl, facebookName } = req.body;
 
         // Validation
         if (!username || !password) {
@@ -26,6 +26,11 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 4 characters' });
         }
 
+        // Validate Facebook info (optional but recommended)
+        if (facebookUrl && !facebookUrl.includes('facebook.com')) {
+            return res.status(400).json({ error: 'URL Facebook không hợp lệ' });
+        }
+
         // Check if username exists
         const existing = userOps.findByUsername.get(username);
         if (existing) {
@@ -35,8 +40,8 @@ router.post('/register', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user
-        const result = userOps.create.run(username, hashedPassword, INITIAL_COINS);
+        // Create user with Facebook info
+        const result = userOps.create.run(username, hashedPassword, INITIAL_COINS, facebookUrl || null, facebookName || null);
         const userId = result.lastInsertRowid;
 
         // Record initial coins transaction
@@ -63,7 +68,9 @@ router.post('/register', async (req, res) => {
                 username: user.username,
                 coins: user.coins,
                 total_wins: user.total_wins,
-                total_races: user.total_races
+                total_races: user.total_races,
+                is_admin: user.username === 'admin' ? 1 : (user.is_admin || 0),
+                banned: user.banned || 0
             }
         });
 
@@ -86,6 +93,11 @@ router.post('/login', async (req, res) => {
         const user = userOps.findByUsername.get(username);
         if (!user) {
             return res.status(401).json({ error: 'Invalid username or password' });
+        }
+
+        // Check ban status
+        if (user.banned) {
+            return res.status(403).json({ error: 'Account banned' });
         }
 
         // Check password
@@ -122,19 +134,25 @@ router.post('/login', async (req, res) => {
         // Generate token
         const token = generateToken(user);
 
+        const responseUser = {
+            id: user.id,
+            username: user.username,
+            coins: newCoins,
+            total_wins: user.total_wins,
+            total_races: user.total_races,
+            is_admin: user.username === 'admin' ? 1 : (user.is_admin || 0),
+            banned: user.banned || 0
+        };
+
+        console.log('Login response user:', responseUser);
+
         res.json({
             message: dailyRewardGiven 
                 ? `Welcome back! You received ${DAILY_REWARD} coins!` 
                 : 'Welcome back!',
             token,
             dailyReward: dailyRewardGiven ? DAILY_REWARD : 0,
-            user: {
-                id: user.id,
-                username: user.username,
-                coins: newCoins,
-                total_wins: user.total_wins,
-                total_races: user.total_races
-            }
+            user: responseUser
         });
 
     } catch (error) {
@@ -158,6 +176,8 @@ router.get('/me', authenticateToken, (req, res) => {
                 coins: user.coins,
                 total_wins: user.total_wins,
                 total_races: user.total_races,
+                is_admin: user.username === 'admin' ? 1 : (user.is_admin || 0),
+                avatar: user.avatar,
                 created_at: user.created_at
             }
         });

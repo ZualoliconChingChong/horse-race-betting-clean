@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
-import { Home, Trophy, User, LogOut, LogIn, Coins } from 'lucide-react'
+import { Home, Trophy, User, LogOut, LogIn, Coins, Shield } from 'lucide-react'
 import useAuthStore from '../stores/authStore'
 
 function Layout() {
@@ -39,6 +39,26 @@ function Layout() {
               <Trophy size={18} />
               <span className="hidden sm:inline">Xếp hạng</span>
             </Link>
+
+            {user && (
+              <Link 
+                to="/my-horse" 
+                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-dark-800 transition"
+              >
+                <span className="text-lg">🐴</span>
+                <span className="hidden sm:inline">Ngựa của tôi</span>
+              </Link>
+            )}
+
+            {user && (user.is_admin === 1 || user.username === 'admin') && (
+              <Link 
+                to="/admin" 
+                className="flex items-center gap-1 px-3 py-2 rounded-lg hover:bg-dark-800 transition bg-purple-500/20 text-purple-400"
+              >
+                <Shield size={18} />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+            )}
 
             {user ? (
               <>

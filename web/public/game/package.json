@@ -1,0 +1,53 @@
+{
+  "name": "horse-maze-electron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "start:mod": "set HMR_MOD=1&& electron .",
+    "build": "electron-builder -w",
+    "lint": "eslint . --ext .js --ignore-path .eslintignore",
+    "lint:fix": "eslint . --ext .js --fix --ignore-path .eslintignore",
+    "format": "prettier --write ."
+  },
+  "keywords": [],
+  "author": "VMX",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^37.3.0",
+    "electron-builder": "^26.0.12",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-import": "^2.32.0",
+    "prettier": "^3.6.2"
+  },
+  "build": {
+    "appId": "com.horsemaze.race",
+    "productName": "Horse Maze Race",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist/**",
+      "!node_modules/.cache/**"
+    ],
+    "extraResources": [
+      "assets/**"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

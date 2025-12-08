@@ -51,9 +51,15 @@ const useRaceStore = create((set, get) => ({
   },
 
   // Create race (admin)
-  createRace: async (mapData, registrationMinutes = 30) => {
+  createRace: async (mapData, registrationMinutes = 30, name = null, gameMode = 'carrot', maxPlayers = 6) => {
     try {
-      const response = await api.post('/race/create', { mapData, registrationMinutes })
+      const response = await api.post('/race/create', { 
+        mapData, 
+        registrationMinutes, 
+        name,
+        gameMode,
+        maxPlayers
+      })
       // Refresh races list
       get().fetchActiveRaces()
       return { success: true, race: response.data.race }
@@ -123,3 +129,5 @@ const useRaceStore = create((set, get) => ({
 }))
 
 export default useRaceStore
+
+

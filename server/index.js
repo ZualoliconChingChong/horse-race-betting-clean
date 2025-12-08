@@ -9,6 +9,8 @@ const { initDatabase } = require('./db/database');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const raceRoutes = require('./routes/race');
+const adminRoutes = require('./routes/admin');
+const horseRoutes = require('./routes/horses');
 const { setupSocketHandlers } = require('./socket/handlers');
 
 const app = express();
@@ -32,7 +34,8 @@ app.use(cors({
         : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
     credentials: true
 }));
-app.use(express.json());
+// Increase body size limit for map preview images (default is 100kb)
+app.use(express.json({ limit: '10mb' }));
 
 // Make io accessible to routes
 app.set('io', io);
@@ -41,6 +44,8 @@ app.set('io', io);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/race', raceRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/horses', horseRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -57,8 +62,8 @@ app.get('*', (req, res, next) => {
     res.sendFile(path.join(__dirname, '../web/dist/index.html'));
 });
 
-// Start server
-const PORT = process.env.PORT || 3001;
+// Start server (use 4000 by default to avoid clashing with other local servers)
+const PORT = process.env.PORT || 4000;
 
 async function startServer() {
     // Initialize database first

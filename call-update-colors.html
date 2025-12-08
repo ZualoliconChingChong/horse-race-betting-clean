@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Horse Colors</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #45B7D1;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Update White Horse Colors</h1>
+    <p>This will update all horses with white (#FFFFFF) or null color to random bright colors.</p>
+    
+    <button onclick="updateColors()">Update All White Horses</button>
+    
+    <div id="result"></div>
+    
+    <script>
+        async function updateColors() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '⏳ Updating...';
+            resultDiv.className = '';
+            
+            try {
+                // Get auth token from localStorage
+                const authStorage = localStorage.getItem('auth-storage');
+                if (!authStorage) {
+                    throw new Error('Not logged in! Please login first at http://localhost:3001');
+                }
+                
+                const auth = JSON.parse(authStorage);
+                const token = auth.state?.token || auth.token;
+                
+                if (!token) {
+                    throw new Error('No auth token found');
+                }
+                
+                // Call API
+                const response = await fetch('http://localhost:3001/api/horses/update-white-colors', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Update failed');
+                }
+                
+                // Show success
+                resultDiv.className = 'success';
+                resultDiv.innerHTML = `✅ Success!\n\n${data.message}\n\nUpdated horses:\n` + 
+                    data.horses.map(h => `  • ${h.name}: ${h.oldColor} → ${h.newColor}`).join('\n');
+                
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Horse Maze Race — WITH RESULTS TABLE v2025</title>
+<link rel="stylesheet" href="styles/main.css">
+
+</head>
+<body>
+
+<!-- Epic Loading Screen -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-container">
+    <div class="loading-logo">
+      <div class="horse-icon">🐎</div>
+      <h1 class="game-title">HORSE MAZE RACE</h1>
+      <p class="game-subtitle">Ultimate Racing Experience</p>
+    </div>
+    
+    <div class="loading-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-glow"></div>
+      </div>
+      <div class="loading-text" id="loadingText">Initializing...</div>
+      <div class="loading-percentage" id="loadingPercentage">0%</div>
+    </div>
+    
+    <div class="loading-particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+    
+    <div class="loading-tips">
+      <div class="tip-text" id="tipText">💡 Tip: Use RAM power-up to eliminate opponents!</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="stage" id="stage">
+    <canvas id="cv" width="1400" height="900"></canvas>
+    
+    <!-- Thanh thông báo overlay trên map -->
+    <div class="notification-bar show" id="notificationBar">
+      <div class="notification-icon" id="notificationIcon">ℹ️</div>
+      <div class="notification-text" id="gameNotificationText"></div>
+      <!-- Close button hidden to keep notification always visible -->
+      <button class="notification-close" id="notificationClose" style="display: none;">×</button>
+    </div>
+
+    <!-- Game HUB overlay dưới map -->
+    <div class="game-hub" id="gameHub">
+      <div class="hub-section hub-stats">
+        <div class="hub-item">
+          <div class="hub-icon">🐎</div>
+          <div class="hub-label">Ngựa</div>
+          <div class="hub-value" id="horsesCount">0</div>
+        </div>
+        <div class="hub-item">
+          <div class="hub-icon">🥕</div>
+          <div class="hub-label">Cà rốt</div>
+          <div class="hub-value" id="carrotActive">A</div>
+        </div>
+        <div class="hub-item">
+          <div class="hub-icon">⏱</div>
+          <div class="hub-label">Thời gian</div>
+          <div class="hub-value" id="timer">0.00</div>
+        </div>
+        <div class="hub-item">
+          <div class="hub-icon">🎯</div>
+          <div class="hub-label">FPS</div>
+          <div class="hub-value" id="fpsHud">0</div>
+        </div>
+      </div>
+      
+      <div class="hub-section hub-controls">
+        <div class="hub-speed-control">
+          <div class="hub-speed-label">⚡ Tốc độ</div>
+          <div class="hub-speed-slider" id="speedSlider">
+            <div class="speed-val" id="speedVal"></div>
+            <div class="speed-thumb" id="speedThumb"></div>
+          </div>
+          <div class="hub-speed-value" id="speedLiveVal">1.0×</div>
+        </div>
+        
+        <div class="hub-physics-control">
+          <label class="hub-toggle-label">
+            <input type="checkbox" id="preventCollisionSpeedChange" class="hub-toggle">
+            <span class="hub-toggle-slider"></span>
+            <span class="hub-toggle-text">🛡️ Ngăn va chạm thay đổi tốc độ</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="hub-section hub-actions">
+        <button class="hub-btn primary" id="hudPlayTest" title="Chạy thử (F1)">
+          <span class="btn-icon">▶</span>
+          <span class="btn-text">Chạy thử</span>
+        </button>
+        <button class="hub-btn secondary" id="openEditorBtn" title="Mở Map Editor" style="display:none">
+          <span class="btn-icon">✏</span>
+          <span class="btn-text">Editor</span>
+        </button>
+        <button class="hub-btn warning" id="pauseBtnHUD" title="Tạm dừng / Tiếp tục" style="display:none">
+          <span class="btn-icon">⏸️</span>
+          <span class="btn-text">Dừng</span>
+        </button>
+        <button class="hub-btn danger" id="toEditor" style="display:none">
+          <span class="btn-icon">⏹</span>
+          <span class="btn-text">Dừng & Sửa</span>
+        </button>
+        <!-- Dev Mode Toggle -->
+        <button class="hub-btn" id="devModeToggle" title="Dev Mode - Điều khiển ngựa (F3)" style="background: linear-gradient(135deg, #9c27b0, #673ab7);">
+          <span class="btn-icon">🎮</span>
+          <span class="btn-text">Dev Mode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Overlay -->
+  <div id="resultsOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:9999;">
+    <div style="background:#0f1417; border:1px solid #24323b; border-radius:10px; padding:16px 18px; width:min(420px, 92%); color:#e6edf3; box-shadow:0 10px 30px rgba(0,0,0,0.45);">
+      <div style="font-weight:700; font-size:18px; margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+        🏁 Kết quả
+      </div>
+      <div id="resultsBody" style="font-size:15px; line-height:1.6; margin-bottom:12px;">
+        <!-- Filled by JS -->
+      </div>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="btn" id="playAgain                                                                                                                                                                             Btn">▶ Chơi lại</button>
+        <button class="btn secondary" id="closeResultsBtn">Đóng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dev Mode Controls Overlay -->
+<div id="devModeControls" style="position: fixed; top: 20px; right: 20px; background: rgba(156, 39, 176, 0.95); color: white; padding: 15px; border-radius: 10px; font-family: 'Segoe UI', Arial, sans-serif; display: none; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+  <div style="font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+    🎮 Dev Mode Active
+    <button id="devModeClose" style="background: none; border: none; color: white; font-size: 16px; cursor: pointer; margin-left: auto;">×</button>
+  </div>
+  <div style="font-size: 12px; line-height: 1.4;">
+    <div><strong>Controls:</strong></div>
+    <div>🔼 W/↑ - Tăng tốc</div>
+    <div>🔽 S/↓ - Giảm tốc</div>
+    <div>◀️ A/← - Rẽ trái</div>
+    <div>▶️ D/→ - Rẽ phải</div>
+    <div>🚀 Space - Skill (khi ready)</div>
+    <div>🎯 Tab - Chuyển ngựa</div>
+    <div>🔄 F5 - Refresh horses</div>
+    <div>🐛 Console: DevMode.debugHorses()</div>
+    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.3);">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <span>Ngựa:</span>
+        <select id="playerHorseSelect" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 2px 4px; border-radius: 3px; font-size: 11px;">
+          <option value="0">#1</option>
+        </select>
+        <span id="playerHorseName" style="font-weight: bold;">#1</span>
+        <button id="refreshHorses" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 1px 4px; border-radius: 3px; font-size: 10px; cursor: pointer;">🔄</button>
+      </div>
+      <div id="playerHorseSkill">Skill: <span id="playerSkillStatus">Ready</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- FPS moved into HUD -->
+
+
+<!-- Modern Map Editor -->
+<div class="rightbar" id="editorBar">
+  <div class="grip-l" id="gripL" title="Kéo để chỉnh rộng"></div>
+  <div class="grip-br" id="gripBR" title="Kéo để đổi kích thước"></div>
+  <div class="grip-bl" id="gripBL" title="Kéo để đổi kích thước"></div>
+  <div class="grip-tr" id="gripTR" title="Kéo để đổi kích thước"></div>
+  <div class="grip-tl" id="gripTL" title="Kéo để đổi kích thước"></div>
+  
+  <div class="editor-header" id="editorHeader">
+    <div class="editor-title-section">
+      <h2>🎨 Map Editor</h2>
+      <div class="drag-handle" id="dragHandle" title="Kéo để di chuyển panel">⋮⋮</div>
+    </div>
+    <div class="editor-controls">
+      <div class="top-actions" style="display:flex; gap:8px; align-items:center; margin-right:8px;">
+        <button class="btn" id="playBtn" title="Start Race (F1)">▶</button>
+        <button class="btn" id="editBtn" title="Map Editor (F2)">✏</button>
+        <button class="btn" id="languageToggleBtn" title="Switch Language / Đổi Ngôn Ngữ">🌐</button>
+        <button class="btn" id="focusBtn" title="Focus Mode" style="display: none;">📺</button>
+      </div>
+      <div class="theme-controls" title="Editor Theme">
+        <button class="theme-btn active" id="themeProfessional" title="Dark Professional">🌙</button>
+        <button class="theme-btn" id="themeModern" title="Modern Dark">🖤</button>
+        <button class="theme-btn" id="themeWarm" title="Warm Dark">🔥</button>
+        <button class="theme-btn" id="themeGaming" title="Gaming Style">🎮</button>
+      </div>
+      <div class="position-controls" title="Vị trí panel">
+        <button class="position-btn active" id="posRight" title="Bên phải">→</button>
+        <button class="position-btn" id="posLeft" title="Bên trái">←</button>
+        <button class="position-btn" id="posBottom" title="Dưới cùng">↓</button>
+      </div>
+      <button class="reset-view-btn" id="resetViewBtn" title="Reset view (Ctrl+0)">🔄</button>
+    </div>
+  </div>
+
+  <div class="editor-content">
+    <!-- Drawing Tools Section -->
+    <div class="section">
+      <div class="section-title">🛠️ Tools</div>
+      
+      <!-- Essential Tools -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_essential">🎯 Essential</div>
+        <div class="tools compact">
+          <div class="tool active" data-tool="select" title="Select & Move">🎯</div>
+          <div class="tool" data-tool="erase" title="Delete Objects">🗑️</div>
+          <div class="tool" data-tool="wall" title="Draw Walls">🧱</div>
+          <div class="tool" data-tool="brush" title="Brush Walls">🖌️</div>
+        </div>
+      </div>
+
+      <!-- Geometry Tools -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_geometry">📐 Geometry</div>
+        <div class="tools compact">
+          <div class="tool" data-tool="diag" title="Diagonal Walls">📐</div>
+          <div class="tool" data-tool="semi" title="Half-Circle">🌙</div>
+          <div class="tool" data-tool="arc" title="Arc Walls">🌈</div>
+          <div class="tool" data-tool="text" title="Text Walls">🔤</div>
+          <div class="tool" data-tool="ebrush" title="Eraser Brush">🧹</div>
+          <div class="tool" data-tool="breakwall" title="Break Wall Brush">💥🧱</div>
+          <div class="tool" data-tool="softwall" title="Soft Wall Brush">🧽🧱</div>
+        </div>
+      </div>
+
+      <!-- Race Elements -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_race">🏁 Race Setup</div>
+        <div class="tools compact">
+          <div class="tool" data-tool="spawn" title="Horse Spawns">🏁</div>
+          <div class="tool" data-tool="carrotA" title="Finish Line A">🥕</div>
+          <div class="tool" data-tool="carrotB" title="Finish Line B">🏆</div>
+          <div class="tool" data-tool="room" title="Waiting Room">🏠</div>
+          <div class="tool" data-tool="start" title="Start Gate">🚦</div>
+        </div>
+      </div>
+
+      <!-- Power-ups -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_powerups">⚡ Power-ups</div>
+        <div class="tools compact">
+          <div class="tool" data-tool="boost" title="Speed Boost">⚡</div>
+          <div class="tool" data-tool="turbo" title="Turbo">🚀</div>
+          <div class="tool" data-tool="ghost" title="Ghost Mode">👻</div>
+          <div class="tool" data-tool="shield" title="Shield">🛡️</div>
+          <div class="tool" data-tool="teleport" title="Teleport">🌀</div>
+          <div class="tool" data-tool="magnet" title="Magnet">🧲</div>
+          <div class="tool" data-tool="timefreeze" title="Time Freeze">❄️</div>
+          <div class="tool" data-tool="icefreezer" title="Ice Freezer">🧊</div>
+          <div class="tool" data-tool="testpower" title="Testpower">⚡</div><div class="tool" data-tool="poison" title="Poison">☠️</div>
+          <div class="tool" data-tool="fireaura" title="Fire Aura">🔥</div>
+          <div class="tool" data-tool="healingzone" title="Healing Zone">💚</div><div class="tool" data-tool="tornado" title="Tornado Vortex">🌪️</div>
+          <div class="tool" data-tool="volcano" title="Volcano">🌋</div>
+          <div class="tool" data-tool="warpzone" title="Warp Zone">🌌</div>
+          <div class="tool" data-tool="quantumdash" title="Quantum Dash">🔮</div><div class="tool" data-tool="yellowheart" title="Yellowheart">💛</div><div class="tool" data-tool="nebula" title="Nebula">🔹</div>
+        </div>
+      </div>
+
+      <!-- Obstacles -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_obstacles">🚧 Obstacles</div>
+        <div class="tools compact">
+          <div class="tool" data-tool="ram" title="Ram Attack">💥</div>
+          <div class="tool" data-tool="mud" title="Mud Patch">🟤</div>
+          <div class="tool" data-tool="healingpatch" title="Healing Patch">💖</div>
+          <div class="tool" data-tool="rotbarrier" title="Rotating Barrier">⚖️</div>
+          <div class="tool" data-tool="firetrap" title="Fire Trap">☄️</div>
+          <div class="tool" data-tool="magnetpull" title="Magnetic Pull">🧿</div>
+        <div class="tool" data-tool="magnetpush" title="Magnetic Push">✨</div>
+          <div class="tool" data-tool="bumper" title="Bumper">🟦</div>
+          <div class="tool" data-tool="spinner" title="Spinner">🔄</div>
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <div class="tool-category">
+        <div class="category-header" data-i18n="cat_advanced">🔧 Advanced</div>
+        <div class="tools compact">
+          <div class="tool" data-tool="belt" title="Conveyor Belt">📦</div>
+          <div class="tool" data-tool="fan" title="Wind Fan">💫</div>
+          <div class="tool" data-tool="weather" title="Weather System">🌦️</div>
+          <div class="tool" data-tool="oneway" title="One-way Gate">⛩️</div>
+          <div class="tool" data-tool="pad" title="Landing Pad">🟩</div>
+        </div>
+      </div>
+      
+      <div class="row"><label data-i18n="color">🎨 Color</label><input type="color" id="shapeColor" value="#607d8b"/></div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="settings">⚙️ Settings</div>
+      
+      <!-- Language Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="language">🌐 Language</div>
+        <div class="row compact" style="margin-bottom: 4px;">
+          <select id="languageSelect" style="width: 100%; padding: 4px; border-radius: 4px; background: #2d3a4a; color: #eee; border: 1px solid #4a5a6a;">
+            <option value="en">English</option>
+            <option value="vi">Tiếng Việt</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Grid Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="grid">📏 Grid</div>
+        <div class="row compact"><label data-i18n="grid_size">Size</label><input id="grid" type="range" min="8" max="60" step="2" value="20" /><span id="gridVal">20px</span></div>
+        <div class="row compact" style="align-items:center; gap:8px">
+          <label for="hideGridOnPlay" data-i18n="hide_in_play">Hide in Play</label>
+          <input id="hideGridOnPlay" type="checkbox" />
+        </div>
+      </div>
+
+      <!-- Object Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="cat_objects"> Objects</div>
+        <div class="row compact"><label data-i18n="horse_speed"> Horse Speed</label><input id="speed" type="range" min="0.5" max="4" step="0.1" value="1.0" /><span id="speedValEditor">1.0×</span></div>
+        <div class="row compact"><label data-i18n="max_horse_speed"> Max Horse Speed</label><input id="maxHorseSpeed" type="range" min="0.5" max="4" step="0.1" value="4.0" /><span id="maxHorseSpeedVal">4.0×</span></div>
+        <div class="row compact"><label data-i18n="horse_radius"> Horse Radius</label><input id="horseRadius" type="range" min="8" max="60" step="1" value="36" /><span id="horseRadiusVal">36</span></div>
+        <div class="row compact"><label data-i18n="carrot_size"> Carrot</label><input id="carrotRadius" type="range" min="8" max="60" step="1" value="30" /><span id="carrotRadiusVal">30</span></div>
+        <div class="row compact"><label data-i18n="corner_radius"> Corner</label><input id="radius" type="range" min="6" max="30" step="2" value="14" /><span id="radiusVal">14</span></div>
+      </div>
+
+      <!-- Wall Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="cat_walls"> Walls</div>
+        <div class="row compact"><label data-i18n="wall_width">Width</label><input id="thick" type="range" min="6" max="80" step="2" value="24" /><span id="thickVal">24px</span></div>
+        <div class="row compact" style="align-items:center; gap:8px">
+          <label for="roundCap" data-i18n="round_cap">Round Cap</label>
+          <input id="roundCap" type="checkbox" checked />
+        </div>
+        <div class="row compact"><label data-i18n="arc_span">🌈 Arc Span</label><input id="arcSpan" type="range" min="30" max="330" step="5" value="180" /><span id="arcSpanVal">180°</span></div>
+        <div class="row compact"><label data-i18n="brush_step">🖌️ Brush Step</label><input id="brushStep" type="range" min="2" max="16" step="1" value="6" /><span id="brushStepVal">6px</span></div>
+        <div class="row compact"><label data-i18n="break_hp">💥 Break HP</label><input id="breakHp" type="range" min="1" max="50" step="1" value="8" /><span id="breakHpVal">8</span></div>
+        <div class="row compact"><label data-i18n="on_break">💥 On Break</label>
+          <select id="breakOn">
+            <option value="remove">Remove</option>
+            <option value="shards" selected>Shards</option>
+          </select>
+        </div>
+        <div class="row compact"><label data-i18n="soft_stiffness">🧽 Soft Stiffness</label><input id="softStiff" type="range" min="0.05" max="10" step="0.05" value="0.5" /><span id="softStiffVal">0.25</span></div>
+        <div class="row compact"><label data-i18n="soft_max_def">🧽 Max Deform</label><input id="softMaxDef" type="range" min="0" max="100" step="1" value="18" /><span id="softMaxDefVal">18px</span></div>
+        <div class="row compact"><label data-i18n="soft_recover">🧽 Recovery</label><input id="softRecover" type="range" min="0" max="120" step="2" value="24" /><span id="softRecoverVal">24px/s</span></div>
+      </div>
+
+      <!-- Special Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="cat_special">🔧 Special</div>
+        <div class="row compact"><label data-i18n="spinner_speed">🔄 Spinner Speed</label><input id="spinnerSpeed" type="range" min="0.1" max="5" step="0.1" value="1.0" /><span id="spinnerSpeedVal">1.0</span></div>
+        <div class="row compact"><label data-i18n="spinner_length">📏 Spinner Length</label><input id="spinnerLength" type="range" min="20" max="240" step="5" value="80" /><span id="spinnerLengthVal">80px</span></div>
+        <div class="row compact"><label data-i18n="mud_slowdown">🟤 Mud Slowdown</label><input id="mudSlowdown" type="range" min="0.1" max="0.9" step="0.05" value="0.4" /><span id="mudSlowdownVal">60%</span></div>
+      </div>
+      
+      <!-- Magnet Settings -->
+      <div class="setting-group">
+        <div class="group-title" data-i18n="cat_magnet">🧲 Magnet</div>
+        <div class="row compact">
+          <label data-i18n="magnet_range">Range</label>
+          <input id="magnetRange" type="range" min="50" max="400" step="10" value="100" />
+          <span id="magnetRangeVal">100px</span>
+        </div>
+        <div class="row compact">
+          <label data-i18n="magnet_duration">Duration</label>
+          <input id="magnetDuration" type="range" min="1000" max="10000" step="500" value="3000" />
+          <span id="magnetDurationVal">3000 ms</span>
+        </div>
+        <div class="row compact">
+          <label data-i18n="magnet_power">Power</label>
+          <input id="magnetPower" type="range" min="100" max="1000" step="10" value="200" />
+          <span id="magnetPowerVal">200</span>
+        </div>
+        <div class="row compact" style="align-items:center; gap:8px">
+          <label data-i18n="magnet_attract_all">Attract All</label>
+          <input id="magnetAttractAll" type="checkbox" />
+        </div>
+      </div>
+
+      <!-- Context Inspector Popup (Global Quick-Access) -->
+      <div id="contextInspector" style="position:absolute; display:none; z-index:9999; min-width:220px; max-width:280px; background:#1e2833; color:#e0f2f1; border:1px solid #3a4a5a; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.35); padding:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <div style="font-weight:600;" data-i18n="context_title">⚙️ Context Settings</div>
+          <button id="contextClose" class="btn" style="padding:2px 6px;">✕</button>
+        </div>
+        <div id="contextBody">
+          <!-- Filled dynamically per target -->
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button id="contextApply" class="btn" data-i18n="btn_apply">Apply</button>
+        </div>
+      </div>
+      <div class="control-row" id="spinnerAngleControl" style="display: none;">
+        <label data-i18n="label_spinner_angle">🧭 Spinner Angle</label>
+        <input type="range" id="spinnerAngle" min="0" max="359" value="0" step="1">
+        <span id="spinnerAngleVal">0°</span>
+      </div>
+      <!-- Bumper Inspector (shown when tool or selection is bumper) -->
+      <div class="section" id="bumperInspector" style="display: none; margin-top:8px;">
+        <div class="section-title" data-i18n="cat_bumper">🟦 Bumper</div>
+        <div class="row"><label data-i18n="bumper_radius">🔘 Radius</label><input id="bumperRadius" type="range" min="6" max="80" step="1" value="22" /><span id="bumperRadiusVal">22</span></div>
+        <div class="row"><label data-i18n="bumper_elasticity">🪗 Elasticity</label><input id="bumperElasticity" type="range" min="0.5" max="2.5" step="0.01" value="1.15" /><span id="bumperElasticityVal">1.15</span></div>
+        <div class="row"><label data-i18n="bumper_noise">🌫️ Angle Noise</label><input id="bumperNoise" type="range" min="0" max="0.7" step="0.01" value="0.15" /><span id="bumperNoiseVal">0.15</span></div>
+        <div class="row"><label data-i18n="bumper_color">🎨 Bumper Color</label><input type="color" id="bumperColor" value="#7cf1ff"/></div>
+      </div>
+
+      <!-- Fan Inspector (shown when tool or selection is fan) -->
+      <div class="section" id="fanInspector" style="display: none; margin-top:8px;">
+        <div class="section-title" data-i18n="cat_fan">🌀 Fan</div>
+        <div class="row"><label data-i18n="fan_radius">🔘 Radius</label><input id="fanRadius" type="range" min="20" max="300" step="1" value="120" /><span id="fanRadiusVal">120</span></div>
+        <div class="row"><label data-i18n="fan_angle">📐 Angle</label><input id="fanAngle" type="range" min="0" max="359" step="1" value="0" /><span id="fanAngleVal">0°</span></div>
+        <div class="row"><label data-i18n="fan_spread">🍕 Spread</label><input id="fanSpread" type="range" min="10" max="180" step="1" value="60" /><span id="fanSpreadVal">60°</span></div>
+        <div class="row"><label data-i18n="fan_strength">💨 Strength</label><input id="fanStrength" type="range" min="0" max="0.3" step="0.005" value="0.08" /><span id="fanStrengthVal">0.08</span></div>
+      </div>
+    </div>
+
+    <!-- Spawn Settings Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_spawn">🏁 Spawn Settings</div>
+      <div class="row"><label data-i18n="spawn_preset">📋 Spawn Preset</label><select id="spawnPreset"><option value="auto">Auto Grid</option><option value="line">Line</option><option value="grid2">Grid 2×</option><option value="fan">Fan/Arc</option><option value="scatter">Scatter</option></select></div>
+      <div class="row"><label data-i18n="spawn_jitter">🎲 Spawn Jitter</label><input id="spawnJitter" type="range" min="0" max="16" step="1" value="6" /><span id="spawnJitterVal">6px</span></div>
+      <div class="row"><label data-i18n="start_bias">⏱️ Start Bias</label><input id="startBias" type="range" min="0" max="1500" step="50" value="100" /><span id="startBiasVal">100ms</span></div>
+    </div>
+
+    <!-- Game Items Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_game_items">🎮 Game Items</div>
+      <div class="row">
+        <label>🥕 Carrot A</label>
+        <input type="checkbox" id="carrotAOn" />
+        <span class="sw" style="background:linear-gradient(45deg, #ff9800, #ffc107)" title="Carrot A"></span>
+      </div>
+      <div class="row">
+        <label>🥕 Carrot B</label>
+        <input type="checkbox" id="carrotBOn" />
+        <span class="sw" style="background:linear-gradient(45deg, #ff5722, #e91e63)" title="Carrot B"></span>
+      </div>
+    </div>
+
+    <!-- Game Settings Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_game_settings">🎮 Game Settings</div>
+      <div class="row"><label data-i18n="num_horses">🐎 Horses (1-50)</label><input id="n" type="range" min="1" max="50" step="1" value="8" /><span id="nVal">8</span></div>
+      <div class="row"><label data-i18n="game_speed">⚡ Speed (0.1-5)</label><input id="runtimeSpeedSlider" type="range" min="0.1" max="5" step="0.1" value="1.0" /><span id="runtimeSpeedVal">1.0×</span></div>
+      <div class="row"><label data-i18n="countdown">⏱️ Countdown (s)</label><input id="countdownSlider" type="range" min="0" max="10" step="1" value="0" /><span id="countdownVal">0s</span></div>
+      <div class="row">
+        <label data-i18n="collision_sfx">🔊 Collision SFX</label>
+        <input type="checkbox" id="collisionSfx" checked />
+        <span class="sw" style="background:linear-gradient(45deg, #4caf50, #8bc34a)" title="Sound Effects"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="trail_effect">💨 Horse Trail Effect</label>
+        <input type="checkbox" id="trailEnabled" />
+        <input type="color" id="trailColor" value="#9e9e9e" title="Trail color" style="margin-left:8px" />
+      </div>
+      <div class="row">
+        <label data-i18n="trail_intensity">💨 Trail Intensity</label>
+        <input id="trailIntensity" type="range" min="0" max="1.6" step="0.05" value="1.0" />
+        <span id="trailIntensityVal">1.00×</span>
+      </div>
+      <div class="row">
+        <label data-i18n="hide_all_names">🙈 Hide All Names</label>
+        <input type="checkbox" id="hideHorseNames" />
+      </div>
+      <div class="row"><label data-i18n="name_size">🔤 Name Size</label>
+        <input id="nameFontScale" type="range" min="0.5" max="2.0" step="0.05" value="0.55" />
+        <span id="nameFontScaleVal">0.55×</span>
+      </div>
+      
+      <!-- HP System Settings -->
+      <div class="row">
+        <label data-i18n="enable_hp_system">❤️ Enable HP System</label>
+        <input type="checkbox" id="hpSystemEnabled" />
+        <span class="sw" style="background:linear-gradient(45deg, #f44336, #e91e63)" title="HP Combat System"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="horse_max_hp">💖 Horse Max HP</label>
+        <input id="horseMaxHP" type="number" min="1" max="9999" step="1" value="100" />
+        <span id="horseMaxHPVal">100</span>
+      </div>
+      <div class="row">
+        <label data-i18n="show_hp_numbers">🔢 Show HP Numbers</label>
+        <input type="checkbox" id="showHPNumbers" />
+        <span class="sw" style="background:linear-gradient(45deg, #2196f3, #03a9f4)" title="Display HP Values"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="show_horse_speed">⚡ Show Horse Speed</label>
+        <input type="checkbox" id="showHorseSpeed" />
+        <span class="sw" style="background:linear-gradient(45deg, #9c27b0, #ba68c8)" title="Display velocity below horses"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="auto_rotate_sprite">🔄 Auto Rotate Horse Sprite (Global)</label>
+        <input type="checkbox" id="autoRotateHorseSprite" />
+        <span class="sw" style="background:linear-gradient(45deg, #ff9800, #ffc107)" title="Automatically rotate all horse sprites based on movement direction"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="last_horse_wins">👑 Last Horse Standing Wins</label>
+        <input type="checkbox" id="lastHorseWins" />
+        <span class="sw" style="background:linear-gradient(45deg, #ff9800, #ffc107)" title="Win by elimination instead of finish line"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="wall_damage">🧱 Wall Damage</label>
+        <input type="checkbox" id="wallDamageEnabled" />
+        <span class="sw" style="background:linear-gradient(45deg, #795548, #8d6e63)" title="Wall Collision Damage"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="border_damage">🔲 Border Damage</label>
+        <input type="checkbox" id="borderDamageEnabled" />
+        <span class="sw" style="background:linear-gradient(45deg, #607d8b, #78909c)" title="Screen Border Damage"></span>
+      </div>
+      <div class="row">
+        <label data-i18n="wall_damage_amount">💥 Wall Damage Amount</label>
+        <input id="wallDamageAmount" type="range" min="1" max="50" step="1" value="10" />
+        <span id="wallDamageAmountVal">10</span>
+      </div>
+      <div class="row">
+        <label data-i18n="border_damage_amount">🔥 Border Damage Amount</label>
+        <input id="borderDamageAmount" type="range" min="1" max="50" step="1" value="15" />
+        <span id="borderDamageAmountVal">15</span>
+      </div>
+      <div class="row"><label data-i18n="min_cruise">🏎️ Min Cruise</label><input id="minCruise" type="range" min="0" max="15" step="0.1" value="1.5" /><span id="minCruiseVal">1.5</span></div>
+      <div class="row">
+        <label data-i18n="luck_or_suck">🍀 Luck or Suck</label>
+        <input type="checkbox" id="luckEnabled" />
+      </div>
+      <div class="row">
+        <label data-i18n="luck_interval">⏲️ Luck Interval (s)</label>
+        <input id="luckInterval" type="number" min="3" max="60" step="1" value="12" />
+      </div>
+<div style="margin-top:16px">
+        <button class="btn" id="testRace" data-i18n="test_race_btn">▶ Test Race</button>
+      </div>
+    </div>
+
+    <!-- Map Management Section -->
+    <div class="section">
+      <div class="panel-section" id="audio-panel">
+        <div class="panel-title" data-i18n="panel_bgm">🎵 Background Music</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;">
+            <label for="bgmFile" data-i18n="label_bgm_file">Music File:</label>
+            <input type="file" id="bgmFile" accept="audio/*" class="btn secondary" style="width:100%;">
+            <label data-i18n="label_controls">Controls:</label>
+            <div style="display:flex; gap: 8px; align-items: center;">
+                <button class="btn" id="bgmPause" style="width: 44px; height: 36px; padding: 0;">⏸️</button>
+                <input type="range" id="bgmVolume" min="0" max="1" step="0.05" value="0.5" style="flex-grow: 1;">
+            </div>
+            <label for="ttsVoiceSel" data-i18n="label_tts_voice">TTS Voice:</label>
+            <select id="ttsVoiceSel" title="Select TTS Voice" style="width:100%;"></select>
+            <label for="ttsEnabled" data-i18n="label_tts_enabled">Enable TTS:</label>
+            <input type="checkbox" id="ttsEnabled" />
+            <!-- Azure TTS controls are hidden for a simpler setup -->
+            <label for="ttsSourceSel" style="display:none" data-i18n="label_tts_source">TTS Source:</label>
+            <select id="ttsSourceSel" title="Select TTS Source" style="width:100%; display:none">
+              <option value="browser">Browser</option>
+              <option value="azure">Azure (Cloud)</option>
+            </select>
+            <div id="ttsAzureCfg" style="display:none; grid-column: 1 / span 2; gap:8px;">
+              <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;">
+                <label for="ttsAzureKey" data-i18n="label_azure_key">Azure Key:</label>                                                                                                                                                                                                      
+                <input type="password" id="ttsAzureKey" placeholder="API Key" style="width:100%" />
+                <label for="ttsAzureRegion" data-i18n="label_azure_region">Region:</label>
+                <input type="text" id="ttsAzureRegion" placeholder="e.g. southeastasia" style="width:100%" />
+                <label for="ttsAzureVoice" data-i18n="label_azure_voice">Azure Voice:</label>
+                <input type="text" id="ttsAzureVoice" placeholder="vi-VN-HoaiMyNeural" style="width:100%" />
+              </div>
+            </div>
+            <div style="grid-column: 1 / span 2; display:flex; gap:8px; margin-top:6px;">
+              <button class="btn secondary" id="testTts" data-i18n="test_tts_btn">🔊 Test TTS</button>
+              <small style="opacity:.8; align-self:center;" data-i18n="test_tts_hint">Plays: "Hello!"</small>
+            </div>
+        </div>
+      </div>
+
+      <div class="panel-section" id="map-management-panel">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <button class="btn" id="clearMap" data-i18n="btn_clear_map">🗑️ Clear Map</button>
+        <button class="btn secondary" id="loadSample" data-i18n="btn_load_sample">📋 Load Sample</button>
+        <button class="btn" id="randomMap" data-i18n="btn_generate_map">🎲 Generate Map</button>
+        <button class="btn" id="randomItems" data-i18n="btn_add_items">✨ Add Items</button>
+        <button class="btn" id="addBelt" data-i18n="btn_add_belt">➕ Add Belt</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button class="btn secondary" id="exportMap" data-i18n="btn_export_json">📤 Export JSON</button>
+        <button class="btn secondary" id="importMap" data-i18n="btn_import_json">📥 Import JSON</button>
+      </div>
+    </div>
+    <!-- Preset Maps Quick Select -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_preset_maps">🗺️ Preset Maps</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <button class="btn" id="preset1" data-i18n="btn_preset_oval">🏁 Oval</button>
+        <button class="btn" id="preset2" data-i18n="btn_preset_spinner">🌪️ Spinner</button>
+        <button class="btn" id="preset3" data-i18n="btn_preset_maze">🧱 Maze</button>
+      </div>
+    </div>
+    <!-- Waiting Room Settings -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_waiting_room">🚪 Waiting Room</div>
+      <div class="row"><label data-i18n="wr_width">📏 Width</label><input id="waitingRoomW" type="number" min="160" max="1200" step="10" value="260"/></div>
+      <div class="row"><label data-i18n="wr_height">📐 Height</label><input id="waitingRoomH" type="number" min="160" max="1200" step="10" value="480"/></div>
+      <div class="row"><label data-i18n="wr_corner_radius">⬜ Corner Radius</label><input id="waitingRoomR" type="number" min="0" max="60" step="1" value="18"/></div>
+      <div class="row"><label data-i18n="wr_auto_fit">⚙️ Auto-fit at race start</label><input id="autoFitWaitingRoom" type="checkbox" checked/></div>
+    </div>
+    <!-- Advanced Carrot Customization Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_carrot_settings">🥕 Advanced Carrot Settings</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <button class="btn secondary" id="swapCarrots" data-i18n="btn_swap_ab">🔄 Swap A/B</button>
+        <button class="btn secondary" id="resetCarrots" data-i18n="btn_reset_pos">🎯 Reset Positions</button>
+      </div>
+      <div class="row">
+        <label data-i18n="label_png_sprite">🖼️ PNG Sprite</label>
+        <input id="carrotSpriteFile" type="file" accept="image/png"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <button class="btn secondary" id="clearCarrotSpriteA" data-i18n="btn_clear_a">🗑️ Clear A</button>
+        <button class="btn secondary" id="clearCarrotSpriteB" data-i18n="btn_clear_b">🗑️ Clear B</button>
+      </div>
+      <div class="row"><label data-i18n="label_sprite_scale">📏 Sprite Scale</label><input id="carrotSpriteScale" type="range" min="0.5" max="2.5" step="0.05" value="1.0"/><span id="carrotSpriteScaleVal">1.0×</span></div>
+      <div class="row"><label data-i18n="label_sprite_outline">🖌️ Sprite Outline</label><select id="carrotSpriteOutline"><option value="off">Off</option><option value="on">On</option></select></div>
+      <div class="row"><label data-i18n="label_outline_color">🎨 Outline Color</label><input id="carrotSpriteOutlineColor" type="color" value="#FFFFFF"/></div>
+      <div class="row"><label data-i18n="label_outline_width">📏 Outline Width</label><input id="carrotSpriteOutlineWidth" type="range" min="1" max="8" step="1" value="2"/><span id="carrotSpriteOutlineWidthVal">2px</span></div>
+    </div>
+
+    <!-- Horse Customization Section -->
+    <div class="section">
+      <div class="section-title" data-i18n="cat_horse_custom">🐴 Horse Customization</div>
+      <div class="row">
+        <label data-i18n="label_select_horse">🔢 Select Horse #</label>
+        <input id="horseIdx" type="number" min="1" max="50" value="1"/>
+        <span class="chip">Max: Current Count</span>
+      </div>
+      <div class="row"><label data-i18n="label_display_name">📝 Display Name</label><input id="horseName" type="text" placeholder="e.g., Thunder Bolt"/></div>
+      <div class="row"><label data-i18n="label_special_skill">⚡ Special Skill</label><select id="horseSkill"><option value="none">None</option><option value="hunter">Hunter's Gambit</option><option value="guardian">Divine Guardian</option><option value="phantom_strike">Phantom Strike</option><option value="cosmic_swap">Cosmic Swap</option><option value="chain_lightning">Chain Lightning</option><option value="gravity_well">Gravity Well</option><option value="chill_guy">Chill Guy</option><option value="overdrive">Overdrive</option><option value="slipstream">Slipstream</option><option value="shockwave">Shockwave</option><option value="oguri_fat">Oguri Fat</option><option value="silence_shizuka">Silence Shizuka</option><option value="fireball">Fireball</option></select></div>
+      <div class="row" id="skillDescRow"><label></label><div id="skillDesc" style="background:rgba(33,150,243,0.15);padding:8px 12px;border-radius:6px;font-size:13px;color:#90caf9;border-left:3px solid #2196F3;">Không có kỹ năng đặc biệt</div></div>
+      
+      <!-- Individual Horse Stats -->
+      <div class="row"><label data-i18n="label_custom_speed">🏃 Custom Speed</label><input id="horseSpeed" type="number" min="0.1" max="5.0" step="0.1" placeholder="Default"/><span class="chip">Leave empty for default</span></div>
+      <div class="row"><label data-i18n="label_custom_hp">❤️ Custom HP</label><input id="horseHP" type="number" min="1" max="500" step="1" placeholder="Default"/><span class="chip">Leave empty for default (100)</span></div>
+      <div class="row"><label data-i18n="label_luck">🍀 Luck</label><input id="horseLuck" type="number" min="0" max="100" step="0.1" placeholder="0"/><span class="chip">% chance to bypass cooldown</span></div>
+      <div class="row"><label data-i18n="label_luck_int">⏱️ Luck Interval</label><input id="horseLuckInterval" type="number" min="0.1" max="60" step="0.1" placeholder="1"/><span class="chip">seconds (default: 1s)</span></div>
+      
+      <div class="row"><label data-i18n="label_body_color">🎨 Body Color</label><input id="colorBody" type="color" value="#42a5f5"/><span class="sw" id="swBody"></span></div>
+      <div class="row"><label data-i18n="label_label_color">🏷️ Label Color</label><input id="colorLabel" type="color" value="#1e88e5"/><span class="sw" id="swLabel"></span></div>
+      
+      <div class="row"><label data-i18n="label_png_sprite">🖼️ PNG Sprite</label><input id="spriteFile" type="file" accept="image/png"/></div>
+      <!-- Single button to open sprite preset picker -->
+      <div class="row"><button class="btn secondary" id="openSpritePicker">📚 Sprite Presets…</button></div>
+      <!-- Modal Picker -->
+      <div id="spritePickerModal" style="display:none;position:fixed;inset:0;z-index:1000;">
+        <div id="spritePickerBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,0.45)"></div>
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1e1e1e;border:1px solid #333;border-radius:12px;min-width:320px;max-width:80vw;max-height:80vh;box-shadow:0 10px 30px rgba(0,0,0,0.4);display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #333">
+            <div style="font-weight:600">Sprite Presets</div>
+            <button id="closeSpritePicker" class="btn secondary">✖</button>
+          </div>
+          <div style="padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #333">
+            <button class="btn" id="importSpriteFiles">➕ Import PNGs…</button>
+            <button class="btn secondary" id="importSpriteFolder">📂 Import Folder…</button>
+            <span style="opacity:0.75;font-size:12px">Tip: You can also use built-ins below</span>
+          </div>
+          <div id="spritePickerGrid" style="padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(4,112px);justify-content:center;gap:12px"></div>
+        </div>
+      </div>
+      <div class="row"><label>🥕 Carrot PNG</label><input id="carrotSpriteFile" type="file" accept="image/png"/></div>
+      <div class="row"><label>📏 Sprite Scale</label><input id="spriteScale" type="range" min="0.5" max="2.0" step="0.05" value="1.0"/><span id="spriteScaleVal">1.0×</span></div>
+      <div class="row"><label>🖌️ Outline</label><select id="spriteOutline"><option value="off">Off</option><option value="on">On</option></select></div>
+      <div class="row"><label>🎨 Outline Color</label><input id="spriteOutlineColor" type="color" value="#000000"/></div>
+      <div class="row"><label>📏 Outline Width</label><input id="spriteOutlineWidth" type="range" min="1" max="6" step="1" value="2"/><span id="spriteOutlineWidthVal">2px</span></div>
+      
+      <!-- Action Groups -->
+      <div class="action-groups">
+        <!-- Current Horse Actions -->
+        <div class="action-group">
+          <div class="group-title" data-i18n="current_horse_group">🎯 Current Horse</div>
+          <div class="action-grid">
+            <button class="btn primary" id="applyHorse" data-i18n="btn_apply">✅ Apply</button>
+            <button class="btn secondary" id="resetHorse" data-i18n="btn_reset">🔄 Reset</button>
+            <button class="btn secondary" id="randomHorse" data-i18n="btn_random">🎲 Random</button>
+            <button class="btn secondary" id="randomSkill" data-i18n="btn_skill">🎲 Skill</button>
+          </div>
+        </div>
+
+        <!-- All Horses Actions -->
+        <div class="action-group">
+          <div class="group-title" data-i18n="all_horses_group">👥 All Horses</div>
+          <div class="action-grid">
+            <button class="btn secondary" id="copyAll" data-i18n="btn_copy_all">📋 Copy All</button>
+            <button class="btn secondary" id="randomAllHorses" data-i18n="btn_random_all">🎲 Random All</button>
+            <button class="btn secondary" id="randomSkillAll" data-i18n="btn_skill_all">🎲 Skill All</button>
+            <button class="btn secondary" id="clearSprite" data-i18n="btn_clear">🗑️ Clear</button>
+          </div>
+        </div>
+
+        <!-- Sprite Actions -->
+        <div class="action-group">
+          <div class="group-title" data-i18n="sprites_group">🖼️ Sprites</div>
+          <div class="action-grid">
+            <button class="btn secondary" id="randomSprite" data-i18n="btn_random_n">🎲 Random #N</button>
+            <button class="btn secondary" id="randomSpriteAll" data-i18n="btn_random_all">🎲 Random All</button>
+            <button class="btn secondary" id="copySpriteAll" data-i18n="btn_copy_all">📋 Copy All</button>
+            <button class="btn secondary" id="copyOutlineAll" data-i18n="btn_outline_all">✏️ Outline All</button>
+          </div>
+        </div>
+
+        <!-- Color & Skill Actions -->
+        <div class="action-group">
+          <div class="group-title" data-i18n="colors_skills_group">🎨 Colors & Skills</div>
+          <div class="action-grid">
+            <button class="btn secondary" id="copyBodyAll" data-i18n="btn_body_all">🎨 Body All</button>
+            <button class="btn secondary" id="copySkillAll" data-i18n="btn_skill_all_2">🛠️ Skill All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hint">Hint: Sprite PNG nền trong suốt sẽ đẹp nhất. Tệp được lưu local (Base64) khi Save/Export.</div>
+  </div>
+  <div class="row"><button class="btn" id="undo" data-i18n="btn_undo">Undo (recent shape)</button><button class="btn" id="clearWalls" data-i18n="btn_clear_walls">Clear ALL walls</button></div>
+  <div class="row"><button class="btn" id="exportJson" data-i18n="btn_export_json">Export JSON</button><input id="importFile" type="file" accept=".json" /></div>
+  <div class="row"><button class="btn" id="saveLS" data-i18n="btn_save_browser">Save to browser</button><button class="btn" id="loadLS" data-i18n="btn_load_browser">Load</button></div>
+</div>
+
+<!-- Toggle buttons -->
+
+<div class="countdown" id="cd" style="display:none">Chuẩn bị...</div>
+
+
+<!-- Load typedefs (JSDoc only, no runtime behavior) -->
+<script src="scripts/types.js"></script>
+<!-- App namespace (read-only proxies), safe & non-destructive -->
+<script src="scripts/app.js"></script>
+<!-- Load constants first -->
+<script src="scripts/constants.js"></script>
+<script src="scripts/data/horse-defaults.js"></script>
+<script src="scripts/data/horse-initialization.js"></script>
+<!-- Load new safety utilities (SAFE - pure functions, no side effects) -->
+<script src="scripts/validators.js"></script>
+<script src="scripts/safe-utils.js"></script>
+<script src="scripts/dom-cache.js"></script>
+<script src="scripts/utils/vector-drawing.js"></script>
+<script src="scripts/utils/sprite-drawing.js"></script>
+<script src="scripts/utils/drawing-effects.js"></script>
+<script src="scripts/utils/drawing-helpers.js"></script>
+<script src="scripts/utils/grid-drawing.js"></script>
+<!-- Load spatial hash for optimized collision detection -->
+<script src="scripts/spatial-hash.js"></script>
+<!-- Load core modules -->
+<script src="scripts/core/audio.js"></script>
+<script src="scripts/core/geometry.js"></script>
+<script src="scripts/core/weather.js"></script>
+<script src="scripts/core/visual-effects.js"></script>
+<script src="scripts/core/powerup-system.js"></script>
+<!-- Load core constants first -->
+<script src="scripts/core/constants.js"></script>
+<script src="scripts/core/fps-monitor.js"></script>
+<script src="scripts/core/performance-timing.js"></script>
+<!-- Load UI modules -->
+<script src="scripts/ui/theme.js"></script>
+<script src="scripts/ui/notifications.js"></script>
+<script src="scripts/ui/event-log.js"></script>
+<script src="scripts/ui/hud.js?v=20251128"></script>
+<script src="scripts/ui/flash.js"></script>
+<script src="scripts/ui/hud-speed-slider.js"></script>
+<script src="scripts/ui/focus-mode.js"></script>
+<script src="scripts/ui/game-controls.js"></script>
+<script src="scripts/ui/visibility-controls.js"></script>
+<script src="scripts/ui/settings-controls.js"></script>
+<script src="scripts/ui/button-tooltips.js"></script>
+<script src="scripts/ui/results-overlay.js"></script>
+<!-- horse-editor-buttons.js removed - keeping in extracted-inline.js for proper function access -->
+<!-- Load extracted inline code (defines mapDef and other globals) -->
+<script src="scripts/extracted-inline.js?v=20251128"></script>
+<!-- Load sprite modules AFTER extracted-inline.js (they depend on ensureCustomIndex) -->
+<script src="scripts/core/sprite-manager.js"></script>
+<script src="scripts/core/carrot-sprite-manager.js"></script>
+<!-- Load editor modules -->
+<script src="scripts/editor/history.js"></script>
+<script src="scripts/editor/stage-transform.js"></script>
+<script src="scripts/editor/waiting-room-resize.js"></script>
+<script src="scripts/editor/canvas-resize.js"></script>
+<script src="scripts/editor/horse-editor-utils.js"></script>
+<script src="scripts/editor/horse-customization-ui.js"></script>
+<script src="scripts/editor/powerup-settings-init.js"></script>
+<script src="scripts/editor/powerup-collision.js"></script>
+<script src="scripts/rendering/powerup-rendering.js"></script>
+<script src="scripts/editor/draggable-panel.js"></script>
+<script src="scripts/editor/carrot-ui-controls.js"></script>
+<script src="scripts/editor/text-walls.js"></script>
+<script src="scripts/editor/editor-shortcuts.js"></script>
+<!-- ui-initialization.js removed - keeping event handlers in extracted-inline.js for stability -->
+<!-- Load race module AFTER mapDef is defined -->
+<script src="scripts/core/race.js"></script>
+<!-- app-initialization.js removed - keeping in extracted-inline.js for proper execution order -->
+<!-- Load new modular scripts -->
+<script src="scripts/config.js"></script>
+<script src="scripts/utils.js"></script>
+<script src="scripts/ui-handlers.js"></script>
+<script src="scripts/game-logic.js"></script>
+<!-- Load render module wrapper (non-destructive). Must come after all inline scripts -->
+<script src="scripts/render.js"></script>
+<!-- Load Dev Mode -->
+<script src="scripts/dev-mode.js"></script>
+<script src="scripts/dev-mode-integration.js"></script>
+<!-- Load loading screen -->
+  <script src="scripts/loading.js"></script>
+  <script>
+    // Auto-start loading screen when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      const loadingScreen = new LoadingScreen();
+      
+      // Detect if running in Electron or web browser
+      const isElectron = !!(window.process && window.process.versions && window.process.versions.electron);
+      
+      if (isElectron) {
+        // Electron: autoplay policy disabled, audio works immediately
+        console.log('Running in Electron - audio enabled');
+        loadingScreen.start();
+      } else {
+        // Web browser: need to handle autoplay policy
+        console.log('Running in web browser - handling autoplay policy');
+        
+        // Show loading screen immediately
+        loadingScreen.start();
+        
+        // Add click anywhere to enable audio
+        const enableAudio = (e) => {
+          console.log('User clicked - enabling audio');
+          loadingScreen.playStartupSound();
+          document.removeEventListener('click', enableAudio);
+          document.removeEventListener('keydown', enableAudio);
+          document.removeEventListener('touchstart', enableAudio);
+        };
+        
+        document.addEventListener('click', enableAudio);
+        document.addEventListener('keydown', enableAudio);
+        document.addEventListener('touchstart', enableAudio);
+        
+        // Show instruction for web users
+        setTimeout(() => {
+          if (document.getElementById('loadingScreen').style.display !== 'none') {
+            const instruction = document.createElement('div');
+            instruction.id = 'audioInstruction';
+            instruction.style.cssText = `
+              position: fixed;
+              bottom: 20px;
+              left: 50%;
+              transform: translateX(-50%);
+              background: rgba(0,0,0,0.8);
+              color: white;
+              padding: 10px 20px;
+              border-radius: 20px;
+              font-size: 14px;
+              z-index: 10001;
+              animation: pulse 2s infinite;
+            `;
+            instruction.textContent = '🔊 Click anywhere to enable sound';
+            document.body.appendChild(instruction);
+            
+            // Remove instruction after audio is enabled
+            document.addEventListener('click', () => {
+              if (instruction.parentNode) {
+                instruction.remove();
+              }
+            }, { once: true });
+          }
+        }, 1000);
+      }
+    });
+  </script>
+
+  <!-- Nebula Context Settings Panel - Auto-generated v6.0 -->
+  <div id="nebulaContextPanel" class="context-panel" style="display: none;">
+    <div class="context-header">
+      <h3>🟣 Nebula Settings</h3>
+      <button class="context-close" onclick="hideContextPanel()">&times;</button>
+    </div>
+    
+    <div class="context-content">
+      
+      <div class="context-setting" title="How fast the power-up effect makes the horse move">
+        <label>Speed Multiplier: <span id="nebulaspeedMultiplierValue">2.5</span></label>
+        <input type="range" id="nebulaspeedMultiplier" 
+               min="0.1" max="5" step="0.1" 
+               value="2.5"
+               oninput="updateNebulaSetting('speedMultiplier', this.value)">
+        <div class="range-labels">
+          <span>0.1</span>
+          <span>5</span>
+        </div>
+      </div>
+      <div class="context-setting" title="How long the power-up effect lasts">
+        <label>Duration (ms): <span id="nebuladurationMsValue">4000</span></label>
+        <input type="range" id="nebuladurationMs" 
+               min="500" max="15000" step="250" 
+               value="4000"
+               oninput="updateNebulaSetting('durationMs', this.value)">
+        <div class="range-labels">
+          <span>500</span>
+          <span>15000</span>
+        </div>
+      </div>
+      <div class="context-setting" title="Amount of damage dealt by this power-up">
+        <label>Damage: <span id="nebuladamageValue">20</span></label>
+        <input type="range" id="nebuladamage" 
+               min="1" max="100" step="1" 
+               value="20"
+               oninput="updateNebulaSetting('damage', this.value)">
+        <div class="range-labels">
+          <span>1</span>
+          <span>100</span>
+        </div>
+      </div>
+      <div class="context-setting" title="Visual size of the power-up">
+        <label>Size (radius): <span id="nebularadiusValue">16</span></label>
+        <input type="range" id="nebularadius" 
+               min="8" max="48" step="2" 
+               value="16"
+               oninput="updateNebulaSetting('radius', this.value)">
+        <div class="range-labels">
+          <span>8</span>
+          <span>48</span>
+        </div>
+      </div>
+      <div class="context-setting" title="Enable/disable particle visual effects">
+        <label>
+          <input type="checkbox" id="nebulaparticleEnabled" 
+                 checked
+                 onchange="updateNebulaSetting('particleEnabled', this.checked)">
+          Particle Effects
+        </label>
+      </div>
+      <div class="context-setting" title="Enable/disable glow visual effects">
+        <label>
+          <input type="checkbox" id="nebulaglowEnabled" 
+                 checked
+                 onchange="updateNebulaSetting('glowEnabled', this.checked)">
+          Glow Effect
+        </label>
+      </div>
+      <div class="context-setting" title="Intensity of visual and gameplay effects">
+        <label>Effect Intensity: <span id="nebulaintensityValue">1</span></label>
+        <input type="range" id="nebulaintensity" 
+               min="0.1" max="3" step="0.1" 
+               value="1"
+               oninput="updateNebulaSetting('intensity', this.value)">
+        <div class="range-labels">
+          <span>0.1</span>
+          <span>3</span>
+        </div>
+      </div>
+      
+      <div class="context-actions">
+        <button class="btn btn-primary" onclick="applyNebulaSettings()">Apply</button>
+        <button class="btn btn-secondary" onclick="resetNebulaSettings()">Reset to Defaults</button>
+        <button class="btn btn-info" onclick="exportNebulaSettings()">Export Settings</button>
+      </div>
+      
+      <div class="context-presets">
+        <label>Quick Presets:</label>
+        <div class="preset-buttons">
+          <button onclick="loadNebulaPreset('weak')">Weak</button>
+          <button onclick="loadNebulaPreset('normal')">Normal</button>
+          <button onclick="loadNebulaPreset('strong')">Strong</button>
+          <button onclick="loadNebulaPreset('extreme')">Extreme</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Panel Styles -->
+  <style>
+  .context-panel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2d3748;
+    border: 2px solid #4a5568;
+    border-radius: 8px;
+    padding: 0;
+    min-width: 320px;
+    max-width: 480px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    z-index: 10000;
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  .context-header {
+    background: #1a202c;
+    padding: 15px 20px;
+    border-bottom: 1px solid #4a5568;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .context-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .context-close {
+    background: none;
+    border: none;
+    color: #cbd5e0;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .context-close:hover {
+    color: #f7fafc;
+    background: #4a5568;
+    border-radius: 4px;
+  }
+
+  .context-content {
+    padding: 20px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .context-setting {
+    margin-bottom: 20px;
+  }
+
+  .context-setting label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .context-setting input[type="range"] {
+    width: 100%;
+    margin: 8px 0;
+  }
+
+  .context-setting input[type="checkbox"] {
+    margin-right: 8px;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #a0aec0;
+    margin-top: 4px;
+  }
+
+  .context-actions {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .btn-primary { background: #3182ce; color: white; }
+  .btn-primary:hover { background: #2c5aa0; }
+
+  .btn-secondary { background: #4a5568; color: white; }
+  .btn-secondary:hover { background: #2d3748; }
+
+  .btn-info { background: #319795; color: white; }
+  .btn-info:hover { background: #2c7a7b; }
+
+  .context-presets {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #4a5568;
+  }
+
+  .context-presets label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  .preset-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .preset-buttons button {
+    padding: 6px 12px;
+    border: 1px solid #4a5568;
+    background: #2d3748;
+    color: #cbd5e0;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .preset-buttons button:hover {
+    background: #4a5568;
+    color: white;
+  }
+
+  /* Text Walls Popup */
+  .text-walls-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+
+  .text-walls-dialog {
+    background: #1a202c;
+    border: 2px solid #4a5568;
+    border-radius: 12px;
+    padding: 24px;
+    width: 400px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .text-walls-dialog h3 {
+    margin: 0 0 16px 0;
+    color: #cbd5e0;
+    font-size: 18px;
+  }
+
+  .text-walls-dialog label {
+    display: block;
+    color: #a0aec0;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  .text-walls-dialog input[type="text"],
+  .text-walls-dialog input[type="number"],
+  .text-walls-dialog select {
+    width: 100%;
+    padding: 8px 12px;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 6px;
+    color: #e2e8f0;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .text-walls-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .text-walls-buttons button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .text-walls-buttons .btn-create {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+  }
+
+  .text-walls-buttons .btn-cancel {
+    background: #4a5568;
+    color: #cbd5e0;
+  }
+
+  .text-walls-buttons button:hover {
+    opacity: 0.9;
+  }
+  </style>
+
+<!-- Text Walls Popup -->
+<div id="textWallsOverlay" class="text-walls-overlay">
+  <div class="text-walls-dialog">
+    <h3>🔤 Text Walls Generator</h3>
+    
+    <label>📝 Text:</label>
+    <input type="text" id="textWallsInput" placeholder="Enter text..." maxlength="50" />
+    
+    <label>📏 Font Size:</label>
+    <input type="number" id="textWallsFontSize" min="20" max="200" step="10" value="100" />
+    
+    <label>🎨 Font Style:</label>
+    <select id="textWallsFontStyle">
+      <option value="bold Arial">Bold Arial</option>
+      <option value="bold Courier">Bold Courier</option>
+      <option value="bold Impact">Bold Impact</option>
+      <option value="bold Georgia">Bold Georgia</option>
+      <option value="900 Arial Black">Extra Bold</option>
+    </select>
+    
+    <label>🧱 Stroke Width (px): <span style="font-size:11px; color:#a0aec0;">(thickness)</span></label>
+    <input type="number" id="textWallsBlockSize" min="1" max="8" step="1" value="3" />
+    
+    <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer;">
+      <input type="checkbox" id="textWallsMerge" style="cursor: pointer;" checked />
+      <span>🔗 Merge into single brush <span style="font-size:11px; color:#a0aec0;">(1 object instead of many)</span></span>
+    </label>
+    
+    <div class="text-walls-buttons">
+      <button class="btn-cancel" id="textWallsCancel">Cancel</button>
+      <button class="btn-create" id="textWallsCreate">Create Walls</button>
+    </div>
+  </div>
+</div>
+
+<!-- Race Save Injector for Editor Mode -->
+<script src="race-save-injector.js"></script>
+
+</body>
+</html>

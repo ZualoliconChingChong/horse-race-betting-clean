@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Game Launcher</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            color: white;
+            font-family: system-ui;
+            overflow: hidden;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0a0a0a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        #loading h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #loading p {
+            font-size: 1.2rem;
+            color: #888;
+        }
+        
+        #gameFrame {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+            display: none;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <h1>🏇 Loading Race...</h1>
+        <p id="statusText">Connecting to server...</p>
+    </div>
+    
+    <iframe id="gameFrame" src=""></iframe>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        
+        async function init() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const raceId = urlParams.get('raceId');
+                
+                // Default race settings (will be overridden by saved config if exists)
+                const settings = {
+                    mode: urlParams.get('mode') || 'survivor',
+                    hpSystem: urlParams.get('hpSystem') === 'true' || true,
+                    wallDamage: urlParams.get('wallDamage') === 'true' || true,
+                    wallDamageAmount: parseInt(urlParams.get('wallDamageAmount')) || 10,
+                    borderDamage: urlParams.get('borderDamage') === 'true' || true,
+                    borderDamageAmount: parseInt(urlParams.get('borderDamageAmount')) || 5
+                };
+                
+                console.log('[Launcher] Initial settings:', settings);
+                document.getElementById('statusText').textContent = 'Loading race data...';
+                
+                // Fetch race data
+                const response = await fetch(`${API_BASE}/race/${raceId}/game-data`);
+                if (!response.ok) {
+                    throw new Error('Failed to load race');
+                }
+                
+                const data = await response.json();
+                console.log('[Launcher] Race data:', data);
+                
+                if (data.participants === 0) {
+                    throw new Error('No participants in race');
+                }
+                
+                document.getElementById('statusText').textContent = 'Loading game...';
+                
+                // Load game iframe
+                const gameFrame = document.getElementById('gameFrame');
+                gameFrame.src = '/game/index.html';
+                
+                gameFrame.onload = () => {
+                    console.log('[Launcher] Game loaded, injecting data...');
+                    document.getElementById('statusText').textContent = 'Starting race...';
+                    
+                    setTimeout(() => {
+                        injectRaceData(gameFrame.contentWindow, data, settings);
+                        document.getElementById('loading').style.display = 'none';
+                        gameFrame.style.display = 'block';
+                    }, 1000);
+                };
+                
+                gameFrame.onerror = (err) => {
+                    console.error('[Launcher] Game load error:', err);
+                    document.getElementById('statusText').innerHTML = '<div class="error">❌ Failed to load game</div>';
+                };
+                
+            } catch (error) {
+                console.error('[Launcher] Error:', error);
+                document.getElementById('statusText').innerHTML = `<div class="error">❌ ${error.message}</div>`;
+            }
+        }
+        
+        function injectRaceData(gameWindow, data, settings) {
+            try {
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                console.log('[Launcher] 🎯 INJECTING RACE DATA');
+                console.log('[Launcher] Total participants:', data.horseCustoms.length);
+                console.log('[Launcher] Full data:', data);
+                console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                
+                if (!gameWindow.mapDef) {
+                    console.error('[Launcher] ❌ mapDef not found in game window');
+                    return;
+                }
+                
+                // Set number of horses to match participants
+                const horseCount = data.horseCustoms.length;
+                
+                // Update #n input element (game reads from this)
+                const nEl = gameWindow.document.getElementById('n');
+                if (nEl) {
+                    nEl.value = horseCount.toString();
+                    console.log('[Launcher] ✅ Set #n input to', horseCount);
+                } else {
+                    console.error('[Launcher] ❌ #n input element not found!');
+                }
+                
+                // Also try to set directly if element exists later
+                setTimeout(() => {
+                    const nEl2 = gameWindow.document.getElementById('n');
+                    if (nEl2) {
+                        nEl2.value = horseCount.toString();
+                        console.log('[Launcher] ✅ Re-confirmed #n input =', horseCount);
+                    }
+                }, 100);
+                
+                // Inject horse customs - ensure only the exact number of participants
+                gameWindow.mapDef.horseCustoms = [];
+                
+                data.horseCustoms.forEach((horse, index) => {
+                    let spritePath = null;
+                    
+                    if (horse.sprite && horse.sprite.key) {
+                        // Remove .png extension if present (game adds it)
+                        const spriteKey = horse.sprite.key.replace('.png', '');
+                        spritePath = `assets/horses/${spriteKey}.png`;
+                    }
+                    
+                    console.log(`[Launcher] Horse ${index}: "${horse.name}"`, {
+                        sprite: spritePath,
+                        skill: horse.skill,
+                        betId: horse.betId
+                    });
+                    
+                    gameWindow.mapDef.horseCustoms[index] = {
+                        name: horse.name,
+                        sprite: spritePath,
+                        body: horse.body || '#FF0000',
+                        label: horse.label_color || horse.label || '#FFFFFF',
+                        skill: horse.skill || 'none',
+                        customSpeed: horse.customSpeed || 1.0,
+                        customHP: horse.customHP || 100,
+                        luck: horse.luck || 0,
+                        luckInterval: horse.luckInterval || 1.0,
+                        betId: horse.betId,
+                        userId: horse.userId,
+                        username: horse.username
+                    };
+                });
+                
+                console.log('[Launcher] ✅ Injected', horseCount, 'horses:', gameWindow.mapDef.horseCustoms);
+                
+                // Preload sprite images
+                if (typeof gameWindow.rebuildSpriteCaches === 'function') {
+                    gameWindow.rebuildSpriteCaches();
+                    console.log('[Launcher] ✅ Preloading sprites...');
+                } else {
+                    console.warn('[Launcher] rebuildSpriteCaches not found');
+                }
+                
+                // Load saved map config if exists
+                console.log('[Launcher] Checking for saved map config...');
+                console.log('[Launcher] data.race:', data.race);
+                console.log('[Launcher] data.race.map_data:', data.race?.map_data);
+                
+                if (data.race && data.race.map_data) {
+                    console.log('[Launcher] 🗺️ Found saved map config, applying...');
+                    
+                    // Apply saved map elements
+                    const mapData = typeof data.race.map_data === 'string' 
+                        ? JSON.parse(data.race.map_data) 
+                        : data.race.map_data;
+                    
+                    console.log('[Launcher] Parsed mapData:', mapData);
+                    console.log('[Launcher] Brushes count:', mapData.brushes?.length || 0);
+                    console.log('[Launcher] Walls count:', mapData.walls?.length || 0);
+                    
+                    // Apply all wall types
+                    if (mapData.walls) gameWindow.mapDef.walls = mapData.walls;
+                    if (mapData.brushes) gameWindow.mapDef.brushes = mapData.brushes;
+                    if (mapData.pipes) gameWindow.mapDef.pipes = mapData.pipes;
+                    if (mapData.semis) gameWindow.mapDef.semis = mapData.semis;
+                    if (mapData.arcs) gameWindow.mapDef.arcs = mapData.arcs;
+                    if (mapData.textWalls) gameWindow.mapDef.textWalls = mapData.textWalls;
+                    
+                    // Apply race elements
+                    if (mapData.spawns) gameWindow.mapDef.spawns = mapData.spawns;
+                    if (mapData.carrotA) gameWindow.mapDef.carrotA = mapData.carrotA;
+                    if (mapData.carrotB) gameWindow.mapDef.carrotB = mapData.carrotB;
+                    if (mapData.room) gameWindow.mapDef.room = mapData.room;
+                    if (mapData.startGate) gameWindow.mapDef.startGate = mapData.startGate;
+                    
+                    // Apply power-ups
+                    if (mapData.boosts) gameWindow.mapDef.boosts = mapData.boosts;
+                    if (mapData.shields) gameWindow.mapDef.shields = mapData.shields;
+                    if (mapData.turbos) gameWindow.mapDef.turbos = mapData.turbos;
+                    if (mapData.traps) gameWindow.mapDef.traps = mapData.traps;
+                    if (mapData.muds) gameWindow.mapDef.muds = mapData.muds;
+                    if (mapData.ices) gameWindow.mapDef.ices = mapData.ices;
+                    
+                    // Apply ALL saved settings (override URL params if saved config exists)
+                    const applySetting = (key, value, target = 'mapDef', logName = null) => {
+                        if (value !== undefined) {
+                            try {
+                                if (target === 'window') {
+                                    gameWindow[key] = value;
+                                } else {
+                                    gameWindow.mapDef[key] = value;
+                                }
+                                console.log(`[Launcher] ✅ Applied ${logName || key}:`, value);
+                            } catch (err) {
+                                console.warn(`[Launcher] ⚠️ Cannot apply ${logName || key}:`, err.message);
+                            }
+                        }
+                    };
+                    
+                    // Game mode settings
+                    applySetting('lastHorseWins', mapData.lastHorseWins, 'mapDef', 'Last Horse Wins');
+                    
+                    // HP System
+                    applySetting('hpSystemEnabled', mapData.hpSystemEnabled, 'mapDef', 'HP System');
+                    applySetting('horseMaxHP', mapData.horseMaxHP, 'mapDef', 'Horse Max HP');
+                    applySetting('showHPNumbers', mapData.showHPNumbers, 'mapDef', 'Show HP Numbers');
+                    
+                    // Damage settings
+                    applySetting('wallDamageEnabled', mapData.wallDamageEnabled, 'mapDef', 'Wall Damage');
+                    applySetting('wallDamageAmount', mapData.wallDamageAmount, 'mapDef', 'Wall Damage Amount');
+                    applySetting('borderDamageEnabled', mapData.borderDamageEnabled, 'mapDef', 'Border Damage');
+                    applySetting('borderDamageAmount', mapData.borderDamageAmount, 'mapDef', 'Border Damage Amount');
+                    applySetting('brushDamageEnabled', mapData.brushDamageEnabled, 'mapDef', 'Brush Damage');
+                    applySetting('brushDamageAmount', mapData.brushDamageAmount, 'mapDef', 'Brush Damage Amount');
+                    
+                    // Visual & UI settings
+                    applySetting('showHorseSpeed', mapData.showHorseSpeed, 'mapDef', 'Show Horse Speed');
+                    applySetting('autoRotateHorseSprite', mapData.autoRotateHorseSprite, 'mapDef', 'Auto Rotate Sprite');
+                    applySetting('trailEnabled', mapData.trailEnabled, 'mapDef', 'Trail Enabled');
+                    applySetting('trailColor', mapData.trailColor, 'mapDef', 'Trail Color');
+                    applySetting('trailIntensity', mapData.trailIntensity, 'mapDef', 'Trail Intensity');
+                    applySetting('hideHorseNames', mapData.hideHorseNames, 'window', 'Hide Horse Names');
+                    applySetting('nameFontScale', mapData.nameFontScale, 'window', 'Name Font Scale');
+                    
+                    // Luck system
+                    applySetting('luckEnabled', mapData.luckEnabled, 'window', 'Luck Enabled');
+                    applySetting('luckIntervalSec', mapData.luckInterval, 'window', 'Luck Interval');
+                    
+                    // Audio & effects
+                    applySetting('collisionSfxEnabled', mapData.collisionSfx, 'window', 'Collision SFX');
+                    
+                    // Physics
+                    applySetting('preventCollisionSpeedChange', mapData.preventCollisionSpeedChange, 'window', 'Prevent Collision Speed Change');
+                    
+                    // Race settings
+                    applySetting('countdown', mapData.countdown, 'window', 'Countdown');
+                    
+                    // Map physics
+                    applySetting('horseRadius', mapData.horseRadius, 'mapDef', 'Horse Radius');
+                    applySetting('carrotRadius', mapData.carrotRadius, 'mapDef', 'Carrot Radius');
+                    applySetting('maxVel', mapData.maxVel, 'mapDef', 'Max Velocity');
+                    applySetting('minCruise', mapData.minCruise, 'mapDef', 'Min Cruise');
+                    applySetting('horseHitScale', mapData.horseHitScale, 'mapDef', 'Horse Hit Scale');
+                    applySetting('horseHitInset', mapData.horseHitInset, 'mapDef', 'Horse Hit Inset');
+                    
+                    // Power-up settings (objects)
+                    if (mapData.magnetSettings) {
+                        gameWindow.mapDef.magnetSettings = mapData.magnetSettings;
+                        console.log('[Launcher] ✅ Applied Magnet Settings:', mapData.magnetSettings);
+                    }
+                    if (mapData.turboSettings) {
+                        gameWindow.mapDef.turboSettings = mapData.turboSettings;
+                        console.log('[Launcher] ✅ Applied Turbo Settings:', mapData.turboSettings);
+                    }
+                    if (mapData.shieldSettings) {
+                        gameWindow.mapDef.shieldSettings = mapData.shieldSettings;
+                        console.log('[Launcher] ✅ Applied Shield Settings:', mapData.shieldSettings);
+                    }
+                    if (mapData.poisonSettings) {
+                        gameWindow.mapDef.poisonSettings = mapData.poisonSettings;
+                        console.log('[Launcher] ✅ Applied Poison Settings:', mapData.poisonSettings);
+                    }
+                    if (mapData.timeFreezeSettings) {
+                        gameWindow.mapDef.timeFreezeSettings = mapData.timeFreezeSettings;
+                        console.log('[Launcher] ✅ Applied Time Freeze Settings:', mapData.timeFreezeSettings);
+                    }
+                    if (mapData.teleportSettings) {
+                        gameWindow.mapDef.teleportSettings = mapData.teleportSettings;
+                        console.log('[Launcher] ✅ Applied Teleport Settings:', mapData.teleportSettings);
+                    }
+                    if (mapData.warpzoneSettings) {
+                        gameWindow.mapDef.warpzoneSettings = mapData.warpzoneSettings;
+                        console.log('[Launcher] ✅ Applied Warp Zone Settings:', mapData.warpzoneSettings);
+                    }
+                    if (mapData.quantumdashSettings) {
+                        gameWindow.mapDef.quantumdashSettings = mapData.quantumdashSettings;
+                        console.log('[Launcher] ✅ Applied Quantum Dash Settings:', mapData.quantumdashSettings);
+                    }
+                    
+                    // Weather system
+                    if (mapData.weather) {
+                        gameWindow.mapDef.weather = mapData.weather;
+                        console.log('[Launcher] ✅ Applied Weather Settings:', mapData.weather);
+                    }
+                    
+                    // Trail system (update window variable too)
+                    if (mapData.trailEnabled !== undefined) {
+                        gameWindow.horseMotionTrailEnabled = mapData.trailEnabled;
+                    }
+                    
+                    console.log('[Launcher] ✅ Applied saved map config');
+                    console.log('[Launcher] gameWindow.mapDef after applying:', gameWindow.mapDef);
+                    console.log('[Launcher] gameWindow.mapDef.brushes:', gameWindow.mapDef.brushes?.length || 0);
+                    console.log('[Launcher] gameWindow.mapDef.walls:', gameWindow.mapDef.walls?.length || 0);
+                    
+                    // Force redraw to show loaded map
+                    setTimeout(() => {
+                        console.log('[Launcher] 🎨 Forcing redraw after map load...');
+                        if (gameWindow.redrawAll) gameWindow.redrawAll();
+                        if (gameWindow.draw) gameWindow.draw();
+                        if (gameWindow.drawMap) gameWindow.drawMap();
+                        if (gameWindow.stage?.draw) gameWindow.stage.draw();
+                    }, 300);
+                } else {
+                    console.warn('[Launcher] ⚠️ No saved map config found - using default settings');
+                    
+                    // Apply default settings only if no saved config
+                    gameWindow.mapDef.hpSystemEnabled = settings.hpSystem;
+                    gameWindow.mapDef.lastHorseWins = (settings.mode === 'survivor');
+                    gameWindow.mapDef.wallDamageEnabled = settings.wallDamage;
+                    gameWindow.mapDef.wallDamageAmount = settings.wallDamageAmount;
+                    gameWindow.mapDef.borderDamageEnabled = settings.borderDamage;
+                    gameWindow.mapDef.borderDamageAmount = settings.borderDamageAmount;
+                }
+                
+                console.log('[Launcher] ✅ Final game settings:');
+                console.log('  🎮 Game Mode:', { lastHorseWins: gameWindow.mapDef.lastHorseWins });
+                console.log('  ❤️ HP System:', {
+                    enabled: gameWindow.mapDef.hpSystemEnabled,
+                    maxHP: gameWindow.mapDef.horseMaxHP,
+                    showNumbers: gameWindow.mapDef.showHPNumbers
+                });
+                console.log('  💥 Damage:', {
+                    wallDamage: gameWindow.mapDef.wallDamageEnabled,
+                    wallAmount: gameWindow.mapDef.wallDamageAmount,
+                    borderDamage: gameWindow.mapDef.borderDamageEnabled,
+                    borderAmount: gameWindow.mapDef.borderDamageAmount,
+                    brushDamage: gameWindow.mapDef.brushDamageEnabled,
+                    brushAmount: gameWindow.mapDef.brushDamageAmount
+                });
+                console.log('  🗺️ Map:', {
+                    horseRadius: gameWindow.mapDef.horseRadius,
+                    carrotRadius: gameWindow.mapDef.carrotRadius,
+                    maxVel: gameWindow.mapDef.maxVel,
+                    minCruise: gameWindow.mapDef.minCruise
+                });
+                console.log('  🎨 Visual:', {
+                    showSpeed: gameWindow.mapDef.showHorseSpeed,
+                    trail: gameWindow.mapDef.trailEnabled,
+                    hideNames: gameWindow.hideHorseNames
+                });
+                console.log('  🍀 Luck:', {
+                    enabled: gameWindow.luckEnabled,
+                    interval: gameWindow.luckIntervalSec
+                });
+                
+                // Hook race completion
+                setupRaceCompletionHook(gameWindow, data.raceId);
+                
+                // Override startRace to force correct horse count
+                const originalStartRace = gameWindow.startRace;
+                gameWindow.startRace = function() {
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    console.log('[Launcher] 🏁 STARTING RACE');
+                    
+                    // Force set #n before starting
+                    const nEl = gameWindow.document.getElementById('n');
+                    if (nEl) {
+                        console.log('[Launcher] Current #n value:', nEl.value);
+                        nEl.value = horseCount.toString();
+                        console.log('[Launcher] Forced #n to:', horseCount);
+                    } else {
+                        console.error('[Launcher] ❌ #n element not found at startRace!');
+                    }
+                    
+                    console.log('[Launcher] horseCustoms array:', gameWindow.mapDef.horseCustoms);
+                    console.log('[Launcher] Expected horses:', horseCount);
+                    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+                    
+                    // Call original startRace
+                    if (originalStartRace) {
+                        originalStartRace.call(gameWindow);
+                    }
+                    
+                    // Log actual horses created
+                    setTimeout(() => {
+                        console.log('[Launcher] ✅ Actual horses created:', gameWindow.horses.length);
+                        gameWindow.horses.forEach((h, i) => {
+                            console.log(`  Horse ${i}: ${h.name} | sprite: ${h._img ? '✓' : '✗'}`);
+                        });
+                    }, 500);
+                };
+                
+                // Auto-start race after 2.5 seconds (give time for sprites to load)
+                setTimeout(() => {
+                    console.log('[Launcher] Starting race with', horseCount, 'horses...');
+                    console.log('[Launcher] horseCustoms length:', gameWindow.mapDef.horseCustoms.length);
+                    gameWindow.startRace();
+                }, 2500);
+                
+            } catch (error) {
+                console.error('[Launcher] Injection error:', error);
+            }
+        }
+        
+        function setupRaceCompletionHook(gameWindow, raceId) {
+            // Poll for race completion
+            const checkInterval = setInterval(() => {
+                if (gameWindow.winner && gameWindow.horses && !gameWindow.running) {
+                    clearInterval(checkInterval);
+                    console.log('[Launcher] Race finished!');
+                    handleRaceComplete(gameWindow, raceId);
+                }
+            }, 500);
+        }
+        
+        async function handleRaceComplete(gameWindow, raceId) {
+            try {
+                console.log('[Launcher] Collecting results...');
+                
+                const horses = gameWindow.horses;
+                
+                // Sort horses by finish order (winner first)
+                const finishedHorses = horses
+                    .map((horse, index) => ({
+                        horseIndex: index,
+                        horse: horse,
+                        finishTime: horse.finishTime || 999999,
+                        betId: (gameWindow.mapDef.horseCustoms[index] || {}).betId,
+                        horseName: horse.name
+                    }))
+                    .filter(h => h.betId)
+                    .sort((a, b) => a.finishTime - b.finishTime);
+                
+                const results = finishedHorses.map((item, index) => ({
+                    betId: item.betId,
+                    position: index + 1,
+                    finishTime: item.finishTime
+                }));
+                
+                console.log('[Launcher] Results:', results);
+                
+                // Submit results to server
+                const response = await fetch(`${API_BASE}/race/${raceId}/results`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ results })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to submit results');
+                }
+                
+                const data = await response.json();
+                console.log('[Launcher] ✅ Results submitted:', data);
+                
+                // Inject payout data into game for results overlay
+                const payouts = {};
+                finishedHorses.forEach((item, index) => {
+                    if (index === 0) payouts[item.horseName] = data.payouts.first;
+                    else if (index === 1) payouts[item.horseName] = data.payouts.second;
+                    else if (index === 2) payouts[item.horseName] = data.payouts.third;
+                    else payouts[item.horseName] = 0;
+                });
+                
+                gameWindow.raceResults = {
+                    totalPool: data.totalPool,
+                    first: data.payouts.first,
+                    second: data.payouts.second,
+                    third: data.payouts.third,
+                    payouts: payouts
+                };
+                
+                // Trigger results overlay to show now with betting data
+                console.log('[Launcher] ✅ Injected payout data, showing results...');
+                
+                setTimeout(() => {
+                    if (typeof gameWindow.showResultsOverlay === 'function') {
+                        gameWindow.resultsShown = false; // Reset flag to allow re-render
+                        gameWindow.showResultsOverlay();
+                        console.log('[Launcher] ✅ Results overlay shown');
+                    }
+                }, 100);
+                
+                // Show success notification in game
+                setTimeout(() => {
+                    if (confirm(`Race completed!\n\n🥇 1st: ${data.payouts.first.toLocaleString()} coins\n🥈 2nd: ${data.payouts.second.toLocaleString()} coins\n🥉 3rd: ${data.payouts.third.toLocaleString()} coins\n\nTotal Pool: ${data.totalPool.toLocaleString()} coins\n\nReturn to race page?`)) {
+                        window.location.href = `/race/${raceId}`;
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('[Launcher] Result submission error:', error);
+                alert('Failed to submit race results: ' + error.message);
+            }
+        }
+        
+        // Start loading
+        init();
+    </script>
+</body>
+</html>

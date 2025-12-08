@@ -5,7 +5,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-change-this';
 // Generate JWT token
 function generateToken(user) {
     return jwt.sign(
-        { id: user.id, username: user.username },
+        { 
+            id: user.id, 
+            username: user.username,
+            is_admin: user.username === 'admin' ? 1 : (user.is_admin || 0)
+        },
         JWT_SECRET,
         { expiresIn: '7d' }
     );

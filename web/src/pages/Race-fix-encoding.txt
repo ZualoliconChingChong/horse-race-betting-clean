@@ -1,0 +1,5 @@
+Line 191: <h3 className="text-xl font-bold">✏️ Đổi Tên Lobby</h3>
+Line 206: Tên mới (để trống = tên mặc định)
+Line 229: {updatingName ? '⏳ Đang lưu...' : '💾 Lưu'}
+Line 238: Hủy
+Line 302: ✏️ Đổi Tên

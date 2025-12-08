@@ -1,14 +1,42 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, Clock, Coins, Play, RefreshCw, Trophy } from 'lucide-react'
+import { Users, Clock, Coins, Play, RefreshCw, Trophy, Plus, X } from 'lucide-react'
 import useRaceStore from '../stores/raceStore'
 import useAuthStore from '../stores/authStore'
 import socketService from '../services/socket'
 
 function Lobby() {
-  const { races, fetchActiveRaces, isLoading } = useRaceStore()
+  const { races, fetchActiveRaces, createRace, isLoading } = useRaceStore()
   const { user } = useAuthStore()
   const [onlineUsers, setOnlineUsers] = useState(0)
+  const [creating, setCreating] = useState(false)
+  
+  // Modal states for creating race
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [lobbyName, setLobbyName] = useState('')
+  const [registrationTime, setRegistrationTime] = useState(30)
+  const [gameMode, setGameMode] = useState('carrot')
+  const [maxPlayers, setMaxPlayers] = useState(6)
+
+  async function handleCreateRace() {
+    if (creating) return
+    
+    setCreating(true)
+    const result = await createRace(null, registrationTime, lobbyName || null, gameMode, maxPlayers)
+    
+    if (result.success) {
+      alert('Đã tạo cuộc đua thành công!')
+      setShowCreateModal(false)
+      setLobbyName('')
+      setRegistrationTime(30)
+      setGameMode('carrot')
+      setMaxPlayers(6)
+    } else {
+      alert(result.error || 'Không thể tạo cuộc đua')
+    }
+    
+    setCreating(false)
+  }
 
   useEffect(() => {
     fetchActiveRaces()
@@ -45,6 +73,127 @@ function Lobby() {
 
   return (
     <div className="space-y-6">
+      {/* Create Race Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 rounded-xl p-6 max-w-md w-full border border-dark-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">🏁 Tạo Cuộc Đua Mới</h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1 hover:bg-dark-800 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-dark-400 mb-2">
+                  Tên Lobby (tùy chọn)
+                </label>
+                <input
+                  type="text"
+                  value={lobbyName}
+                  onChange={(e) => setLobbyName(e.target.value)}
+                  placeholder="VD: Cuộc đua tốc độ, Race Tối Nay..."
+                  className="w-full px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg focus:border-primary-500 outline-none"
+                  maxLength={50}
+                />
+                <p className="text-xs text-dark-500 mt-1">
+                  Để trống sẽ dùng tên mặc định (Race #ID)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-dark-400 mb-2">
+                  Chế độ chơi
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGameMode('carrot')}
+                    className={`p-4 rounded-lg border-2 transition text-left ${
+                      gameMode === 'carrot'
+                        ? 'border-green-500 bg-green-500/20'
+                        : 'border-dark-700 hover:border-green-400'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">🥕</div>
+                    <div className="font-bold">Cà Rốt</div>
+                    <div className="text-xs text-dark-400 mt-1">
+                      Winner takes all
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setGameMode('survival')}
+                    className={`p-4 rounded-lg border-2 transition text-left ${
+                      gameMode === 'survival'
+                        ? 'border-red-500 bg-red-500/20'
+                        : 'border-dark-700 hover:border-red-400'
+                    }`}
+                  >
+                    <div className="text-2xl mb-1">⚔️</div>
+                    <div className="font-bold">Sống Còn</div>
+                    <div className="text-xs text-dark-400 mt-1">
+                      Va chạm đến chết
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-dark-400 mb-2">
+                    Số người tối đa
+                  </label>
+                  <input
+                    type="number"
+                    value={maxPlayers}
+                    onChange={(e) => setMaxPlayers(Math.max(2, parseInt(e.target.value) || 2))}
+                    min={2}
+                    placeholder="Tối thiểu 2"
+                    className="w-full px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg focus:border-primary-500 outline-none"
+                  />
+                  <p className="text-xs text-dark-500 mt-1">Tối thiểu 2, không giới hạn tối đa</p>
+                </div>
+                <div>
+                  <label className="block text-sm text-dark-400 mb-2">
+                    Thời gian đăng ký (phút)
+                  </label>
+                  <input
+                    type="number"
+                    value={registrationTime}
+                    onChange={(e) => setRegistrationTime(parseInt(e.target.value) || 30)}
+                    min={5}
+                    max={120}
+                    className="w-full px-3 py-2 bg-dark-800 border border-dark-700 rounded-lg focus:border-primary-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleCreateRace}
+                  disabled={creating}
+                  className="flex-1 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-dark-600 text-white rounded-lg font-medium transition"
+                >
+                  {creating ? '⏳ Đang tạo...' : '✅ Tạo Lobby'}
+                </button>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={creating}
+                  className="px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg transition"
+                >
+                  Hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -52,6 +201,15 @@ function Lobby() {
           <p className="text-dark-400">Chọn cuộc đua để tham gia</p>
         </div>
         <div className="flex items-center gap-4">
+          {user && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Tạo Cuộc Đua
+            </button>
+          )}
           <div className="flex items-center gap-2 text-dark-300">
             <Users size={18} className="text-green-400" />
             <span>{onlineUsers} online</span>
@@ -178,13 +336,31 @@ function RaceCard({ race }) {
           <span className={`w-2 h-2 rounded-full ${getStatusColor(race.status)}`} />
           <span className="text-sm font-medium">{getStatusText(race.status)}</span>
         </div>
-        <span className="text-dark-400 text-sm">#{race.id}</span>
+        <span className="text-dark-400 text-sm">
+          {race.serial || `#${race.id}`}
+        </span>
       </div>
 
+      {/* Map Preview */}
+      {race.preview_image && (
+        <div className="mb-3 rounded-lg overflow-hidden border border-dark-600 bg-dark-700">
+          <img 
+            src={race.preview_image} 
+            alt="Map preview"
+            className="w-full object-contain group-hover:scale-105 transition"
+            style={{ maxHeight: '150px' }}
+          />
+        </div>
+      )}
+
       <div className="flex items-center gap-4 mb-3">
-        <span className="text-4xl group-hover:animate-bounce">🐎</span>
+        {!race.preview_image && (
+          <span className="text-4xl group-hover:animate-bounce">🐎</span>
+        )}
         <div>
-          <h3 className="font-bold text-lg">Race #{race.id}</h3>
+          <h3 className="font-bold text-lg">
+            {race.name || `Race #${race.id}`}
+          </h3>
           <p className="text-dark-400 text-sm">
             Min: {race.minBet?.toLocaleString() || 500} coin
           </p>

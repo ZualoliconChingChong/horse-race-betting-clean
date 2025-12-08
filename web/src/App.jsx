@@ -12,6 +12,8 @@ import Lobby from './pages/Lobby'
 import Race from './pages/Race'
 import Profile from './pages/Profile'
 import Leaderboard from './pages/Leaderboard'
+import Admin from './pages/Admin'
+import MyHorse from './pages/MyHorse'
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -58,6 +60,12 @@ function App() {
         } />
         <Route path="profile" element={
           <ProtectedRoute><Profile /></ProtectedRoute>
+        } />
+        <Route path="my-horse" element={
+          <ProtectedRoute><MyHorse /></ProtectedRoute>
+        } />
+        <Route path="admin" element={
+          <ProtectedRoute><Admin /></ProtectedRoute>
         } />
       </Route>
     </Routes>

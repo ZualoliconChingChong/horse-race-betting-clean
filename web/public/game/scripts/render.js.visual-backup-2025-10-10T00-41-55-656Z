@@ -1,0 +1,3350 @@
+// @ts-check
+// scripts/render.js
+// Safe bootstrap for render modularization. Does not change behavior.
+// Phase 1: attach a wrapper that simply forwards to the existing global render().
+// Later phases will move the actual implementation here.
+
+// Note: EMOJI_FONT is declared globally in extracted-inline.js (loaded before this file)
+// Access it as: window.EMOJI_FONT or just EMOJI_FONT (it's in global scope)
+
+(function () {
+  if (typeof window === 'undefined') return;
+  /**
+   * @typedef {((...args:any[])=>any) & { __wrappedByRenderModule?: boolean, __before?: Function, __after?: Function }} RenderFn
+   */
+  /**
+   * @typedef {Window & typeof globalThis & { [key: string]: any }} WindowWithRender
+   */
+  /** @type {WindowWithRender} */
+  // @ts-ignore - cast window to extended type for runtime globals
+  const w = window;
+  // Create module object with drawing helpers available immediately
+  const moduleObj = {
+    /** Vẽ icon vector (dành cho editor) */
+    _drawVectorIcon(ctx, type, x, y, r){
+      try {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = Math.max(1.5, r * 0.10);
+        // Nội dung icon đơn giản, rõ ràng
+        if (type === 'boost' || type === 'turbo'){
+          // Tia sét
+          const k = r * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(-k*0.4, -k*0.6);
+          ctx.lineTo(0, -k*0.1);
+          ctx.lineTo(-k*0.1, -k*0.1);
+          ctx.lineTo(k*0.2, k*0.6);
+          ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+          ctx.stroke();
+        } else if (type === 'teleport'){
+          // Vòng xoáy
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+          for (let i=0;i<3;i++){
+            ctx.beginPath();
+            const rr = r*0.25 + i*r*0.18;
+            ctx.arc(0,0, rr, 0, Math.PI*1.5);
+            ctx.stroke();
+          }
+        } else if (type === 'poison'){
+          // Skull shape
+          const w = r*0.8, h = r*0.8;
+          ctx.beginPath();
+          ctx.arc(0, -h*0.2, w*0.4, 0, Math.PI*2);
+          ctx.arc(-w*0.2, -h*0.1, w*0.25, 0, Math.PI*2);
+          ctx.arc(w*0.2, -h*0.1, w*0.25, 0, Math.PI*2);
+          ctx.fill();
+        } else if (type === 'magnet'){
+          // Hình chữ U
+          const w = r*0.9, h = r*0.9;
+          ctx.beginPath();
+          ctx.moveTo(-w*0.3, -h*0.2);
+          ctx.lineTo(-w*0.3, h*0.1);
+          ctx.arc(0, h*0.1, w*0.3, Math.PI, 0, false);
+          ctx.lineTo(w*0.3, -h*0.2);
+          ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+          ctx.stroke();
+        } else if (type === 'freeze'){
+          // Bông tuyết tối giản
+          ctx.strokeStyle = '#0277bd';
+          const L = r*0.6;
+          for (let a=0;a<3;a++){
+            ctx.save();
+            ctx.rotate(a*Math.PI/3);
+            ctx.beginPath(); ctx.moveTo(0,-L); ctx.lineTo(0,L); ctx.stroke();
+            ctx.restore();
+          }
+          // Hai mắt
+          ctx.fillStyle = 'rgba(0,0,0,0.75)';
+          const er = Math.max(2, r*0.12);
+          ctx.beginPath(); ctx.arc(-r*0.22, -r*0.1, er, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(r*0.22, -r*0.1, er, 0, Math.PI*2); ctx.fill();
+        } else if (type === 'ram'){
+          // Sao nổ
+          ctx.strokeStyle='rgba(0,0,0,0.8)';
+          for (let i=0;i<6;i++){
+            ctx.save(); ctx.rotate(i*Math.PI/3);
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-r*0.7); ctx.stroke();
+            ctx.restore();
+          }
+        } else if (type === 'shield'){
+          // Viền khiên
+          ctx.strokeStyle='rgba(255,255,255,0.95)';
+          ctx.beginPath();
+          ctx.moveTo(0,-r*0.6);
+          ctx.quadraticCurveTo(r*0.6,-r*0.2, 0, r*0.75);
+          ctx.quadraticCurveTo(-r*0.6,-r*0.2, 0,-r*0.6);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } catch {}
+    },
+    /**
+     * Vẽ Boosts (sao chép nguyên xi từ index.html). An toàn: tự save/restore.
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {'play'|'editor'|string} mode
+     * @param {Array<{x:number,y:number,r:number}>} liveBoosts
+     * @param {{ boosts?: Array<{x:number,y:number,r:number}> }} mapDef
+     * @param {(ctx:CanvasRenderingContext2D, x:number, y:number, r:number, color:string, a:number)=>void} drawGlow
+     * @param {(a:number,b:number,c:number)=>number} glowAlpha
+     */
+    drawBoosts(ctx, mode, liveBoosts, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveBoosts (set by race.js with consumed flags)
+        // In editor mode: render mapDef.boosts directly
+        const boostsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveBoosts || liveBoosts || [])
+          : (mapDef?.boosts || []);
+        const currentTime = performance.now();
+        
+        for (const b of boostsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (b.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Enhanced animated glow effect
+          const pulseSpeed = 0.003;
+          const pulse = Math.sin(currentTime * pulseSpeed) * 0.3 + 0.7;
+          const glowIntensity = glowAlpha(0.4 * pulse, 0.9 * pulse, 0.1);
+          
+          try {
+            drawGlow(ctx, b.x, b.y, b.r * (1 + pulse * 0.2), 'rgb(255,235,59)', glowIntensity);
+          } catch {}
+          
+          // Animated electric ring
+          const ringCount = 3;
+          for (let i = 0; i < ringCount; i++) {
+            const ringPhase = (currentTime * 0.002 + i * Math.PI / ringCount) % (Math.PI * 2);
+            const ringRadius = b.r + 4 + Math.sin(ringPhase) * 3;
+            const ringAlpha = (Math.sin(ringPhase) * 0.3 + 0.4) * 0.6;
+            
+            ctx.strokeStyle = `rgba(255, 235, 59, ${ringAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Main body with gradient
+          const gradient = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+          gradient.addColorStop(0, '#fff176');
+          gradient.addColorStop(0.7, '#ffeb3b');
+          gradient.addColorStop(1, '#fbc02d');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Electric sparks around the boost
+          const sparkCount = 6;
+          for (let i = 0; i < sparkCount; i++) {
+            const angle = (i / sparkCount) * Math.PI * 2 + currentTime * 0.005;
+            const sparkRadius = b.r + 8 + Math.sin(currentTime * 0.008 + i) * 4;
+            const sparkX = b.x + Math.cos(angle) * sparkRadius;
+            const sparkY = b.y + Math.sin(angle) * sparkRadius;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.8 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(sparkX, sparkY, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Enhanced outline
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * pulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with shadow
+          ctx.font = `bold ${Math.max(12, Math.round(b.r * 0.95))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'boost', b.x, b.y, b.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const boostGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'B' : '⚡';
+            
+            // Text shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillText(boostGlyph, b.x + 1, b.y + 1);
+            
+            // Main text
+            ctx.fillStyle = '#fff';
+            ctx.fillText(boostGlyph, b.x, b.y);
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawTurbos(ctx, mode, liveTurbos, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveTurbos (set by race.js with consumed flags)
+        // In editor mode: render mapDef.turbos directly
+        const turbosToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveTurbos || liveTurbos || [])
+          : (mapDef?.turbos || []);
+        const currentTime = performance.now();
+        
+        for (const t of turbosToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (t.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Intense flame animation
+          const flameSpeed = 0.008;
+          const flame = Math.sin(currentTime * flameSpeed) * 0.5 + 0.5;
+          const flameIntensity = Math.sin(currentTime * flameSpeed * 1.3) * 0.3 + 0.7;
+          
+          // Multiple flame layers
+          const flameCount = 5;
+          for (let i = 0; i < flameCount; i++) {
+            const flamePhase = (currentTime * 0.006 + i * Math.PI / 3) % (Math.PI * 2);
+            const flameRadius = t.r + 3 + i * 2 + Math.sin(flamePhase) * 4;
+            const flameAlpha = (Math.sin(flamePhase) * 0.4 + 0.6) * (1 - i * 0.15);
+            
+            ctx.strokeStyle = `rgba(255, ${112 - i * 15}, ${67 - i * 10}, ${flameAlpha})`;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, flameRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced glow with flame effect
+          try {
+            drawGlow(ctx, t.x, t.y, t.r * (1 + flame * 0.3), 'rgb(255,112,67)', glowAlpha(0.5 * flameIntensity, 1.2 * flameIntensity, 0.1));
+          } catch {}
+          
+          // Main body with fire gradient
+          const gradient = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, t.r);
+          gradient.addColorStop(0, '#ffcc02');
+          gradient.addColorStop(0.4, '#ff7043');
+          gradient.addColorStop(0.8, '#d84315');
+          gradient.addColorStop(1, '#bf360c');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Fire particles
+          const particleCount = 12;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + currentTime * 0.01;
+            const particleRadius = t.r + 8 + Math.sin(currentTime * 0.012 + i) * 6;
+            const particleX = t.x + Math.cos(angle) * particleRadius;
+            const particleY = t.y + Math.sin(angle) * particleRadius;
+            
+            const particleSize = 1 + Math.sin(currentTime * 0.015 + i) * 1;
+            ctx.fillStyle = `rgba(255, ${200 + Math.sin(i) * 55}, 0, ${0.8 * flameIntensity})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Enhanced outline with flame effect
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 * flameIntensity})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with fire glow
+          ctx.font = `bold ${Math.max(12, Math.round(t.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'turbo', t.x, t.y, t.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const turboGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'T' : '🚀';
+            
+            // Text with fire glow
+            ctx.shadowColor = 'rgba(255, 165, 0, 0.9)';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(turboGlyph, t.x, t.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawTeleports(ctx, mode, liveTeleports, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveTeleports (set by race.js with consumed flags)
+        // In editor mode: render mapDef.teleports directly
+        const teleportsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveTeleports || liveTeleports || [])
+          : (mapDef?.teleports || []);
+        const currentTime = performance.now();
+        
+        for (const tp of teleportsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (tp.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Dimensional vortex animation
+          const vortexSpeed = 0.006;
+          const vortex = Math.sin(currentTime * vortexSpeed) * 0.4 + 0.6;
+          const dimensionalShift = Math.sin(currentTime * vortexSpeed * 1.8) * 0.3 + 0.7;
+          
+          // Swirling portal rings
+          const portalCount = 6;
+          for (let i = 0; i < portalCount; i++) {
+            const portalPhase = (currentTime * 0.005 + i * Math.PI / 3) % (Math.PI * 2);
+            const portalRadius = tp.r + 2 + i * 3 + Math.sin(portalPhase) * 2;
+            const portalAlpha = (Math.sin(portalPhase + i) * 0.3 + 0.4) * (1 - i * 0.12);
+            
+            // Rotating gradient colors for dimensional effect
+            const hue = (currentTime * 0.1 + i * 60) % 360;
+            ctx.strokeStyle = `hsla(${hue}, 70%, 60%, ${portalAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(tp.x, tp.y, portalRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced dimensional glow
+          try {
+            drawGlow(ctx, tp.x, tp.y, tp.r * (1 + vortex * 0.25), '#00bcd4', glowAlpha(0.6 * dimensionalShift, 1.2 * dimensionalShift, 0.2));
+          } catch {}
+          
+          // Main portal body with swirling gradient
+          const gradient = ctx.createRadialGradient(tp.x, tp.y, 0, tp.x, tp.y, tp.r);
+          gradient.addColorStop(0, '#e0f7fa');
+          gradient.addColorStop(0.3, '#4dd0e1');
+          gradient.addColorStop(0.6, '#00bcd4');
+          gradient.addColorStop(0.9, '#0097a7');
+          gradient.addColorStop(1, '#006064');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(tp.x, tp.y, tp.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Dimensional energy spirals
+          const spiralCount = 3;
+          for (let s = 0; s < spiralCount; s++) {
+            ctx.strokeStyle = `rgba(0, 188, 212, ${0.6 * vortex})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            
+            const spiralTurns = 3;
+            const spiralRadius = tp.r * 0.8;
+            const spiralOffset = (currentTime * 0.003 + s * Math.PI * 2 / spiralCount) % (Math.PI * 2);
+            
+            for (let t = 0; t < spiralTurns * Math.PI * 2; t += 0.1) {
+              const r = (spiralRadius * (spiralTurns * Math.PI * 2 - t)) / (spiralTurns * Math.PI * 2);
+              const x = tp.x + Math.cos(t + spiralOffset) * r;
+              const y = tp.y + Math.sin(t + spiralOffset) * r;
+              
+              if (t === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          
+          // Dimensional particles
+          const particleCount = 10;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + currentTime * 0.004;
+            const particleRadius = tp.r + 5 + Math.sin(currentTime * 0.008 + i) * 6;
+            const particleX = tp.x + Math.cos(angle) * particleRadius;
+            const particleY = tp.y + Math.sin(angle) * particleRadius;
+            
+            const particleSize = 1.5 + Math.sin(currentTime * 0.01 + i) * 1;
+            const particleAlpha = (Math.sin(currentTime * 0.007 + i) * 0.4 + 0.6) * vortex;
+            
+            // Shifting particle colors
+            const particleHue = (currentTime * 0.2 + i * 36) % 360;
+            ctx.fillStyle = `hsla(${particleHue}, 80%, 70%, ${particleAlpha})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Enhanced portal outline
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * dimensionalShift})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(tp.x, tp.y, tp.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with dimensional glow
+          ctx.font = `bold ${Math.max(12, Math.round(tp.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'teleport', tp.x, tp.y, tp.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const tpGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'P' : '🌀';
+            
+            // Text with dimensional glow
+            ctx.shadowColor = `rgba(0, 188, 212, ${0.9 * dimensionalShift})`;
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(tpGlyph, tp.x, tp.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawPoisons(ctx, mode, livePoisons, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.livePoisons (set by race.js with consumed flags)
+        // In editor mode: render mapDef.poisons directly
+        const poisonsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.livePoisons || livePoisons || [])
+          : (mapDef?.poisons || []);
+        const currentTime = performance.now();
+        
+        for (const poison of poisonsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (poison.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Toxic bubbling animation
+          const bubbleSpeed = 0.005;
+          const bubble = Math.sin(currentTime * bubbleSpeed) * 0.4 + 0.6;
+          const toxicPulse = Math.sin(currentTime * bubbleSpeed * 1.5) * 0.3 + 0.7;
+          
+          // Toxic vapor rings
+          const vaporCount = 5;
+          for (let i = 0; i < vaporCount; i++) {
+            const vaporPhase = (currentTime * 0.004 + i * Math.PI / 2.5) % (Math.PI * 2);
+            const vaporRadius = poison.r + 3 + i * 3 + Math.sin(vaporPhase) * 2;
+            const vaporAlpha = (Math.sin(vaporPhase + i) * 0.2 + 0.3) * (1 - i * 0.15);
+            
+            ctx.strokeStyle = `rgba(50, 205, 50, ${vaporAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(poison.x, poison.y, vaporRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced toxic glow
+          try {
+            drawGlow(ctx, poison.x, poison.y, poison.r * (1 + bubble * 0.2), '#32CD32', glowAlpha(0.5 * toxicPulse, 1.0 * toxicPulse, 0.2));
+          } catch {}
+          
+          // Main poison body with toxic gradient
+          const gradient = ctx.createRadialGradient(poison.x, poison.y, 0, poison.x, poison.y, poison.r);
+          gradient.addColorStop(0, '#90EE90');
+          gradient.addColorStop(0.4, '#32CD32');
+          gradient.addColorStop(0.8, '#228B22');
+          gradient.addColorStop(1, '#006400');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(poison.x, poison.y, poison.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Toxic bubbles
+          const bubbleCount = 8;
+          for (let i = 0; i < bubbleCount; i++) {
+            const angle = (i / bubbleCount) * Math.PI * 2 + currentTime * 0.003;
+            const bubbleRadius = poison.r + 4 + Math.sin(currentTime * 0.007 + i) * 5;
+            const bubbleX = poison.x + Math.cos(angle) * bubbleRadius;
+            const bubbleY = poison.y + Math.sin(angle) * bubbleRadius;
+            
+            const bubbleSize = 1.5 + Math.sin(currentTime * 0.008 + i) * 1;
+            const bubbleAlpha = (Math.sin(currentTime * 0.006 + i) * 0.4 + 0.6) * toxicPulse;
+            
+            ctx.fillStyle = `rgba(144, 238, 144, ${bubbleAlpha})`;
+            ctx.beginPath();
+            ctx.arc(bubbleX, bubbleY, bubbleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Skull pattern overlay
+          const skullRadius = poison.r * 0.6;
+          ctx.strokeStyle = `rgba(0, 100, 0, ${0.4 * bubble})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(poison.x, poison.y - skullRadius * 0.2, skullRadius * 0.8, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Enhanced outline
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * toxicPulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(poison.x, poison.y, poison.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with toxic glow
+          ctx.font = `bold ${Math.max(12, Math.round(poison.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'poison', poison.x, poison.y, poison.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const poisonGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'P' : '☠️';
+            
+            // Text with toxic glow
+            ctx.shadowColor = `rgba(50, 205, 50, ${0.9 * toxicPulse})`;
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(poisonGlyph, poison.x, poison.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+        ctx.restore();
+      } catch {}
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawMagnets(ctx, mode, liveMagnets, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveMagnets (set by race.js with consumed flags)
+        // In editor mode: render mapDef.magnets directly
+        const magnetsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveMagnets || liveMagnets || [])
+          : (mapDef?.magnets || []);
+        const currentTime = performance.now();
+        
+        for (const mg of magnetsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (mg.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Magnetic field animation
+          const fieldSpeed = 0.003;
+          const fieldPulse = Math.sin(currentTime * fieldSpeed) * 0.4 + 0.6;
+          const magneticWave = Math.sin(currentTime * fieldSpeed * 2) * 0.3 + 0.7;
+          
+          // Magnetic field lines
+          const fieldCount = 8;
+          for (let i = 0; i < fieldCount; i++) {
+            const fieldPhase = (currentTime * 0.002 + i * Math.PI / 4) % (Math.PI * 2);
+            const fieldRadius = mg.r + 4 + i * 2 + Math.sin(fieldPhase) * 3;
+            const fieldAlpha = (Math.sin(fieldPhase + i) * 0.3 + 0.4) * (1 - i * 0.1);
+            
+            // Alternating red and blue field lines (N/S poles)
+            const fieldColor = i % 2 === 0 ? `rgba(255, 69, 0, ${fieldAlpha})` : `rgba(30, 144, 255, ${fieldAlpha})`;
+            ctx.strokeStyle = fieldColor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(mg.x, mg.y, fieldRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced magnetic glow
+          try {
+            drawGlow(ctx, mg.x, mg.y, mg.r * (1 + fieldPulse * 0.2), '#ffeb3b', glowAlpha(0.5 * magneticWave, 1.0 * magneticWave, 0.1));
+          } catch {}
+          
+          // Main magnet body with metallic gradient
+          const gradient = ctx.createRadialGradient(mg.x, mg.y, 0, mg.x, mg.y, mg.r);
+          gradient.addColorStop(0, '#fff59d');
+          gradient.addColorStop(0.3, '#ffeb3b');
+          gradient.addColorStop(0.7, '#ffc107');
+          gradient.addColorStop(1, '#ff8f00');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(mg.x, mg.y, mg.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Magnetic attraction particles
+          const particleCount = 12;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + currentTime * 0.004;
+            const particleRadius = mg.r + 6 + Math.sin(currentTime * 0.008 + i) * 4;
+            const particleX = mg.x + Math.cos(angle) * particleRadius;
+            const particleY = mg.y + Math.sin(angle) * particleRadius;
+            
+            const particleSize = 1 + Math.sin(currentTime * 0.01 + i) * 0.5;
+            const particleAlpha = (Math.sin(currentTime * 0.007 + i) * 0.4 + 0.6) * fieldPulse;
+            
+            // Alternating metallic particles
+            const particleColor = i % 3 === 0 ? `rgba(192, 192, 192, ${particleAlpha})` : 
+                                 i % 3 === 1 ? `rgba(255, 215, 0, ${particleAlpha})` : 
+                                               `rgba(205, 127, 50, ${particleAlpha})`;
+            
+            ctx.fillStyle = particleColor;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Horseshoe magnet pattern
+          const horseshoeRadius = mg.r * 0.6;
+          ctx.strokeStyle = `rgba(255, 0, 0, ${0.4 * fieldPulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(mg.x - horseshoeRadius * 0.3, mg.y, horseshoeRadius * 0.5, Math.PI, 0);
+          ctx.stroke();
+          
+          ctx.strokeStyle = `rgba(0, 0, 255, ${0.4 * fieldPulse})`;
+          ctx.beginPath();
+          ctx.arc(mg.x + horseshoeRadius * 0.3, mg.y, horseshoeRadius * 0.5, Math.PI, 0);
+          ctx.stroke();
+          
+          // Enhanced metallic outline
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * magneticWave})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(mg.x, mg.y, mg.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with magnetic glow
+          ctx.font = `bold ${Math.max(12, Math.round(mg.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'magnet', mg.x, mg.y, mg.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const mgGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'M' : '🧲';
+            
+            // Text with metallic glow
+            ctx.shadowColor = `rgba(255, 215, 0, ${0.9 * magneticWave})`;
+            ctx.shadowBlur = 5;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(mgGlyph, mg.x, mg.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawTimeFreezes(ctx, mode, liveTimeFreezes, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveTimeFreezes (set by race.js with consumed flags)
+        // In editor mode: render mapDef.timeFreezes directly
+        const timeFreezesToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveTimeFreezes || liveTimeFreezes || [])
+          : (mapDef?.timeFreezes || []);
+        const currentTime = performance.now();
+        
+        for (const tf of timeFreezesToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (tf.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Frozen time animation
+          const freezeSpeed = 0.002;
+          const freeze = Math.sin(currentTime * freezeSpeed) * 0.3 + 0.7;
+          const crystalPulse = Math.sin(currentTime * freezeSpeed * 2.5) * 0.4 + 0.6;
+          
+          // Ice crystal formation rings
+          const crystalCount = 6;
+          for (let i = 0; i < crystalCount; i++) {
+            const crystalPhase = (currentTime * 0.001 + i * Math.PI / 3) % (Math.PI * 2);
+            const crystalRadius = tf.r + 3 + i * 4 + Math.sin(crystalPhase) * 2;
+            const crystalAlpha = (Math.sin(crystalPhase + i) * 0.2 + 0.4) * (1 - i * 0.1);
+            
+            // Ice blue gradient rings
+            const iceIntensity = Math.floor(255 - i * 20);
+            ctx.strokeStyle = `rgba(${iceIntensity}, ${iceIntensity}, 255, ${crystalAlpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(tf.x, tf.y, crystalRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced frozen glow
+          try {
+            drawGlow(ctx, tf.x, tf.y, tf.r * (1 + freeze * 0.2), '#e1f5fe', glowAlpha(0.7 * crystalPulse, 1.3 * crystalPulse, 0.3));
+          } catch {}
+          
+          // Main frozen orb with ice gradient
+          const gradient = ctx.createRadialGradient(tf.x, tf.y, 0, tf.x, tf.y, tf.r);
+          gradient.addColorStop(0, '#ffffff');
+          gradient.addColorStop(0.2, '#e3f2fd');
+          gradient.addColorStop(0.5, '#bbdefb');
+          gradient.addColorStop(0.8, '#90caf9');
+          gradient.addColorStop(1, '#42a5f5');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(tf.x, tf.y, tf.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Frozen time shards
+          const shardCount = 8;
+          for (let i = 0; i < shardCount; i++) {
+            const angle = (i / shardCount) * Math.PI * 2 + currentTime * 0.0005;
+            const shardRadius = tf.r + 5 + Math.sin(currentTime * 0.003 + i) * 4;
+            const shardX = tf.x + Math.cos(angle) * shardRadius;
+            const shardY = tf.y + Math.sin(angle) * shardRadius;
+            
+            // Ice shard shapes
+            ctx.save();
+            ctx.translate(shardX, shardY);
+            ctx.rotate(angle + currentTime * 0.001);
+            
+            const shardSize = 2 + Math.sin(currentTime * 0.004 + i) * 1;
+            const shardAlpha = (Math.sin(currentTime * 0.003 + i) * 0.3 + 0.7) * freeze;
+            
+            ctx.fillStyle = `rgba(173, 216, 230, ${shardAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(-shardSize, 0);
+            ctx.lineTo(0, -shardSize * 2);
+            ctx.lineTo(shardSize, 0);
+            ctx.lineTo(0, shardSize);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+          }
+          
+          // Snowflake pattern overlay
+          const snowflakeRadius = tf.r * 0.6;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * crystalPulse})`;
+          ctx.lineWidth = 1.5;
+          
+          // Draw snowflake arms
+          for (let arm = 0; arm < 6; arm++) {
+            const armAngle = (arm / 6) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(tf.x, tf.y);
+            ctx.lineTo(
+              tf.x + Math.cos(armAngle) * snowflakeRadius,
+              tf.y + Math.sin(armAngle) * snowflakeRadius
+            );
+            ctx.stroke();
+            
+            // Small branches on each arm
+            const branchLength = snowflakeRadius * 0.3;
+            const branchX = tf.x + Math.cos(armAngle) * snowflakeRadius * 0.7;
+            const branchY = tf.y + Math.sin(armAngle) * snowflakeRadius * 0.7;
+            
+            ctx.beginPath();
+            ctx.moveTo(
+              branchX + Math.cos(armAngle + Math.PI / 4) * branchLength,
+              branchY + Math.sin(armAngle + Math.PI / 4) * branchLength
+            );
+            ctx.lineTo(branchX, branchY);
+            ctx.lineTo(
+              branchX + Math.cos(armAngle - Math.PI / 4) * branchLength,
+              branchY + Math.sin(armAngle - Math.PI / 4) * branchLength
+            );
+            ctx.stroke();
+          }
+          
+          // Enhanced ice outline
+          ctx.strokeStyle = `rgba(66, 165, 245, ${0.8 * freeze})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(tf.x, tf.y, tf.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with frozen glow
+          ctx.font = `bold ${Math.max(12, Math.round(tf.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'freeze', tf.x, tf.y, tf.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const tfGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'F' : '❄️';
+            
+            // Text with ice crystal glow
+            ctx.shadowColor = `rgba(173, 216, 230, ${0.9 * crystalPulse})`;
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(tfGlyph, tf.x, tf.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawIceFreezers(ctx, mode, liveIceFreezers, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        const iceFreezersToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveIceFreezers || liveIceFreezers || [])
+          : (mapDef?.icefreezers || []);
+        const currentTime = performance.now();
+        
+        for (const ice of iceFreezersToDraw) {
+          if (ice.consumed && (mode === 'play' || mode === 'race')) continue;
+          
+          const pulse = 0.85 + 0.15 * Math.sin(currentTime * 0.003);
+          const fastPulse = 0.7 + 0.3 * Math.sin(currentTime * 0.006);
+          const rotation = currentTime * 0.0005;
+          
+          // Multi-layer glowing aura
+          try {
+            drawGlow(ctx, ice.x, ice.y, ice.r * 2.8 * pulse, '#b3e5fc', glowAlpha(0.15 * pulse, 0.8, 0.3));
+            drawGlow(ctx, ice.x, ice.y, ice.r * 1.8 * pulse, '#81d4fa', glowAlpha(0.3 * pulse, 1.0, 0.4));
+            drawGlow(ctx, ice.x, ice.y, ice.r * 1.2 * fastPulse, '#e1f5fe', glowAlpha(0.5 * fastPulse, 1.3, 0.6));
+          } catch {}
+          
+          // Rotating ice crystal rings
+          const ringCount = 3;
+          for (let ring = 0; ring < ringCount; ring++) {
+            const ringRadius = ice.r + 6 + ring * 5;
+            const ringRotation = rotation * (ring % 2 === 0 ? 1 : -1) + (ring * Math.PI / 3);
+            const ringAlpha = (0.4 - ring * 0.1) * pulse;
+            
+            ctx.strokeStyle = `rgba(129, 212, 250, ${ringAlpha})`;
+            ctx.lineWidth = 2 - ring * 0.3;
+            ctx.beginPath();
+            
+            // Draw hexagonal ice ring
+            for (let i = 0; i < 6; i++) {
+              const angle = ringRotation + (i * Math.PI) / 3;
+              const x = ice.x + Math.cos(angle) * ringRadius;
+              const y = ice.y + Math.sin(angle) * ringRadius;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+          
+          // Floating ice shards (orbiting)
+          const shardCount = 8;
+          for (let i = 0; i < shardCount; i++) {
+            const angle = (i / shardCount) * Math.PI * 2 + rotation * 1.5;
+            const orbitRadius = ice.r + 10 + Math.sin(currentTime * 0.004 + i) * 4;
+            const shardX = ice.x + Math.cos(angle) * orbitRadius;
+            const shardY = ice.y + Math.sin(angle) * orbitRadius;
+            const shardSize = 2.5 + Math.sin(currentTime * 0.005 + i) * 0.8;
+            const shardAlpha = (0.6 + 0.4 * Math.sin(currentTime * 0.004 + i)) * pulse;
+            
+            ctx.save();
+            ctx.translate(shardX, shardY);
+            ctx.rotate(angle + currentTime * 0.002);
+            
+            // Diamond-shaped ice shard
+            ctx.fillStyle = `rgba(225, 245, 254, ${shardAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(0, -shardSize * 2);
+            ctx.lineTo(shardSize, 0);
+            ctx.lineTo(0, shardSize * 1.2);
+            ctx.lineTo(-shardSize, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Shard glow
+            ctx.strokeStyle = `rgba(129, 212, 250, ${shardAlpha * 0.7})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.restore();
+          }
+          
+          // Main ice block with layered gradient
+          const gradient = ctx.createRadialGradient(
+            ice.x - ice.r * 0.4, ice.y - ice.r * 0.4, 0,
+            ice.x, ice.y, ice.r * 1.3
+          );
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${0.95 * pulse})`);
+          gradient.addColorStop(0.3, `rgba(225, 245, 254, ${0.9 * pulse})`);
+          gradient.addColorStop(0.6, `rgba(179, 229, 252, ${0.85 * pulse})`);
+          gradient.addColorStop(0.85, `rgba(129, 212, 250, ${0.75 * pulse})`);
+          gradient.addColorStop(1, `rgba(66, 165, 245, ${0.6 * pulse})`);
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(ice.x, ice.y, ice.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Ice spikes radiating outward
+          ctx.save();
+          ctx.translate(ice.x, ice.y);
+          const spikeCount = 6;
+          for (let i = 0; i < spikeCount; i++) {
+            const spikeAngle = rotation * 2 + (i * Math.PI * 2) / spikeCount;
+            const spikeLength = ice.r * (0.3 + 0.1 * Math.sin(currentTime * 0.006 + i));
+            const spikeAlpha = 0.5 * pulse;
+            
+            ctx.save();
+            ctx.rotate(spikeAngle);
+            
+            ctx.fillStyle = `rgba(179, 229, 252, ${spikeAlpha})`;
+            ctx.beginPath();
+            ctx.moveTo(ice.r * 0.6, 0);
+            ctx.lineTo(ice.r * 0.6 + spikeLength, -2);
+            ctx.lineTo(ice.r * 0.6 + spikeLength * 1.2, 0);
+            ctx.lineTo(ice.r * 0.6 + spikeLength, 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+          }
+          ctx.restore();
+          
+          // Sparkling stars around ice
+          const starCount = 6;
+          for (let i = 0; i < starCount; i++) {
+            const starAngle = (i / starCount) * Math.PI * 2 + currentTime * 0.001;
+            const starDist = ice.r * (1.4 + 0.2 * Math.sin(currentTime * 0.007 + i));
+            const starX = ice.x + Math.cos(starAngle) * starDist;
+            const starY = ice.y + Math.sin(starAngle) * starDist;
+            const starSize = 1.5 + Math.sin(currentTime * 0.008 + i) * 0.8;
+            const starAlpha = (0.5 + 0.5 * Math.sin(currentTime * 0.009 + i)) * pulse;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
+            ctx.beginPath();
+            ctx.arc(starX, starY, starSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Ice outline with glow
+          ctx.strokeStyle = `rgba(1, 87, 155, ${0.8 * pulse})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(ice.x, ice.y, ice.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Inner highlight
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.6 * fastPulse})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(ice.x - ice.r * 0.2, ice.y - ice.r * 0.2, ice.r * 0.4, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with enhanced shadow
+          ctx.font = `bold ${Math.max(12, Math.round(ice.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && mapDef?.editorVectorIconsOnly) {
+            try { this._drawVectorIcon(ctx, 'icefreezer', ice.x, ice.y, ice.r); } catch {}
+          } else {
+            const icon = (mode === 'editor' && mapDef?.editorEmojiEnabled === false) ? 'ICE' : '🧊';
+            
+            // Shadow
+            ctx.shadowColor = `rgba(1, 87, 155, ${0.8 * pulse})`;
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.95 * pulse})`;
+            ctx.fillText(icon, ice.x, ice.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try { ctx.restore(); } catch {}
+      }
+    },
+
+  /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+    /** @param {CanvasRenderingContext2D} ctx */
+  drawTestpowers(ctx, mode, liveTestpowers, mapDef, drawGlow, glowAlpha) {
+    try {
+      ctx.save();
+      const testpowersToDraw = (mode === 'play' || mode === 'race')
+        ? (window.liveTestpowers || liveTestpowers || [])
+        : (mapDef?.testpowers || []);
+      
+      const currentTime = performance.now();
+      
+      for (const item of testpowersToDraw) {
+        if (item.consumed && (mode === 'play' || mode === 'race')) continue;
+        
+                // Lightning electric effect
+        const electric = 0.7 + 0.3 * Math.random();
+        try {
+          drawGlow(ctx, item.x, item.y, item.r * 2.2 * electric, '#FFFF00', glowAlpha(0.9 * electric, 2.0, 0.9));
+          
+          // Electric arcs
+          if (Math.random() < 0.3) {
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            ctx.moveTo(item.x - item.r, item.y);
+            ctx.lineTo(item.x + item.r + Math.random() * 10 - 5, item.y + Math.random() * 10 - 5);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+          }
+        } catch {}
+        
+                // Main shape with gradient
+        const gradient = ctx.createRadialGradient(
+          item.x - item.r * 0.3, item.y - item.r * 0.3, 0,
+          item.x, item.y, item.r
+        );
+        gradient.addColorStop(0, '#FFFF00');
+        gradient.addColorStop(0.5, '#FFFFFF');
+        gradient.addColorStop(1, '#E6E6FA');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, item.r, 0, Math.PI * 2);
+        ctx.fill();
+        
+                
+        // Icon
+        ctx.font = `bold ${Math.max(12, Math.round(item.r * 0.85))}px ${EMOJI_FONT}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'white';
+        if (mode === 'editor' && mapDef?.editorVectorIconsOnly) {
+          try { this._drawVectorIcon(ctx, 'testpower', item.x, item.y, item.r); } catch {}
+        } else {
+          const configEmoji = window.config?.powerUps?.testpower?.emoji;
+          const icon = (mode === 'editor' && mapDef?.editorEmojiEnabled === false) 
+            ? 'TES' 
+            : (configEmoji || '⭐');
+          ctx.fillText(icon, item.x, item.y);
+        }
+      }
+    } finally {
+      try { ctx.restore(); } catch {}
+    }
+  },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawGhosts(ctx, mode, liveGhosts, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveGhosts (set by race.js with consumed flags)
+        // In editor mode: render mapDef.ghosts directly
+        const ghostsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveGhosts || liveGhosts || [])
+          : (mapDef?.ghosts || []);
+        const currentTime = performance.now();
+        
+        for (const g of ghostsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (g.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Ethereal floating animation
+          const floatSpeed = 0.002;
+          const float = Math.sin(currentTime * floatSpeed) * 0.4 + 0.6;
+          const phaseShift = Math.sin(currentTime * floatSpeed * 1.7) * 0.3 + 0.7;
+          
+          // Spectral aura rings
+          const auraCount = 6;
+          for (let i = 0; i < auraCount; i++) {
+            const auraPhase = (currentTime * 0.001 + i * Math.PI / 3) % (Math.PI * 2);
+            const auraRadius = g.r + 2 + i * 4 + Math.sin(auraPhase) * 3;
+            const auraAlpha = (Math.sin(auraPhase + i) * 0.15 + 0.2) * (1 - i * 0.12) * float;
+            
+            ctx.strokeStyle = `rgba(137, 207, 240, ${auraAlpha})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(g.x, g.y, auraRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced ethereal glow
+          try {
+            drawGlow(ctx, g.x, g.y, g.r * (1 + float * 0.2), 'rgb(137,207,240)', glowAlpha(0.4 * float, 1.0 * float, 0.3));
+          } catch {}
+          
+          // Main ghost body with transparency gradient
+          const gradient = ctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, g.r);
+          gradient.addColorStop(0, `rgba(200, 230, 255, ${0.7 * phaseShift})`);
+          gradient.addColorStop(0.5, `rgba(137, 207, 240, ${0.5 * phaseShift})`);
+          gradient.addColorStop(1, `rgba(100, 180, 220, ${0.3 * phaseShift})`);
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Spectral wisps
+          const wispCount = 10;
+          for (let i = 0; i < wispCount; i++) {
+            const angle = (i / wispCount) * Math.PI * 2 + currentTime * 0.003;
+            const wispRadius = g.r + 5 + Math.sin(currentTime * 0.004 + i) * 8;
+            const wispX = g.x + Math.cos(angle) * wispRadius;
+            const wispY = g.y + Math.sin(angle) * wispRadius;
+            
+            const wispSize = 1 + Math.sin(currentTime * 0.005 + i) * 0.8;
+            const wispAlpha = (Math.sin(currentTime * 0.006 + i) * 0.3 + 0.5) * float;
+            
+            ctx.fillStyle = `rgba(180, 220, 255, ${wispAlpha})`;
+            ctx.beginPath();
+            ctx.arc(wispX, wispY, wispSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Ethereal outline with phase shifting
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 * phaseShift})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with ethereal glow
+          ctx.font = `bold ${Math.max(12, Math.round(g.r))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'ghost', g.x, g.y, g.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const gGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'G' : '👻';
+            
+            // Text with ethereal glow
+            ctx.shadowColor = `rgba(137, 207, 240, ${0.9 * float})`;
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.9 * phaseShift})`;
+            ctx.fillText(gGlyph, g.x, g.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawRotatingBarriers(ctx, mode, mapDef) {
+      ctx.save();
+      for (const barrier of mapDef.rotatingBarriers){
+        const x = barrier.x, y = barrier.y;
+        const length = barrier.length, width = barrier.width;
+        const angle = barrier.angle;
+        const color = barrier.color || '#FF6B35';
+        
+        ctx.translate(x, y);
+        ctx.rotate(angle);
+        
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(-length/2, -width/2, length, width);
+        
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillRect(-length/2, -width/2, length, width/3);
+        
+        if (mode === 'editor') {
+          ctx.fillStyle = '#FFF';
+          ctx.font = '16px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('⚙️', 0, 0);
+        }
+        
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+      }
+      ctx.restore();
+    },
+    drawMagnetpulls(ctx, mapDef) {
+      if (!mapDef.magnetpulls) return;
+  
+      for (const magnet of mapDef.magnetpulls) {
+        const x = magnet.x;
+        const y = magnet.y;
+        const radius = magnet.radius || 80;
+        
+        // Draw attraction radius (dashed circle)
+        ctx.save();
+        ctx.strokeStyle = '#00BFFF';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Draw magnet core with metallic effect
+        ctx.save();
+        
+        // Outer ring (metallic)
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 18);
+        gradient.addColorStop(0, '#E0E0E0');
+        gradient.addColorStop(0.7, '#B0B0B0');
+        gradient.addColorStop(1, '#808080');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner magnet (blue-red)
+        ctx.fillStyle = '#FF4444';
+        ctx.beginPath();
+        ctx.arc(x - 6, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#4444FF';
+        ctx.beginPath();
+        ctx.arc(x + 6, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Magnet icon
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🧲', x, y);
+        
+        ctx.restore();
+      }
+    },
+    drawMagnetpushs(ctx, mapDef) {
+      if (!mapDef.magnetpushs) return;
+  
+      for (const magnet of mapDef.magnetpushs) {
+        const x = magnet.x;
+        const y = magnet.y;
+        const radius = magnet.radius || 80;
+        
+        // Draw repulsion radius (dashed circle with different color)
+        ctx.save();
+        ctx.strokeStyle = '#FF6B35';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Draw repulsion core with electric effect
+        ctx.save();
+        
+        // Outer ring (electric yellow)
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, 18);
+        gradient.addColorStop(0, '#FFFF80');
+        gradient.addColorStop(0.7, '#FFD700');
+        gradient.addColorStop(1, '#FF6B35');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner electric core
+        ctx.fillStyle = '#FFFF00';
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Electric sparks effect
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI * 2) / 8;
+          const startX = x + Math.cos(angle) * 10;
+          const startY = y + Math.sin(angle) * 10;
+          const endX = x + Math.cos(angle) * 16;
+          const endY = y + Math.sin(angle) * 16;
+          
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
+        
+        // Electric icon
+        ctx.fillStyle = '#000000';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⚡', x, y);
+        
+        ctx.restore();
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawRams(ctx, mode, liveRams, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        
+        // In play/race mode: use window.liveRams (set by race.js with consumed flags)
+        // In editor mode: render mapDef.rams directly
+        const ramsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveRams || liveRams || [])
+          : (mapDef?.rams || []);
+            
+        const currentTime = performance.now();
+        
+        for (const r of ramsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (r.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Dynamic animation variables
+          const pulseSpeed = 0.003; // Pulse animation speed
+          const sparkRotSpeed = 0.002; // Spark rotation speed
+          const glowPulse = 0.7 + 0.3 * Math.sin(currentTime * pulseSpeed);
+          const sparkRotation = currentTime * sparkRotSpeed;
+          
+          // Enhanced explosive ram visual with DYNAMIC effects
+          try {
+            // Animated outer energy glow with pulsing
+            const glowRadius = r.r + 8 + 4 * Math.sin(currentTime * pulseSpeed * 1.5);
+            const glowAlphaValue = glowAlpha(0.3 * glowPulse, 1.5, 0.4);
+            drawGlow(ctx, r.x, r.y, glowRadius, 'rgb(255,69,0)', glowAlphaValue);
+          } catch {}
+          
+          ctx.save();
+          
+          // Animated gradient with shifting colors
+          const gradient = ctx.createRadialGradient(r.x - r.r*0.3, r.y - r.r*0.3, 0, r.x, r.y, r.r);
+          const intensity = 0.8 + 0.2 * Math.sin(currentTime * pulseSpeed * 2);
+          gradient.addColorStop(0, `rgba(255, 255, 100, ${0.9 * intensity})`); // Pulsing yellow center
+          gradient.addColorStop(0.4, `rgba(255, 140, 0, ${0.8 * intensity})`); // Pulsing orange
+          gradient.addColorStop(0.8, `rgba(220, 20, 60, ${0.8 * intensity})`); // Pulsing red
+          gradient.addColorStop(1, `rgba(139, 0, 0, ${0.7 * intensity})`); // Pulsing dark red
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // ANIMATED energy spark effects (rotating)
+          ctx.strokeStyle = `rgba(255, 255, 0, ${0.6 + 0.4 * Math.sin(currentTime * pulseSpeed * 3)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const baseAngle = (i * Math.PI) / 4;
+            const animatedAngle = baseAngle + sparkRotation; // Rotating sparks
+            const sparkLength = r.r * (0.4 + 0.2 * Math.sin(currentTime * pulseSpeed * 4 + i));
+            const x1 = r.x + Math.cos(animatedAngle) * (r.r * 0.3);
+            const y1 = r.y + Math.sin(animatedAngle) * (r.r * 0.3);
+            const x2 = r.x + Math.cos(animatedAngle) * (r.r * 0.3 + sparkLength);
+            const y2 = r.y + Math.sin(animatedAngle) * (r.r * 0.3 + sparkLength);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+          }
+          ctx.stroke();
+          
+          // Animated inner highlight ring (pulsing)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + 0.4 * glowPulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const innerRadius = r.r * (0.6 + 0.1 * Math.sin(currentTime * pulseSpeed * 2.5));
+          ctx.arc(r.x, r.y, innerRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Animated outer warning ring (pulsing)
+          ctx.strokeStyle = `rgba(255, 0, 0, ${0.6 + 0.4 * Math.sin(currentTime * pulseSpeed * 1.8)})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(r.x, r.y, r.r - 1, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Animated secondary sparks (faster rotation)
+          ctx.strokeStyle = `rgba(255, 200, 0, ${0.3 + 0.3 * Math.sin(currentTime * pulseSpeed * 5)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            const baseAngle = (i * Math.PI) / 2 + Math.PI / 4;
+            const animatedAngle = baseAngle - sparkRotation * 1.5; // Counter-rotating
+            const sparkLength = r.r * 0.3;
+            const x1 = r.x + Math.cos(animatedAngle) * (r.r * 0.5);
+            const y1 = r.y + Math.sin(animatedAngle) * (r.r * 0.5);
+            const x2 = r.x + Math.cos(animatedAngle) * (r.r * 0.5 + sparkLength);
+            const y2 = r.y + Math.sin(animatedAngle) * (r.r * 0.5 + sparkLength);
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+          }
+          ctx.stroke();
+          
+          // Icon/emoji with enhanced visibility and subtle animation
+          ctx.font = `bold ${Math.max(16, Math.round(r.r * 0.9))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Animated text shadow
+          const shadowOffset = 1 + 0.5 * Math.sin(currentTime * pulseSpeed * 3);
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.8 * intensity})`;
+          ctx.fillText('💥', r.x + shadowOffset, r.y + shadowOffset);
+          
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.95 * intensity})`;
+          
+          if (mode === 'editor' && mapDef?.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'ram', r.x, r.y, r.r); } catch {} 
+          } else {
+            const rGlyph = (mode === 'editor' && mapDef?.editorEmojiEnabled === false) ? 'RAM' : '💥';
+            ctx.fillText(rGlyph, r.x, r.y);
+          }
+          
+          ctx.restore();
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawShields(ctx, mode, liveShields, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // In play/race mode: use window.liveShields (set by race.js with consumed flags)
+        // In editor mode: render mapDef.shields directly
+        const shieldsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveShields || liveShields || [])
+          : (mapDef?.shields || []);
+        
+        
+        const currentTime = performance.now();
+        
+        for (const s of shieldsToDraw) {
+          // Skip consumed items (only in play/race mode)
+          if (s.consumed && (mode === 'play' || mode === 'race')) continue;
+          // Animated shield energy field
+          const pulseSpeed = 0.004;
+          const pulse = Math.sin(currentTime * pulseSpeed) * 0.4 + 0.6;
+          
+          // Energy field rings
+          const ringCount = 4;
+          for (let i = 0; i < ringCount; i++) {
+            const ringPhase = (currentTime * 0.003 + i * Math.PI / 2) % (Math.PI * 2);
+            const ringRadius = s.r + 2 + i * 3 + Math.sin(ringPhase) * 2;
+            const ringAlpha = (Math.sin(ringPhase + i) * 0.2 + 0.3) * (1 - i * 0.2);
+            
+            ctx.strokeStyle = `rgba(3, 169, 244, ${ringAlpha})`;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Enhanced glow
+          try {
+            drawGlow(ctx, s.x, s.y, s.r * (1 + pulse * 0.15), 'rgb(3,169,244)', glowAlpha(0.4 * pulse, 1.0 * pulse, 0.2));
+          } catch {}
+          
+          // Main shield body with gradient
+          const gradient = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
+          gradient.addColorStop(0, '#4fc3f7');
+          gradient.addColorStop(0.6, '#03a9f4');
+          gradient.addColorStop(1, '#0288d1');
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Hexagonal shield pattern
+          const hexRadius = s.r * 0.7;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 * pulse})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = s.x + Math.cos(angle) * hexRadius;
+            const y = s.y + Math.sin(angle) * hexRadius;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          
+          // Energy particles
+          const particleCount = 8;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + currentTime * 0.002;
+            const particleRadius = s.r + 6 + Math.sin(currentTime * 0.006 + i) * 3;
+            const particleX = s.x + Math.cos(angle) * particleRadius;
+            const particleY = s.y + Math.sin(angle) * particleRadius;
+            
+            ctx.fillStyle = `rgba(79, 195, 247, ${0.7 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Enhanced outline
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 * pulse})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with glow effect
+          ctx.font = `bold ${Math.max(12, Math.round(s.r))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && w.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'shield', s.x, s.y, s.r); } catch {} 
+          }
+          if (!(mode === 'editor' && w.editorVectorIconsOnly)) {
+            const sGlyph = (typeof w.mode !== 'undefined' && w.mode === 'editor' && !w.editorEmojiEnabled) ? 'S' : '🛡️';
+            
+            // Text glow
+            ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+            ctx.shadowBlur = 4;
+            ctx.fillStyle = '#fff';
+            ctx.fillText(sGlyph, s.x, s.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** Vẽ Carrots theo đúng logic hiện tại */
+    drawCarrots(ctx, mapDef, carrotSpriteImg, drawVectorCarrot, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        const carrotsToDraw = mapDef && Array.isArray(mapDef.carrots) ? mapDef.carrots : [];
+        for (const c of carrotsToDraw) {
+          if (!c || c.enabled === false) continue;
+          const x = c.x | 0,
+            y = c.y | 0;
+          const baseR =
+            typeof c.r === 'number' && isFinite(c.r) ? c.r : (mapDef && mapDef.carrotRadius) || 15;
+          const scale = Math.max(0.25, Math.min(3.0, parseFloat(c.scale || '1.0')));
+          const r = baseR * scale;
+          try {
+            drawGlow(ctx, x, y, r, 'rgb(255,160,0)', glowAlpha(0.25, 0.6, 0.2));
+          } catch {}
+
+          if (c._img && c._img.complete) {
+            const w = r * 2,
+              h = r * 2;
+            try {
+              ctx.drawImage(c._img, x - w / 2, y - h / 2, w, h);
+            } catch {}
+            if (c.outline === 'on') {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(x, y, r + 0.5, 0, Math.PI * 2);
+              ctx.strokeStyle = c.outlineColor || 'rgba(255,160,0,0.6)';
+              ctx.lineWidth = Math.max(1, parseInt(c.outlineWidth || 2, 10));
+              ctx.lineCap = 'round';
+              ctx.stroke();
+              ctx.restore();
+            }
+          } else if (carrotSpriteImg && carrotSpriteImg.complete) {
+            const w = r * 2,
+              h = r * 2;
+            try {
+              ctx.drawImage(carrotSpriteImg, x - w / 2, y - h / 2, w, h);
+            } catch {}
+            if (c.outline === 'on') {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(x, y, r + 0.5, 0, Math.PI * 2);
+              ctx.strokeStyle = c.outlineColor || 'rgba(255,160,0,0.6)';
+              ctx.lineWidth = Math.max(1, parseInt(c.outlineWidth || 2, 10));
+              ctx.lineCap = 'round';
+              ctx.stroke();
+              ctx.restore();
+            }
+          } else {
+            // Fallback vector carrot (inline, no assets)
+            try {
+              drawVectorCarrot(ctx, x, y, r);
+            } catch {}
+            if (c.outline === 'on') {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(x, y, r + 0.5, 0, Math.PI * 2);
+              ctx.strokeStyle = c.outlineColor || 'rgba(255,160,0,0.6)';
+              ctx.lineWidth = Math.max(1, parseInt(c.outlineWidth || 2, 10));
+              ctx.lineCap = 'round';
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** Gọi nhanh tất cả nhóm động đã tách */
+    drawDynamicItems(ctx, mode, mapDef, sources) {
+      // Debug logging removed
+      try {
+        const S = sources || {};
+        /** @type {(ctx:CanvasRenderingContext2D, x:number, y:number, r:number, color:string, a:number)=>void} */
+        // @ts-ignore
+        const dg = S.drawGlow || (window.drawGlow || function(){});
+        /** @type {(a:number,b:number,c:number)=>number} */
+        // @ts-ignore
+        const ga = S.glowAlpha || (window.glowAlpha || function(){return 1;});
+        this.drawBoosts(ctx, mode, S.liveBoosts, mapDef, dg, ga);
+        this.drawTurbos(ctx, mode, S.liveTurbos, mapDef, dg, ga);
+        this.drawTeleports(ctx, mode, S.liveTeleports, mapDef, dg, ga);
+        this.drawMagnets(ctx, mode, S.liveMagnets, mapDef, dg, ga);
+        this.drawTimeFreezes(ctx, mode, S.liveTimeFreezes, mapDef, dg, ga);
+        this.drawIceFreezers(ctx, mode, S.liveIceFreezers, mapDef, dg, ga);
+        this.drawTestpowers(ctx, mode, S.liveTestpowers, mapDef, dg, ga);
+        this.drawPoisons(ctx, mode, S.livePoisons, mapDef, dg, ga);
+        this.drawGhosts(ctx, mode, S.liveGhosts, mapDef, dg, ga);
+        this.drawMudPatches(ctx, mode, mapDef, dg, ga);
+        this.drawRams(ctx, mode, S.liveRams, mapDef, dg, ga);
+        this.drawShields(ctx, mode, S.liveShields, mapDef, dg, ga);
+        this.drawWarpzones(ctx, mode, S.liveWarpzones, mapDef, dg, ga);
+        this.drawQuantumdashs(ctx, mode, S.liveQuantumdashs, mapDef, dg, ga);
+        this.drawNebulas(ctx, mode, S.liveNebulas, mapDef, dg, ga);
+        // Dynamic hazards
+        this.drawTornados(ctx, mode, S.liveTornados, mapDef, dg, ga);
+        this.drawVolcanos(ctx, mode, S.liveVolcanos, mapDef, dg, ga);
+      } catch {}
+    },
+    /** Vẽ Spinners theo logic hiện có (bao gồm trail, flash, glints, editor handle) */
+    drawSpinners(ctx, mode, mapDef, liveSpinners) {
+      try {
+        ctx.save();
+      } catch {}
+      try {
+        // In play/race mode: only render liveSpinners (already copied from mapDef)
+        // In editor mode: render mapDef.spinners directly (no duplicates)
+        const spinnersToDraw = (mode === 'play' || mode === 'race')
+          ? (liveSpinners || [])
+          : (mapDef?.spinners || []);
+        const skipTrails = spinnersToDraw && spinnersToDraw.length > 24;
+        for (const s of spinnersToDraw) {
+          try {
+            ctx.save();
+          } catch {}
+          try {
+            ctx.translate(s.x, s.y);
+            // Soft drop shadow (not rotating) - optional
+            try {
+              if (w.spinnerShadowEnabled) {
+                ctx.save();
+                const rx = Math.max(6, s.w * 0.52);
+                const ry = Math.max(3, s.h * 0.35);
+                const oy = Math.max(2, s.h * 0.15);
+                ctx.fillStyle = 'rgba(0,0,0,0.28)';
+                ctx.beginPath();
+                ctx.ellipse(0, oy, rx, ry, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+            } catch {}
+            // Editor-mode trail maintenance to preview while editing
+            try {
+              if (mode !== 'play' && !skipTrails) {
+                const nowT = performance.now();
+                if (!s._trail) s._trail = [];
+                const last = s._trail[s._trail.length - 1];
+                if (!last || Math.abs(last.angle - s.angle) > 0.0005 || nowT - last.ts > 30) {
+                  s._trail.push({ angle: s.angle, ts: nowT });
+                }
+                const trailMs = Math.max(60, Math.min(600, w.spinnerTrailMs ?? 200));
+                const trailSamples = Math.max(3, Math.min(16, w.spinnerTrailSamples ?? 8));
+                const cutoffE = nowT - trailMs;
+                while (s._trail.length && s._trail[0].ts < cutoffE) s._trail.shift();
+                if (s._trail.length > trailSamples)
+                  s._trail.splice(0, s._trail.length - trailSamples);
+              }
+            } catch {}
+
+            ctx.rotate(s.angle);
+            // Subtle spin trail (afterimages at previous angles)
+            try {
+              if (!skipTrails && s._trail && s._trail.length > 1) {
+                const baseColor = s.color || '#9E9E9E';
+                const nowT = performance.now();
+                const spdK = Math.max(0.2, Math.min(1.2, Math.abs(s.speed || 0) / 2 + 0.2));
+                const trailMs = Math.max(60, Math.min(600, w.spinnerTrailMs ?? 200));
+                const maxSamples = Math.max(3, Math.min(16, w.spinnerTrailSamples ?? 8));
+                const startIdx = Math.max(0, s._trail.length - 1 - maxSamples);
+                for (let i = startIdx; i < s._trail.length - 1; i++) {
+                  const sample = s._trail[i];
+                  const age = Math.max(0, nowT - sample.ts);
+                  const k = Math.max(0, Math.min(1, 1 - age / trailMs));
+                  if (k <= 0.01) continue;
+                  ctx.save();
+                  ctx.rotate(sample.angle - s.angle);
+                  ctx.globalAlpha = (0.06 + 0.16 * (i / s._trail.length) * k) * spdK;
+                  ctx.fillStyle = baseColor;
+                  const tw = s.w * (0.92 + 0.08 * (i / s._trail.length));
+                  const th = s.h * (0.85 + 0.15 * (i / s._trail.length));
+                  ctx.fillRect(-tw / 2, -th / 2, tw, th);
+                  ctx.restore();
+                }
+                ctx.globalAlpha = 1;
+              }
+            } catch {}
+
+            // Core spinner
+            ctx.fillStyle = s.color || '#9E9E9E';
+            ctx.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
+
+            // Soft edge highlight along length (gives depth)
+            try {
+              const grad = ctx.createLinearGradient(-s.w / 2, 0, s.w / 2, 0);
+              grad.addColorStop(0.0, 'rgba(255,255,255,0.00)');
+              grad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+              grad.addColorStop(1.0, 'rgba(0,0,0,0.00)');
+              ctx.save();
+              ctx.globalCompositeOperation = 'lighter';
+              ctx.fillStyle = grad;
+              ctx.fillRect(-s.w / 2, -s.h / 2, s.w, s.h);
+              ctx.restore();
+            } catch {}
+
+            // Tip glints depending on speed
+            try {
+              const spd = Math.abs(s.speed || 0);
+              const alpha = Math.min(0.5, 0.12 + spd * 0.12);
+              if (alpha > 0.12) {
+                const tipR = Math.max(2, Math.min(5, s.h * 0.22));
+                const ox = s.w / 2;
+                const glow = ctx.createRadialGradient(ox, 0, 0, ox, 0, tipR * 2.4);
+                glow.addColorStop(0, `rgba(255, 220, 150, ${alpha})`);
+                glow.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = glow;
+                ctx.beginPath();
+                ctx.arc(ox, 0, tipR * 2.4, 0, Math.PI * 2);
+                ctx.fill();
+                const glowL = ctx.createRadialGradient(-ox, 0, 0, -ox, 0, tipR * 2.4);
+                glowL.addColorStop(0, `rgba(255, 220, 150, ${alpha * 0.85})`);
+                glowL.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = glowL;
+                ctx.beginPath();
+                ctx.arc(-ox, 0, tipR * 2.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+            } catch {}
+
+            // Center glow depending on speed
+            try {
+              const spd = Math.abs(s.speed || 0);
+              if (spd > 0.1) {
+                const a = Math.min(0.35, 0.12 + spd * 0.08);
+                const rIn = Math.max(4, Math.min(s.h, s.w) * 0.25);
+                const rOut = Math.max(rIn + 6, Math.min(s.h, s.w) * 0.7);
+                const g = ctx.createRadialGradient(0, 0, rIn * 0.2, 0, 0, rOut);
+                g.addColorStop(0, `rgba(255,255,255,${a * 0.4})`);
+                g.addColorStop(0.6, `rgba(255,200,120,${a})`);
+                g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(0, 0, rOut, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+              }
+            } catch {}
+
+            // Flash on recent impact
+            try {
+              const nowF = performance.now();
+              if (s._flashUntil && nowF < s._flashUntil) {
+                const flashMs = Math.max(60, Math.min(400, w.spinnerFlashMs ?? 120));
+                const t = 1 - (s._flashUntil - nowF) / flashMs;
+                const strength = Math.max(0.2, Math.min(1, s._flashStrength || 0.6));
+                const a = (0.35 + 0.35 * strength) * (1 - t);
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.strokeStyle = `rgba(255,200,120,${a})`;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-s.w / 2, -s.h / 2, s.w, s.h);
+                ctx.restore();
+              }
+            } catch {}
+
+            // Editor handle when selected
+            try {
+              if (mode === 'editor' && w.selected === s) {
+                const handleX = s.w / 2 + 10;
+                const handleY = 0;
+                const handleRadius = 8;
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(handleX, handleY, handleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+              }
+            } catch {}
+          } finally {
+            try {
+              ctx.restore();
+            } catch {}
+          }
+        }
+      } catch {
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+    /** Hiển thị Slipstream wakes (visuals) */
+    drawSlipstreams(ctx, mode, horses) {
+      try {
+        const wakes = Array.isArray(w.liveSlipstreams) ? w.liveSlipstreams : [];
+        if (mode === 'play' && wakes.length) {
+          const nowT = performance.now();
+          ctx.save();
+          for (const wk of wakes) {
+            if (!wk) continue;
+            const total = Math.max(1, wk.life0 || 4000);
+            const remain = Math.max(0, (wk.until || 0) - nowT);
+            const k = Math.max(0, Math.min(1, remain / total));
+            const r = Math.max(10, wk.r || 28);
+            try {
+              w.drawGlow(ctx, wk.x, wk.y, r * (1.2 + 0.3 * k), 'rgb(0,188,212)', 0.25 * k);
+            } catch {}
+            try {
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(wk.x, wk.y, r, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(0,188,212,${0.55 * k})`;
+              ctx.lineWidth = Math.max(1, 2.5 * k);
+              ctx.stroke();
+              ctx.restore();
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(wk.x, wk.y, r * 0.55, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(128,222,234,${0.35 * k})`;
+              ctx.lineWidth = Math.max(0.8, 1.5 * k);
+              ctx.stroke();
+              ctx.restore();
+            } catch {}
+          }
+          ctx.restore();
+        }
+      } catch {}
+    },
+    /** Shockwave visuals (expanding/contracting ring) */
+    drawShockwaves(ctx, mode, horses) {
+      try {
+        if (mode === 'play') {
+          const nowT = performance.now();
+          ctx.save();
+          for (const h of horses) {
+            if (!h || h.eliminated) continue;
+            if (!h._shockwaveStart || !h._shockwaveMaxR) continue;
+            const dur = Math.max(300, h.skillState?.duration || 1200);
+            const elapsed = Math.max(0, nowT - h._shockwaveStart);
+            const speed = 9;
+            const phase = (elapsed / dur) * speed;
+            const tTri = 1 - Math.abs((((phase % 2) + 2) % 2) - 1);
+            const t = Math.max(0, Math.min(1, tTri));
+            if (elapsed > dur || t <= 0 || t > 1.05) continue;
+            const R = h._shockwaveMaxR * t;
+            try {
+              w.drawGlow(ctx, h.x, h.y, R * 1.05, 'rgb(3,169,244)', 0.18 * (1 - t));
+            } catch {}
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, Math.max(4, R), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(3,169,244,${0.7 * (1 - t)})`;
+            ctx.lineWidth = Math.max(2, 5 * (1 - t));
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, Math.max(2, R * 0.65), 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(129,212,250,${0.35 * (1 - t)})`;
+            ctx.lineWidth = Math.max(1, 2.5 * (1 - t));
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+      } catch {}
+    },
+    /** Chain Lightning visuals + stun overlay */
+    drawChainLightning(ctx, mode, horses) {
+      try {
+        if (mode === 'play') {
+          const nowT = performance.now();
+          try {
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            for (const h of horses) {
+              if (!h || h.eliminated) continue;
+              if (h._chainFlashUntil && nowT < h._chainFlashUntil) {
+                const t = Math.max(0, Math.min(1, (h._chainFlashUntil - nowT) / 160));
+                try {
+                  w.drawGlow(
+                    ctx,
+                    h.x,
+                    h.y,
+                    Math.max(18, (h.r || 10) + 22 * t),
+                    'rgb(3,169,244)',
+                    0.45 * t
+                  );
+                } catch {}
+              }
+            }
+            ctx.restore();
+          } catch {}
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          for (const caster of horses) {
+            if (!caster || caster.eliminated) continue;
+            const arcs = caster._chainArcs;
+            if (!arcs || !arcs.length) continue;
+            for (const seg of arcs) {
+              if (!seg || nowT > (seg.until || 0)) continue;
+              const from = horses.find((o) => o && o.id === seg.fromId);
+              const to = horses.find((o) => o && o.id === seg.toId);
+              if (!from || !to) continue;
+              const x1 = from.x | 0,
+                y1 = from.y | 0;
+              const x2 = to.x | 0,
+                y2 = to.y | 0;
+              const life = Math.max(1, seg.life0 || 500);
+              const age = Math.max(0, life - Math.max(0, (seg.until || 0) - nowT));
+              const k = Math.max(0.05, Math.min(1, 1 - age / life));
+              try {
+                w.drawGlow(ctx, x1, y1, 14, 'rgb(128,222,234)', 0.3 * k);
+              } catch {}
+              try {
+                w.drawGlow(ctx, x2, y2, 18, 'rgb(3,169,244)', 0.36 * k);
+              } catch {}
+              const passes = 3;
+              for (let p = 0; p < passes; p++) {
+                ctx.beginPath();
+                const steps = 7;
+                for (let i = 0; i <= steps; i++) {
+                  const t = i / steps;
+                  const bx = x1 + (x2 - x1) * t;
+                  const by = y1 + (y2 - y1) * t;
+                  const nx = y2 - y1,
+                    ny = -(x2 - x1);
+                  const nlen = Math.hypot(nx, ny) || 1;
+                  const jmag = (4 + 6 * Math.random()) * (1 - Math.abs(0.5 - t) * 1.6) * k;
+                  const jx = bx + (nx / nlen) * (Math.random() * 2 - 1) * jmag;
+                  const jy = by + (ny / nlen) * (Math.random() * 2 - 1) * jmag;
+                  if (i === 0) ctx.moveTo(jx, jy);
+                  else ctx.lineTo(jx, jy);
+                }
+                ctx.strokeStyle = `rgba(129,212,250,${0.62 * k})`;
+                ctx.lineWidth = Math.max(1.7, 2.8 * k);
+                ctx.lineCap = 'round';
+                ctx.stroke();
+              }
+            }
+          }
+          ctx.restore();
+          // Stun overlay rings
+          ctx.save();
+          for (const h of horses) {
+            if (!h || h.eliminated) continue;
+            if (h.chainStunUntil && nowT < h.chainStunUntil) {
+              const t = Math.max(
+                0.1,
+                Math.min(1, (h.chainStunUntil - nowT) / Math.max(200, h.skillState?.stunMs || 2500))
+              );
+              const pulse = 0.5 + 0.5 * Math.sin(nowT / 120 + (h.id || 0));
+              ctx.beginPath();
+              ctx.arc(h.x, h.y, (h.r || 10) + 6 + 4 * pulse, 0, Math.PI * 2);
+              ctx.strokeStyle = `rgba(225,245,254,${0.8 * t})`;
+              ctx.lineWidth = 2.5;
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+      } catch {}
+    },
+    /** Vẽ mũi tên băng chuyền (belt arrows) */
+    drawBeltArrows(ctx, mapDef) {
+      try {
+        const t = performance.now() * 0.001;
+        for (const b of mapDef.belts || []) {
+          const { x, y, w: hx, h: hy } = b; // avoid shadowing w
+          const angle = b.angle || 0;
+          const cx = x + hx / 2,
+            cy = y + hy / 2;
+          const dir = (b.dir || 'E').toUpperCase();
+          let ux = 1,
+            uy = 0;
+          if (dir === 'W') {
+            ux = -1;
+            uy = 0;
+          } else if (dir === 'N') {
+            ux = 0;
+            uy = -1;
+          } else if (dir === 'S') {
+            ux = 0;
+            uy = 1;
+          }
+          const alongX = Math.abs(ux) >= Math.abs(uy);
+          const length = alongX ? hx : hy;
+          const spacing = 40;
+          const count = Math.ceil(length / spacing) + 3;
+          const speed = b.speed ?? 0.12;
+          const dirSign = alongX ? Math.sign(ux || 1) : Math.sign(uy || 1);
+          const offset = (t * speed * 120) % spacing;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+          ctx.save();
+          try {
+            if (typeof w.roundRectPath === 'function') {
+              w.roundRectPath(-hx / 2, -hy / 2, hx, hy, 8);
+              ctx.clip();
+            }
+          } catch {}
+          ctx.fillStyle = 'rgba(33,150,243,0.95)';
+          ctx.globalAlpha = 0.9;
+          for (let i = -1; i < count; i++) {
+            const base = -length / 2 + i * spacing + (dirSign > 0 ? offset : -offset);
+            const px = alongX ? base : 0;
+            const py = alongX ? 0 : base;
+            const size = Math.max(8, Math.min(16, (alongX ? hy : hx) * 0.22));
+            ctx.beginPath();
+            if (alongX) {
+              const sgn = dirSign || 1;
+              ctx.moveTo(px + size * sgn, py);
+              ctx.lineTo(px - size * sgn, py - size * 0.6);
+              ctx.lineTo(px - size * sgn, py + size * 0.6);
+            } else {
+              const sgn = dirSign || 1;
+              ctx.moveTo(px, py + size * sgn);
+              ctx.lineTo(px - size * 0.6, py - size * sgn);
+              ctx.lineTo(px + size * 0.6, py - size * sgn);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.restore();
+          ctx.restore();
+        }
+      } catch {}
+    },
+    /** Wrapper gọi background effects sẵn có */
+    drawBackgroundEffects(ctx, canvas) {
+      try {
+        if (typeof w.drawBackgroundEffects === 'function') w.drawBackgroundEffects(ctx, canvas);
+      } catch {}
+    },
+    /** Wrapper gọi lightning effects sẵn có */
+    drawLightningEffects(ctx) {
+      try {
+        if (typeof w.drawLightningEffects === 'function') w.drawLightningEffects(ctx);
+      } catch {}
+    },
+    /** Vẽ particle system theo logic hiện có */
+    drawParticles(ctx, particles) {
+      try {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          // Enhanced physics
+          if (typeof p.g === 'number') p.vy += p.g; // gravity
+          if (typeof p.drag === 'number') {
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+          }
+          if (typeof p.wind === 'number') p.vx += p.wind; // wind effect
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life--;
+          if (p.life <= 0) {
+            particles.splice(i, 1);
+          } else {
+            const life0 = typeof p.life0 === 'number' && p.life0 > 0 ? p.life0 : 60;
+            const fade = Math.max(0, Math.min(1, p.life / life0));
+            ctx.save();
+            // Enhanced particle rendering with glow effects
+            if (p.glow) {
+              ctx.shadowColor = p.color || '#FFF';
+              ctx.shadowBlur = p.glow * fade;
+            }
+            ctx.globalAlpha = fade * (p.alpha || 1);
+            // Multiple particle shapes and effects
+            if (p.shape === 'rect') {
+              ctx.translate(p.x, p.y);
+              if (typeof p.rot === 'number') {
+                ctx.rotate(p.rot);
+                if (typeof p.rotVel === 'number') p.rot += p.rotVel;
+              }
+              const sz = typeof p.size === 'number' ? p.size : 2;
+              ctx.fillStyle = p.color || '#FFF';
+              ctx.fillRect(-sz / 2, -sz / 2, sz, sz);
+            } else if (p.shape === 'star') {
+              try {
+                if (typeof w.drawStar === 'function')
+                  w.drawStar(ctx, p.x, p.y, p.size || 3, p.color || '#FFD700');
+              } catch {}
+            } else if (p.shape === 'trail') {
+              ctx.strokeStyle = p.color || '#FFF';
+              ctx.lineWidth = p.size || 2;
+              ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.moveTo(p.x - p.vx * 3, p.y - p.vy * 3);
+              ctx.lineTo(p.x, p.y);
+              ctx.stroke();
+            } else {
+              // Enhanced circle with gradient option
+              if (p.gradient) {
+                const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size || 2);
+                grad.addColorStop(0, p.color || '#FFF');
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+              } else {
+                ctx.fillStyle = p.color || '#FFF';
+              }
+              const sz = typeof p.size === 'number' ? p.size : 2;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, sz, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+        }
+      } catch {}
+    },
+    /**
+     * Vẽ toàn bộ khung hình theo thứ tự hiện tại. Không đổi hành vi.
+     * env (tùy chọn) có thể cung cấp: { mode, mapDef, horses, liveBoosts, liveTurbos, liveTeleports, liveMagnets, liveTimeFreezes, liveGhosts, liveTraps, liveRams, liveShields, liveSpinners, particles, drawGlow, glowAlpha, carrotSpriteImg, drawVectorCarrot, canvas }
+     */
+    drawFrame(ctx, canvas, env) {
+      const w = /** @type {any} */ (window);
+      const ST = (env && env) || (w.App && w.App.state) || {};
+      const mode = (ST.mode !== undefined ? ST.mode : w.mode);
+      const mapDef = (ST.mapDef !== undefined ? ST.mapDef : w.mapDef);
+      const horses = (ST.horses !== undefined ? ST.horses : w.horses);
+      const particles = (ST.particles !== undefined ? ST.particles : w.particles || []);
+      const carrotSpriteImg = (env && env.carrotSpriteImg) || w.carrotSpriteImg;
+      /** @type {(ctx:CanvasRenderingContext2D,x:number,y:number,r:number)=>void} */
+      const drawVectorCarrot = (env && env.drawVectorCarrot) || w.drawVectorCarrot;
+      /** @type {(ctx:CanvasRenderingContext2D,x:number,y:number,r:number,color:string,a:number)=>void} */
+      const drawGlow = (env && env.drawGlow) || w.drawGlow;
+      /** @type {(a:number,b:number,c:number)=>number} */
+      const glowAlpha = (env && env.glowAlpha) || w.glowAlpha;
+
+      // 1) Nhóm vật phẩm động
+      try {
+        this.drawDynamicItems(ctx, mode, mapDef, {
+          liveBoosts: ST.liveBoosts || w.liveBoosts,
+          liveTurbos: ST.liveTurbos || w.liveTurbos,
+          liveTeleports: ST.liveTeleports || w.liveTeleports,
+          liveMagnets: ST.liveMagnets || w.liveMagnets,
+          liveTimeFreezes: ST.liveTimeFreezes || w.liveTimeFreezes,
+          liveIceFreezers: ST.liveIceFreezers || w.liveIceFreezers,
+          livePoisons: ST.livePoisons || w.livePoisons,
+          liveGhosts: ST.liveGhosts || w.liveGhosts,
+          liveRams: ST.liveRams || w.liveRams,
+          liveShields: ST.liveShields || w.liveShields,
+          liveWarpzones: ST.liveWarpzones || w.liveWarpzones,
+          liveQuantumdashs: ST.liveQuantumdashs || w.liveQuantumdashs,
+          liveNebulas: ST.liveNebulas || w.liveNebulas,
+          // Dynamic hazards
+          liveTornados: ST.liveTornados || w.liveTornados,
+          liveVolcanos: ST.liveVolcanos || w.liveVolcanos,
+          drawGlow,
+          glowAlpha,
+        });
+      } catch {}
+
+      // 2) Carrots
+      try {
+        this.drawCarrots(ctx, mapDef, carrotSpriteImg, drawVectorCarrot, drawGlow, glowAlpha);
+      } catch {}
+
+      // 3) Spinners
+      try {
+        this.drawSpinners(ctx, mode, mapDef, ST.liveSpinners || w.liveSpinners);
+      } catch {}
+
+      // 4) Slipstreams
+      try {
+        this.drawSlipstreams(ctx, mode, horses);
+      } catch {}
+
+      // 5) Shockwaves
+      try {
+        this.drawShockwaves(ctx, mode, horses);
+      } catch {}
+
+      // 6) Chain Lightning + stun overlay
+      try {
+        this.drawChainLightning(ctx, mode, horses);
+      } catch {}
+
+      // 7) Belt arrows
+      try {
+        this.drawBeltArrows(ctx, mapDef);
+      } catch {}
+
+      // 7.5) Magnetic effects
+      try {
+        this.drawMagnetpulls(ctx, mapDef);
+      } catch {}
+      try {
+        this.drawMagnetpushs(ctx, mapDef);
+      } catch {}
+
+      // 8) Background effects
+      try {
+        this.drawBackgroundEffects(ctx, canvas || w.canvas);
+      } catch {}
+
+      // 9) Particles
+      try {
+        this.drawParticles(ctx, particles);
+      } catch {}
+
+      // 10) Lightning effects overlay
+      try {
+        this.drawLightningEffects(ctx);
+      } catch {}
+
+      // 11) Horses rendering (CRITICAL - was missing!)
+      try {
+        this.drawHorses(ctx, mode, horses);
+      } catch {}
+    },
+
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawHorses(ctx, mode, horses) {
+      try {
+        ctx.save();
+        const horseArray = horses || [];
+        
+        
+        for (const h of horseArray) {
+          if (!h || h.eliminated) continue;
+          
+          // Use Horse.draw() method if available (proper sprite rendering)
+          if (typeof h.draw === 'function') {
+            h.draw();
+          } else {
+            // Fallback: simple circle (old behavior - should not be used)
+            ctx.fillStyle = h.color || h.colorBody || '#8B4513';
+            ctx.beginPath();
+            ctx.arc(h.x, h.y, h.r || 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Horse outline
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Horse number/name
+            if (h.name || h.number) {
+              ctx.fillStyle = '#FFF';
+              ctx.font = 'bold 10px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(h.name || h.number || '', h.x, h.y);
+            }
+          }
+        }
+      } finally {
+        try { ctx.restore(); } catch {}
+      }
+    },
+    
+    /** @param {CanvasRenderingContext2D} ctx */
+    drawTornados(ctx, mode, liveTornados, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        const tornadosToDraw = (mode === 'editor') ? (mapDef?.tornados || []) : (liveTornados || []);
+        
+        
+        for (const item of tornadosToDraw) {
+          const x = item.x, y = item.y, r = item.r || 18;
+          
+          // Get vortex radius settings for dynamic sizing
+          const settings = (typeof mapDef !== 'undefined' && mapDef?.tornadoSettings) ? mapDef.tornadoSettings : { vortexRadius: 120 };
+          const vortexRadius = settings.vortexRadius || 120;
+          
+          // Scale tornado sprite based on vortex radius - ensure minimum decent size
+          const radiusScale = Math.max(1.2, Math.min(4.0, vortexRadius / 60)); // Minimum 1.2x, max 4.0x
+          
+          // Static tornado size with radius scaling (no pulsing animation)
+          const time = performance.now();
+          const rotation = (time * 0.008) % (Math.PI * 2);
+          const dynamicRadius = r * radiusScale;
+          
+          // Advanced wind effects (inspired by premium power-ups)
+          const windSpeed = 0.005;
+          const vortexSpeed = 0.007;
+          const windGust = Math.sin(time * windSpeed) * 0.4 + 0.6;
+          const vortexPulse = Math.sin(time * vortexSpeed * 1.3) * 0.3 + 0.7;
+          const intensity = 0.8 + 0.2 * Math.sin(time * windSpeed * 2);
+          
+          // Multiple wind glow layers (like advanced power-ups)
+          const glowCount = 3;
+          for (let i = 0; i < glowCount; i++) {
+            const glowPhase = (time * 0.006 + i * Math.PI / 1.5) % (Math.PI * 2);
+            const glowRadius = dynamicRadius + 3 + i * 4 + Math.sin(glowPhase) * 6;
+            const glowAlphaValue = (Math.sin(glowPhase) * 0.4 + 0.6) * (1 - i * 0.25);
+            
+            try {
+              drawGlow(ctx, x, y, glowRadius, `rgb(${135 - i * 15},${206 + i * 10},235)`, glowAlpha(0.2 * glowAlphaValue, 0.7 * glowAlphaValue, 0.2));
+            } catch {}
+          }
+          
+          // Enhanced wind gradient with animated intensity
+          const gradientOffset = r * 0.3 * radiusScale;
+          const gradient = ctx.createRadialGradient(x - gradientOffset, y - gradientOffset, 0, x, y, dynamicRadius);
+          gradient.addColorStop(0, `rgba(240, 248, 255, ${0.9 * intensity})`); // Bright wind center
+          gradient.addColorStop(0.3, `rgba(173, 216, 230, ${0.8 * intensity})`); // Light blue
+          gradient.addColorStop(0.6, `rgba(135, 206, 235, ${0.7 * intensity})`); // Sky blue
+          gradient.addColorStop(0.8, `rgba(70, 130, 180, ${0.6 * intensity})`); // Steel blue
+          gradient.addColorStop(1, `rgba(25, 25, 112, ${0.5 * intensity})`); // Dark blue
+          ctx.fillStyle = gradient;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Tornado icon
+          ctx.font = `bold ${Math.max(16, Math.round(dynamicRadius * 0.8))}px "${EMOJI_FONT}"`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+          ctx.fillText('🌪️', x + 1, y + 1);
+          ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+          ctx.fillText('🌪️', x, y);
+          
+          // Advanced wind effects (inspired by RAM's multi-layer sparks)
+          const windRotation = time * 0.004;
+          
+          // Primary wind streams (rotating)
+          ctx.strokeStyle = `rgba(173, 216, 230, ${0.7 + 0.3 * Math.sin(time * vortexSpeed * 3)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const baseAngle = (i * Math.PI) / 3;
+            const animatedAngle = baseAngle + windRotation;
+            const streamLength = dynamicRadius * (0.5 + 0.2 * Math.sin(time * vortexSpeed * 4 + i));
+            const sx1 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.3);
+            const sy1 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.3);
+            const sx2 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.3 + streamLength);
+            const sy2 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.3 + streamLength);
+            ctx.moveTo(sx1, sy1);
+            ctx.lineTo(sx2, sy2);
+          }
+          ctx.stroke();
+          
+          // Secondary wind swirls (counter-rotating)
+          ctx.strokeStyle = `rgba(135, 206, 235, ${0.5 + 0.3 * Math.sin(time * vortexSpeed * 5)})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            const baseAngle = (i * Math.PI) / 2 + Math.PI / 4;
+            const animatedAngle = baseAngle - windRotation * 1.5;
+            const swirlRadius = dynamicRadius * (0.6 + 0.15 * Math.sin(time * vortexSpeed * 6 + i));
+            const swirlLength = dynamicRadius * 0.4;
+            // Create curved swirl effect
+            const cx = x + Math.cos(animatedAngle) * swirlRadius;
+            const cy = y + Math.sin(animatedAngle) * swirlRadius;
+            const ex = cx + Math.cos(animatedAngle + 0.6) * swirlLength;
+            const ey = cy + Math.sin(animatedAngle + 0.6) * swirlLength;
+            ctx.moveTo(cx, cy);
+            ctx.quadraticCurveTo(
+              cx + Math.cos(animatedAngle + 0.3) * swirlLength * 0.6,
+              cy + Math.sin(animatedAngle + 0.3) * swirlLength * 0.6,
+              ex, ey
+            );
+          }
+          ctx.stroke();
+          
+          // Wind particles (like atmospheric debris)
+          const particleCount = 8;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + time * 0.01;
+            const particleRadius = dynamicRadius + 4 + Math.sin(time * 0.008 + i) * 3;
+            const particleX = x + Math.cos(angle) * particleRadius;
+            const particleY = y + Math.sin(angle) * particleRadius;
+            
+            const particleSize = 1 + Math.sin(time * 0.009 + i) * 0.8;
+            ctx.fillStyle = `rgba(${200 + Math.sin(i) * 55}, 230, 255, ${0.6 * vortexPulse})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Inner vortex ring (pulsing)
+          ctx.strokeStyle = `rgba(240, 248, 255, ${0.6 + 0.3 * windGust})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const innerRadius = dynamicRadius * (0.6 + 0.1 * Math.sin(time * windSpeed * 2.5));
+          ctx.arc(x, y, innerRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Outer wind ring (pulsing)
+          ctx.strokeStyle = `rgba(70, 130, 180, ${0.5 + 0.4 * Math.sin(time * windSpeed * 1.8)})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(x, y, dynamicRadius - 1, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Editor selection
+          if (mode === 'editor' && window.selected === item) {
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.arc(x, y, dynamicRadius + 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          
+          // Show vortex radius in editor mode (always visible)
+          if (mode === 'editor') {
+            const settings = (typeof mapDef !== 'undefined' && mapDef?.tornadoSettings) ? mapDef.tornadoSettings : { vortexRadius: 120 };
+            const vortexRadius = settings.vortexRadius || 120;
+            // Debug: vortex radius should be visible as red circle
+            
+            // Draw vortex radius circle
+            ctx.save();
+            
+            // Default vortex radius (subtle blue)
+            ctx.strokeStyle = 'rgba(135, 206, 235, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.arc(x, y, vortexRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Brighter radius when selected (cyan glow)
+            if (typeof window !== 'undefined' && window.selected === item) {
+              ctx.strokeStyle = 'rgba(0, 255, 255, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([6, 3]);
+              ctx.beginPath();
+              ctx.arc(x, y, vortexRadius, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            
+            ctx.restore();
+          }
+        }
+      } finally {
+        try { ctx.restore(); } catch {}
+      }
+    },
+
+    drawVolcanos(ctx, mode, liveVolcanos, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        // Fix: In play mode, render both static volcanos from mapDef and live volcanos
+        const volcanosToDraw = (mode === 'editor') 
+          ? (mapDef?.volcanos || []) 
+          : (mode === 'play' || mode === 'race')
+            ? [ ...(mapDef?.volcanos || []), ...(liveVolcanos || []) ]
+            : (liveVolcanos || []);
+        
+        
+        for (const item of volcanosToDraw) {
+          const x = item.x, y = item.y, r = item.r || 18;
+          
+          // Get effect radius settings for dynamic sizing
+          const settings = (typeof mapDef !== 'undefined' && mapDef?.volcanoSettings) ? mapDef.volcanoSettings : { effectRadius: 120 };
+          const effectRadius = settings.effectRadius || 120;
+          
+          // Scale volcano sprite based on effect radius (120px = 1.0x scale)
+          const radiusScale = Math.max(1.2, Math.min(4.0, effectRadius / 60)); // Minimum 1.2x, max 4.0x
+          
+          // Static volcano size with radius scaling (no pulsing animation)
+          const dynamicRadius = r * radiusScale;
+          
+          // Advanced lava effects (inspired by RAM and Turbo)
+          const time = performance.now();
+          const lavaSpeed = 0.004;
+          const emberSpeed = 0.006;
+          const lavaGlow = Math.sin(time * lavaSpeed) * 0.5 + 0.5;
+          const emberPulse = Math.sin(time * emberSpeed * 1.3) * 0.3 + 0.7;
+          const intensity = 0.8 + 0.2 * Math.sin(time * lavaSpeed * 2);
+          
+          // Multiple lava glow layers (like Turbo's flame layers)
+          const glowCount = 4;
+          for (let i = 0; i < glowCount; i++) {
+            const glowPhase = (time * 0.005 + i * Math.PI / 2) % (Math.PI * 2);
+            const glowRadius = dynamicRadius + 4 + i * 3 + Math.sin(glowPhase) * 5;
+            const glowAlphaValue = (Math.sin(glowPhase) * 0.3 + 0.7) * (1 - i * 0.2);
+            
+            try {
+              drawGlow(ctx, x, y, glowRadius, `rgb(255,${69 + i * 20},0)`, glowAlpha(0.2 * glowAlphaValue, 0.8 * glowAlphaValue, 0.1));
+            } catch {}
+          }
+          
+          // Enhanced lava gradient with animated intensity
+          const gradientOffset = r * 0.3 * radiusScale;
+          const gradient = ctx.createRadialGradient(x - gradientOffset, y - gradientOffset, 0, x, y, dynamicRadius);
+          gradient.addColorStop(0, `rgba(255, 255, 100, ${0.9 * intensity})`); // Bright molten center
+          gradient.addColorStop(0.3, `rgba(255, 140, 0, ${0.8 * intensity})`); // Hot orange
+          gradient.addColorStop(0.6, `rgba(255, 69, 0, ${0.8 * intensity})`); // Lava red
+          gradient.addColorStop(0.8, `rgba(220, 20, 60, ${0.7 * intensity})`); // Deep red
+          gradient.addColorStop(1, `rgba(139, 69, 19, ${0.6 * intensity})`); // Dark volcanic
+          ctx.fillStyle = gradient;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Volcano icon
+          ctx.font = `bold ${Math.max(16, Math.round(dynamicRadius * 0.8))}px "${EMOJI_FONT}"`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+          ctx.fillText('🌋', x + 1, y + 1);
+          ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+          ctx.fillText('🌋', x, y);
+          
+          // Advanced lava sparks (inspired by RAM's energy sparks)
+          const sparkRotation = time * 0.003;
+          
+          // Primary lava sparks (rotating)
+          ctx.strokeStyle = `rgba(255, 255, 0, ${0.6 + 0.4 * Math.sin(time * emberSpeed * 3)})`;
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const baseAngle = (i * Math.PI) / 4;
+            const animatedAngle = baseAngle + sparkRotation;
+            const sparkLength = dynamicRadius * (0.4 + 0.2 * Math.sin(time * emberSpeed * 4 + i));
+            const sx1 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.4);
+            const sy1 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.4);
+            const sx2 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.4 + sparkLength);
+            const sy2 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.4 + sparkLength);
+            ctx.moveTo(sx1, sy1);
+            ctx.lineTo(sx2, sy2);
+          }
+          ctx.stroke();
+          
+          // Secondary ember sparks (counter-rotating)
+          ctx.strokeStyle = `rgba(255, 140, 0, ${0.4 + 0.3 * Math.sin(time * emberSpeed * 5)})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          for (let i = 0; i < 6; i++) {
+            const baseAngle = (i * Math.PI) / 3 + Math.PI / 6;
+            const animatedAngle = baseAngle - sparkRotation * 1.5;
+            const sparkLength = dynamicRadius * 0.25;
+            const sx1 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.6);
+            const sy1 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.6);
+            const sx2 = x + Math.cos(animatedAngle) * (dynamicRadius * 0.6 + sparkLength);
+            const sy2 = y + Math.sin(animatedAngle) * (dynamicRadius * 0.6 + sparkLength);
+            ctx.moveTo(sx1, sy1);
+            ctx.lineTo(sx2, sy2);
+          }
+          ctx.stroke();
+          
+          // Lava particles (like Turbo's fire particles)
+          const particleCount = 10;
+          for (let i = 0; i < particleCount; i++) {
+            const angle = (i / particleCount) * Math.PI * 2 + time * 0.008;
+            const particleRadius = dynamicRadius + 6 + Math.sin(time * 0.01 + i) * 4;
+            const particleX = x + Math.cos(angle) * particleRadius;
+            const particleY = y + Math.sin(angle) * particleRadius;
+            
+            const particleSize = 1.5 + Math.sin(time * 0.012 + i) * 1;
+            ctx.fillStyle = `rgba(255, ${180 + Math.sin(i) * 75}, 0, ${0.7 * emberPulse})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Inner highlight ring (pulsing)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + 0.3 * lavaGlow})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          const innerRadius = dynamicRadius * (0.7 + 0.1 * Math.sin(time * lavaSpeed * 2.5));
+          ctx.arc(x, y, innerRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Outer warning ring (pulsing)
+          ctx.strokeStyle = `rgba(255, 69, 0, ${0.6 + 0.4 * Math.sin(time * lavaSpeed * 1.8)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, y, dynamicRadius - 1, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Editor selection
+          if (mode === 'editor' && typeof window !== 'undefined' && window.selected === item) {
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.arc(x, y, dynamicRadius + 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          
+          // Show effect radius in editor mode (always visible)
+          if (mode === 'editor') {
+            const settings = (typeof mapDef !== 'undefined' && mapDef?.volcanoSettings) ? mapDef.volcanoSettings : { effectRadius: 120 };
+            const effectRadius = settings.effectRadius || 120;
+            
+            // Draw effect radius circle
+            ctx.save();
+            
+            // Default effect radius (red for lava area)
+            ctx.strokeStyle = 'rgba(255,69,0,0.4)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([8, 8]);
+            ctx.beginPath();
+            ctx.arc(x, y, effectRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Brighter radius when selected
+            if (typeof window !== 'undefined' && window.selected === item) {
+              ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([6, 3]);
+              ctx.beginPath();
+              ctx.arc(x, y, effectRadius, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            
+            ctx.restore();
+          }
+        }
+        
+        // Render volcano particles (only in play mode)
+        if ((mode === 'play' || mode === 'race') && typeof window !== 'undefined' && window.volcanoParticles && window.volcanoParticles.length > 0) {
+          // Rendering volcano particles in RenderModule
+          ctx.save();
+          for (const particle of window.volcanoParticles) {
+            const lifeRatio = particle.life / particle.maxLife;
+            const alpha = Math.min(1.0, lifeRatio * 2); // Fade out as life decreases
+            
+            // Particle glow effect
+            const gradient = ctx.createRadialGradient(
+              particle.x, particle.y, 0,
+              particle.x, particle.y, particle.size * 2
+            );
+            gradient.addColorStop(0, `rgba(255, 255, 100, ${alpha})`); // Bright yellow center
+            gradient.addColorStop(0.5, `rgba(255, 69, 0, ${alpha * 0.8})`); // Orange-red
+            gradient.addColorStop(1, `rgba(139, 0, 0, ${alpha * 0.3})`); // Dark red edge
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Particle core (bright center)
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.8})`;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      } finally {
+        try { ctx.restore(); } catch {}
+      }
+    },
+
+    drawLightnings(ctx, mode, liveLightnings, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        
+        // Fix: In play mode, render both static lightnings from mapDef and live lightnings
+        const lightningsToDraw = (mode === 'editor') 
+          ? (mapDef?.lightnings || [])           // Editor: use mapDef for immediate visibility
+          : (mode === 'play' || mode === 'race')
+            ? [ ...(mapDef?.lightnings || []), ...(liveLightnings || []) ]           // Play: use both static and live data
+            : (mapDef?.lightnings || []);        // Fallback: use mapDef
+            
+        for (const item of lightningsToDraw) {
+          const x = item.x;
+          const y = item.y;
+          const r = item.r || 18;
+          
+          // Dynamic time-based animations
+          const currentTime = performance.now();
+          const pulseSpeed = 0.003;
+          const rotationSpeed = 0.001;
+          
+          // Pulsing effect
+          const pulse = Math.sin(currentTime * pulseSpeed) * 0.3 + 0.7;
+          const dynamicRadius = r * (0.9 + pulse * 0.2);
+          
+          // Rotation effect
+          const rotation = (currentTime * rotationSpeed) % (Math.PI * 2);
+          
+          // Enhanced dynamic glow with pulsing
+          try {
+            const glowIntensity = pulse * 1.5;
+            drawGlow(ctx, x, y, dynamicRadius + 15, '#FFD700', glowAlpha(0.4 * glowIntensity, 1.8 * glowIntensity, 1.2));
+            
+            // Secondary glow ring
+            drawGlow(ctx, x, y, dynamicRadius + 8, '#FFFFFF', glowAlpha(0.2 * pulse, 0.8 * pulse, 0.6));
+          } catch {}
+          
+          ctx.save();
+          
+          // Animated gradient with shifting colors
+          const gradientShift = Math.sin(currentTime * 0.002) * 0.1;
+          const gradient = ctx.createRadialGradient(x - r*0.2, y - r*0.2, 0, x, y, dynamicRadius);
+          gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)'); // Always bright center
+          gradient.addColorStop(0.2, `rgba(255, 255, ${200 + gradientShift * 55}, 0.95)`); // Shifting yellow
+          gradient.addColorStop(0.5, `rgba(255, ${215 + gradientShift * 40}, 0, 0.9)`); // Shifting gold
+          gradient.addColorStop(0.8, `rgba(255, ${140 + gradientShift * 60}, 0, 0.8)`); // Shifting orange
+          gradient.addColorStop(1, 'rgba(255, 69, 0, 0.7)'); // Stable edge
+          ctx.fillStyle = gradient;
+          
+          ctx.beginPath();
+          ctx.arc(x, y, dynamicRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Rotating star rays with dynamic length
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(rotation);
+          
+          // Main rays (8 directions)
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 + pulse * 0.3})`;
+          ctx.lineWidth = 2 + pulse * 0.5;
+          for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
+            const rayLength = dynamicRadius * (1.0 + pulse * 0.4);
+            const x1 = Math.cos(angle) * (dynamicRadius * 0.3);
+            const y1 = Math.sin(angle) * (dynamicRadius * 0.3);
+            const x2 = Math.cos(angle) * rayLength;
+            const y2 = Math.sin(angle) * rayLength;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+          
+          // Secondary rays (4 diagonal, counter-rotating)
+          ctx.rotate(-rotation * 1.5); // Counter rotation for dynamic effect
+          ctx.strokeStyle = `rgba(255, 215, 0, ${0.5 + pulse * 0.3})`;
+          ctx.lineWidth = 1 + pulse * 0.3;
+          for (let i = 0; i < 4; i++) {
+            const angle = (i * Math.PI) / 2 + Math.PI / 4;
+            const rayLength = dynamicRadius * (0.8 + pulse * 0.3);
+            const x1 = Math.cos(angle) * (dynamicRadius * 0.4);
+            const y1 = Math.sin(angle) * (dynamicRadius * 0.4);
+            const x2 = Math.cos(angle) * rayLength;
+            const y2 = Math.sin(angle) * rayLength;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+          
+          ctx.restore(); // Restore rotation
+          
+          // Animated concentric rings
+          const ringCount = 3;
+          for (let ring = 0; ring < ringCount; ring++) {
+            const ringPhase = (currentTime * 0.002 + ring * Math.PI / ringCount) % (Math.PI * 2);
+            const ringRadius = dynamicRadius * (0.6 + ring * 0.15) + Math.sin(ringPhase) * 3;
+            const ringAlpha = (Math.sin(ringPhase) * 0.4 + 0.6) * (1 - ring * 0.2);
+            
+            ctx.strokeStyle = `rgba(255, ${215 - ring * 30}, ${ring * 50}, ${ringAlpha})`;
+            ctx.lineWidth = 1.5 - ring * 0.3;
+            ctx.beginPath();
+            ctx.arc(x, y, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Sparkling particles around the star
+          const particleCount = 6;
+          for (let p = 0; p < particleCount; p++) {
+            const particleAngle = (currentTime * 0.001 + p * Math.PI / 3) % (Math.PI * 2);
+            const particleDistance = dynamicRadius * (1.3 + Math.sin(currentTime * 0.004 + p) * 0.3);
+            const particleX = x + Math.cos(particleAngle) * particleDistance;
+            const particleY = y + Math.sin(particleAngle) * particleDistance;
+            const particleSize = 1 + Math.sin(currentTime * 0.005 + p * 0.5) * 1;
+            const particleAlpha = 0.6 + Math.sin(currentTime * 0.003 + p * 0.8) * 0.4;
+            
+            ctx.fillStyle = `rgba(255, 255, 200, ${particleAlpha})`;
+            ctx.beginPath();
+            ctx.arc(particleX, particleY, particleSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          
+          // Enhanced star icon with dynamic scaling
+          const iconScale = 0.8 + pulse * 0.15;
+          ctx.font = `bold ${Math.max(16, Math.round(dynamicRadius * iconScale))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Dynamic shadows
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.7 + pulse * 0.2})`;
+          ctx.fillText('⭐', x + 2, y + 2); // Shadow
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.5 + pulse * 0.2})`;
+          ctx.fillText('⭐', x + 1, y + 1); // Lighter shadow
+          ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+          ctx.fillText('⭐', x, y); // Main star
+          
+          // Editor mode enhancements (NO TEXT LABEL)
+          if (mode === 'editor') {
+            // Only show selection highlight, no text
+            if (window.selected === item) {
+              ctx.strokeStyle = 'rgba(0, 255, 255, 0.8)';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([5, 5]);
+              ctx.beginPath();
+              ctx.arc(x, y, dynamicRadius + 5, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+          
+          ctx.restore();
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+
+    /** 
+     * Enhanced Warpzone Render Function with Advanced Dynamic Effects
+     * Features: Pulsing glow, particle trails, distortion effects, phase transitions
+     */
+    drawWarpzones(ctx, mode, liveWarpzones, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        
+        // In play/race mode: use window.liveWarpzones (set by race.js with consumed flags)
+        // In editor mode: render mapDef.warpzones directly
+        const warpzonesToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveWarpzones || liveWarpzones || [])
+          : (mapDef?.warpzones || []);
+        
+        const currentTime = performance.now();
+        
+        for (const item of warpzonesToDraw) {
+          if (!item) continue;
+          // Skip consumed items (only in play/race mode)
+          if (item.consumed && (mode === 'play' || mode === 'race')) continue;
+          
+          // Enhanced animation variables with multiple frequencies
+          const fastPulse = Math.sin(currentTime * 0.008) * 0.3 + 0.7;
+          const slowPulse = Math.sin(currentTime * 0.003) * 0.4 + 0.6;
+          const ultraPulse = Math.sin(currentTime * 0.015) * 0.2 + 0.8;
+          
+          // Dynamic radius with breathing effect
+          const baseRadius = item.r || 16;
+          const animatedRadius = baseRadius * (1 + slowPulse * 0.15);
+          
+          // Enhanced multi-layer glow effect
+          try {
+            // Outer glow with dynamic size
+            drawGlow(ctx, item.x, item.y, animatedRadius * 2.5, '#9C27B0', glowAlpha(0.2 * fastPulse, 0.4 * fastPulse, 0.1));
+            // Mid glow
+            drawGlow(ctx, item.x, item.y, animatedRadius * 1.8, '#E91E63', glowAlpha(0.4 * slowPulse, 0.6 * slowPulse, 0.15));
+            // Inner intense glow
+            drawGlow(ctx, item.x, item.y, animatedRadius * 1.2, '#FFFFFF', glowAlpha(0.3 * ultraPulse, 0.8 * ultraPulse, 0.2));
+          } catch {}
+          
+          // Dynamic gradient with color shifting
+          const gradient = ctx.createRadialGradient(item.x, item.y, 0, item.x, item.y, animatedRadius);
+          const alpha1 = Math.floor(255 * (0.8 + slowPulse * 0.2)).toString(16).padStart(2, '0');
+          const alpha2 = Math.floor(255 * (0.6 + fastPulse * 0.3)).toString(16).padStart(2, '0');
+          const alpha3 = Math.floor(255 * (0.4 + ultraPulse * 0.4)).toString(16).padStart(2, '0');
+          
+          gradient.addColorStop(0, `#FFFFFF${alpha1}`);
+          gradient.addColorStop(0.3, `#E91E63${alpha2}`);
+          gradient.addColorStop(0.7, `#9C27B0${alpha3}`);
+          gradient.addColorStop(1, `#673AB7${Math.floor(255 * 0.3).toString(16).padStart(2, '0')}`);
+          
+          // Main warp portal body
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, animatedRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Swirling ring effect
+          ctx.save();
+          ctx.translate(item.x, item.y);
+          ctx.rotate(currentTime * 0.004);
+          
+          for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const ringRadius = animatedRadius * 0.8;
+            const x = Math.cos(angle) * ringRadius;
+            const y = Math.sin(angle) * ringRadius;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + fastPulse * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 2 + ultraPulse, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+          
+          // Animated outline with pulse
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 + slowPulse * 0.3})`;
+          ctx.lineWidth = 2 + fastPulse;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, animatedRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Outer energy ring
+          ctx.strokeStyle = `rgba(156, 39, 176, ${0.5 + ultraPulse * 0.3})`;
+          ctx.lineWidth = 1 + slowPulse * 0.5;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, animatedRadius * 1.3, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with enhanced effects
+          ctx.font = `bold ${Math.max(12, Math.round(animatedRadius * 0.8))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && window.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'warpzone', item.x, item.y, animatedRadius); } catch {} 
+          }
+          if (!(mode === 'editor' && window.editorVectorIconsOnly)) {
+            const glyph = (mode === 'editor' && !window.editorEmojiEnabled) ? 'W' : '🌌';
+            
+            // Dynamic text shadow with color cycling
+            ctx.shadowColor = `rgba(255, 255, 255, ${0.8 + fastPulse * 0.2})`;
+            ctx.shadowBlur = 6 + ultraPulse * 3;
+            ctx.shadowOffsetX = Math.sin(currentTime * 0.01) * 1;
+            ctx.shadowOffsetY = Math.cos(currentTime * 0.01) * 1;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.9 + slowPulse * 0.1})`;
+            ctx.fillText(glyph, item.x, item.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          }
+          
+          // Particle trail effect (simple version for performance)
+          if (mode === 'play' || mode === 'race') {
+            for (let i = 0; i < 3; i++) {
+              const angle = (currentTime * 0.005 + i * Math.PI * 2 / 3) % (Math.PI * 2);
+              const particleRadius = animatedRadius * 1.5;
+              const px = item.x + Math.cos(angle) * particleRadius;
+              const py = item.y + Math.sin(angle) * particleRadius;
+              
+              ctx.fillStyle = `rgba(156, 39, 176, ${0.3 + Math.sin(currentTime * 0.01 + i) * 0.2})`;
+              ctx.beginPath();
+              ctx.arc(px, py, 1 + fastPulse * 0.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+
+    /** 
+     * Enhanced Quantum Dash Render Function with Advanced Dynamic Effects
+     * Features: Quantum field effects, energy waves, phase distortion, crystal-like structure
+     */
+    drawQuantumdashs(ctx, mode, liveQuantumdashs, mapDef, drawGlow, glowAlpha) {
+      try {
+        ctx.save();
+        
+        // In play/race mode: use window.liveQuantumdashs (set by race.js with consumed flags)
+        // In editor mode: render mapDef.quantumdashs directly
+        const quantumdashsToDraw = (mode === 'play' || mode === 'race')
+          ? (window.liveQuantumdashs || liveQuantumdashs || [])
+          : (mapDef?.quantumdashs || []);
+        
+        const currentTime = performance.now();
+        
+        for (const item of quantumdashsToDraw) {
+          if (!item) continue;
+          // Skip consumed items (only in play/race mode)
+          if (item.consumed && (mode === 'play' || mode === 'race')) continue;
+          
+          // Quantum field animation variables
+          const quantumWave = Math.sin(currentTime * 0.012) * 0.3 + 0.7;
+          const energyPulse = Math.sin(currentTime * 0.006) * 0.4 + 0.6;
+          const fieldDistortion = Math.sin(currentTime * 0.009) * 0.2 + 0.8;
+          const crystalPhase = Math.sin(currentTime * 0.015) * 0.25 + 0.75;
+          
+          // Dynamic radius with quantum fluctuation
+          const baseRadius = item.r || 16;
+          const quantumRadius = baseRadius * (1 + energyPulse * 0.2);
+          
+          // Multi-layered quantum field glow
+          try {
+            // Quantum field outer boundary
+            drawGlow(ctx, item.x, item.y, quantumRadius * 3, '#00BCD4', glowAlpha(0.15 * quantumWave, 0.3 * quantumWave, 0.08));
+            // Energy wave layer
+            drawGlow(ctx, item.x, item.y, quantumRadius * 2.2, '#4FC3F7', glowAlpha(0.3 * energyPulse, 0.5 * energyPulse, 0.12));
+            // Core quantum field
+            drawGlow(ctx, item.x, item.y, quantumRadius * 1.5, '#81D4FA', glowAlpha(0.4 * fieldDistortion, 0.7 * fieldDistortion, 0.18));
+            // Crystal core
+            drawGlow(ctx, item.x, item.y, quantumRadius * 0.8, '#E1F5FE', glowAlpha(0.5 * crystalPhase, 0.9 * crystalPhase, 0.25));
+          } catch {}
+          
+          // Quantum crystal gradient with phase shifting
+          const gradient = ctx.createRadialGradient(item.x, item.y, 0, item.x, item.y, quantumRadius);
+          const alpha1 = Math.floor(255 * (0.9 + crystalPhase * 0.1)).toString(16).padStart(2, '0');
+          const alpha2 = Math.floor(255 * (0.7 + energyPulse * 0.2)).toString(16).padStart(2, '0');
+          const alpha3 = Math.floor(255 * (0.5 + quantumWave * 0.3)).toString(16).padStart(2, '0');
+          
+          gradient.addColorStop(0, `#E1F5FE${alpha1}`);
+          gradient.addColorStop(0.25, `#B3E5FC${alpha2}`);
+          gradient.addColorStop(0.6, `#4FC3F7${alpha3}`);
+          gradient.addColorStop(0.85, `#0097A7${Math.floor(255 * 0.6).toString(16).padStart(2, '0')}`);
+          gradient.addColorStop(1, `#00695C${Math.floor(255 * 0.4).toString(16).padStart(2, '0')}`);
+          
+          // Main quantum crystal body
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, quantumRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Quantum field hexagonal pattern
+          ctx.save();
+          ctx.translate(item.x, item.y);
+          ctx.rotate(currentTime * 0.003);
+          
+          for (let layer = 0; layer < 2; layer++) {
+            const layerRadius = quantumRadius * (0.6 + layer * 0.3);
+            const sides = 6;
+            
+            ctx.strokeStyle = `rgba(0, 188, 212, ${(0.3 + fieldDistortion * 0.2) * (1 - layer * 0.3)})`;
+            ctx.lineWidth = 1 + energyPulse * 0.5;
+            ctx.beginPath();
+            
+            for (let i = 0; i <= sides; i++) {
+              const angle = (i / sides) * Math.PI * 2;
+              const x = Math.cos(angle) * layerRadius;
+              const y = Math.sin(angle) * layerRadius;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          ctx.restore();
+          
+          // Energy resonance rings
+          for (let i = 0; i < 3; i++) {
+            const ringPhase = (currentTime * 0.008 + i * Math.PI * 2 / 3) % (Math.PI * 2);
+            const ringAlpha = (Math.sin(ringPhase) + 1) * 0.15;
+            const ringRadius = quantumRadius * (1.2 + i * 0.3 + Math.sin(ringPhase) * 0.1);
+            
+            ctx.strokeStyle = `rgba(0, 188, 212, ${ringAlpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          // Quantum phase outline with energy crackling
+          ctx.strokeStyle = `rgba(225, 245, 254, ${0.8 + energyPulse * 0.2})`;
+          ctx.lineWidth = 2 + fieldDistortion;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, quantumRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          // Icon with quantum effects
+          ctx.font = `bold ${Math.max(12, Math.round(quantumRadius * 0.8))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && window.editorVectorIconsOnly) { 
+            try { this._drawVectorIcon(ctx, 'quantumdash', item.x, item.y, quantumRadius); } catch {} 
+          }
+          if (!(mode === 'editor' && window.editorVectorIconsOnly)) {
+            const glyph = (mode === 'editor' && !window.editorEmojiEnabled) ? 'Q' : '🔮';
+            
+            // Quantum glow text effect
+            ctx.shadowColor = `rgba(0, 188, 212, ${0.9 + quantumWave * 0.1})`;
+            ctx.shadowBlur = 8 + crystalPhase * 4;
+            ctx.shadowOffsetX = Math.sin(currentTime * 0.02) * 0.5;
+            ctx.shadowOffsetY = Math.cos(currentTime * 0.02) * 0.5;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.95 + energyPulse * 0.05})`;
+            ctx.fillText(glyph, item.x, item.y);
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          }
+          
+          // Quantum energy particles floating around
+          if (mode === 'play' || mode === 'race') {
+            for (let i = 0; i < 5; i++) {
+              const particlePhase = currentTime * 0.004 + i * Math.PI * 2 / 5;
+              const orbitRadius = quantumRadius * (1.8 + Math.sin(particlePhase * 2) * 0.3);
+              const px = item.x + Math.cos(particlePhase) * orbitRadius;
+              const py = item.y + Math.sin(particlePhase) * orbitRadius;
+              const particleAlpha = 0.4 + Math.sin(currentTime * 0.01 + i) * 0.2;
+              
+              ctx.fillStyle = `rgba(79, 195, 247, ${particleAlpha})`;
+              ctx.beginPath();
+              ctx.arc(px, py, 1 + crystalPhase * 0.8, 0, Math.PI * 2);
+              ctx.fill();
+              
+              // Small energy spark
+              if (Math.random() < 0.1) {
+                ctx.fillStyle = `rgba(225, 245, 254, ${particleAlpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(px + (Math.random() - 0.5) * 4, py + (Math.random() - 0.5) * 4, 0.5, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    },
+
+    /**
+     * Enhanced Nebula Render Function - v6.0 Advanced Effects Edition
+     */
+    drawNebulas(ctx, mode, liveNebulas, mapDef, drawGlow, glowAlpha) {
+      // Debug logging removed
+      try {
+        ctx.save();
+        
+        const nebulasToDraw = (mode === 'play' || mode === 'race')
+          ? (mapDef?.nebulas || [])
+          : (mapDef?.nebulas || []);
+        
+        const currentTime = performance.now();
+        
+        for (const item of nebulasToDraw) {
+          if (!item) continue;
+          
+          // Skip consumed Nebulas in play mode
+          if ((mode === 'play' || mode === 'race') && item.consumed) {
+            // Debug logging removed
+            continue;
+          }
+          
+          const starPulse = Math.sin(currentTime * 0.005) * 0.3 + 0.7;
+          const galaxyRotation = currentTime * 0.002;
+          const nebulaPhase = Math.sin(currentTime * 0.008) * 0.4 + 0.6;
+          
+          const baseRadius = item.r || 16;
+          const animatedRadius = baseRadius * (1 + starPulse * 0.15);
+          
+          try {
+            drawGlow(ctx, item.x, item.y, animatedRadius * 3.5, '#4A0E4E', glowAlpha(0.1 * starPulse, 0.25 * starPulse, 0.08));
+            drawGlow(ctx, item.x, item.y, animatedRadius * 2.5, '#4A0E4E', glowAlpha(0.2 * nebulaPhase, 0.4 * nebulaPhase, 0.12));
+            drawGlow(ctx, item.x, item.y, animatedRadius * 1.8, '#FFFFFF', glowAlpha(0.3 * starPulse, 0.6 * starPulse, 0.15));
+          } catch {}
+          
+          const gradient = ctx.createRadialGradient(item.x, item.y, 0, item.x, item.y, animatedRadius);
+          
+          const alpha1 = Math.floor(255 * (0.9 + starPulse * 0.1)).toString(16).padStart(2, '0');
+          const alpha2 = Math.floor(255 * (0.7 + nebulaPhase * 0.2)).toString(16).padStart(2, '0');
+          const alpha3 = Math.floor(255 * (0.5 + starPulse * 0.3)).toString(16).padStart(2, '0');
+          
+          gradient.addColorStop(0, `#FFFFFF${alpha1}`);
+          gradient.addColorStop(0.3, `#E1BEE7${alpha2}`);
+          gradient.addColorStop(0.7, `#9C27B0${alpha3}`);
+          gradient.addColorStop(1, `#4A0E4E${Math.floor(255 * 0.4).toString(16).padStart(2, '0')}`);
+          
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, animatedRadius, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.save();
+          ctx.translate(item.x, item.y);
+          ctx.rotate(galaxyRotation);
+          
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const starRadius = animatedRadius * 0.7;
+            const x = Math.cos(angle) * starRadius;
+            const y = Math.sin(angle) * starRadius;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + Math.sin(currentTime * 0.01 + i) * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(x, y, 1 + starPulse * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+          
+          for (let ring = 0; ring < 3; ring++) {
+            const ringPhase = (currentTime * 0.004 + ring * Math.PI * 2 / 3) % (Math.PI * 2);
+            const ringAlpha = (Math.sin(ringPhase) + 1) * 0.15;
+            const ringRadius = animatedRadius * (1.3 + ring * 0.2 + Math.sin(ringPhase) * 0.1);
+            
+            ctx.strokeStyle = `rgba(156, 39, 176, ${ringAlpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(item.x, item.y, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 + nebulaPhase * 0.2})`;
+          ctx.lineWidth = 2 + starPulse;
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, animatedRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          
+          ctx.font = `bold ${Math.max(12, Math.round(animatedRadius * 0.8))}px ${EMOJI_FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          if (mode === 'editor' && window.editorVectorIconsOnly) {
+            try { this._drawVectorIcon(ctx, 'nebula', item.x, item.y, animatedRadius); } catch {}
+          }
+          
+          if (!(mode === 'editor' && window.editorVectorIconsOnly)) {
+            const glyph = (mode === 'editor' && !window.editorEmojiEnabled) ? 'N' : '🔹';
+            
+            ctx.shadowColor = `rgba(156, 39, 176, ${0.9 + starPulse * 0.1})`;
+            ctx.shadowBlur = 8 + nebulaPhase * 4;
+            ctx.shadowOffsetX = Math.sin(currentTime * 0.02) * 0.5;
+            ctx.shadowOffsetY = Math.cos(currentTime * 0.02) * 0.5;
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.95 + nebulaPhase * 0.05})`;
+            ctx.fillText(glyph, item.x, item.y);
+            
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+          }
+          
+          if (mode === 'play' || mode === 'race') {
+            for (let i = 0; i < 6; i++) {
+              const particlePhase = currentTime * 0.003 + i * Math.PI * 2 / 6;
+              const orbitRadius = animatedRadius * (1.5 + Math.sin(particlePhase * 2) * 0.3);
+              const px = item.x + Math.cos(particlePhase) * orbitRadius;
+              const py = item.y + Math.sin(particlePhase) * orbitRadius;
+              
+              const particleAlpha = 0.4 + Math.sin(currentTime * 0.01 + i) * 0.2;
+              ctx.fillStyle = `rgba(156, 39, 176, ${particleAlpha})`;
+              ctx.beginPath();
+              ctx.arc(px, py, 1 + starPulse * 0.8, 0, Math.PI * 2);
+              ctx.fill();
+              
+              if (Math.random() < 0.1) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${particleAlpha * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(px + (Math.random() - 0.5) * 4, py + (Math.random() - 0.5) * 4, 0.5, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+        }
+      } finally {
+        try {
+          ctx.restore();
+        } catch {}
+      }
+    }
+
+  };
+  Object.defineProperty(w, 'RenderModule', {
+    value: moduleObj,
+    writable: false,
+    configurable: false,
+  });
+  try {
+    console.log('[render-module] helper loaded: RenderModule available with drawBoosts');
+  } catch {}
+
+  // Keep a reference to the original render if present, then wrap (optional)
+  const originalRender = typeof w.render === 'function' ? w.render : null;
+  if (!originalRender) {
+    console.warn(
+      '[render-module] window.render not found at load time. Module in helper-only mode.'
+    );
+    return;
+  }
+  // Idempotency: avoid double-wrapping
+  if (originalRender.__wrappedByRenderModule) {
+    return; // already wrapped by this module
+  }
+  const forwardedRender = /** @type {RenderFn} */ (
+    function () {
+      /** @type {RenderFn} */
+      // @ts-ignore
+      const orig = originalRender;
+      // eslint-disable-next-line prefer-rest-params
+      try {
+        if (typeof forwardedRender.__before === 'function') forwardedRender.__before();
+      } catch {}
+      const result = orig.apply(this, arguments);
+      try {
+        if (typeof forwardedRender.__after === 'function') forwardedRender.__after();
+      } catch {}
+      return result;
+    }
+  );
+  forwardedRender.__wrappedByRenderModule = true;
+  // augment module with hooks
+  moduleObj.setBeforeDraw = function (fn) {
+    if (typeof fn === 'function') forwardedRender.__before = fn;
+  };
+  moduleObj.setAfterDraw = function (fn) {
+    if (typeof fn === 'function') forwardedRender.__after = fn;
+  };
+  moduleObj.getOriginal = function () {
+    return originalRender;
+  };
+  // Replace global render with forwarded version
+  w.render = forwardedRender;
+  console.log('[render-module] render() is wrapped (no behavior change).');
+})();

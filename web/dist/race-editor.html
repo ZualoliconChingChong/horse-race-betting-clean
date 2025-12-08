@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Race Map Editor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #gameFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        /* Hidden floating save button - show on hover top-right */
+        #floatingSave {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(74, 222, 128, 0.9);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        body:hover #floatingSave {
+            opacity: 1;
+        }
+        
+        #floatingSave:hover {
+            background: #22c55e;
+            transform: scale(1.05);
+        }
+        
+        /* Floating help - show on hover top-left */
+        #floatingHelp {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(59, 130, 246, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            line-height: 1.4;
+            max-width: 200px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        body:hover #floatingHelp {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating help text -->
+    <div id="floatingHelp">
+        <div><strong>🎮 Editor Mode</strong></div>
+        <div>▶️ F1 = Start Race</div>
+        <div>💾 Ctrl+S = Save</div>
+        <div>✏️ F2 = Toggle Editor</div>
+    </div>
+    
+    <!-- Floating save button - appears on hover -->
+    <button id="floatingSave" onclick="saveConfig()">💾 Save</button>
+    
+    <!-- Fullscreen game iframe -->
+    <iframe id="gameFrame" src=""></iframe>
+
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let raceId = null;
+        let gameWindow = null;
+        
+        async function init() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                raceId = urlParams.get('raceId');
+                
+                if (!raceId) {
+                    alert('Race ID not provided');
+                    return;
+                }
+                
+                // Load game editor with editor mode and raceId params
+                const gameFrame = document.getElementById('gameFrame');
+                gameFrame.src = `/game/index.html?editor=true&raceId=${raceId}`;
+                
+                gameFrame.onload = async () => {
+                    gameWindow = gameFrame.contentWindow;
+                    console.log('[Editor] Game loaded');
+                    
+                    // Wait for game to fully initialize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Enable editor mode
+                    try {
+                        // Hide loading screen first
+                        const loadingScreen = gameWindow.document.getElementById('loadingScreen');
+                        if (loadingScreen) {
+                            loadingScreen.style.display = 'none';
+                            console.log('[Editor] ✅ Hidden loading screen');
+                        }
+                        
+                        // Show editor bar
+                        const editorBar = gameWindow.document.getElementById('editorBar');
+                        if (editorBar) {
+                            editorBar.style.display = 'flex';
+                            editorBar.style.visibility = 'visible';
+                            console.log('[Editor] ✅ Enabled editor UI');
+                        } else {
+                            console.error('[Editor] ❌ Editor bar not found');
+                        }
+                        
+                        // Wait a bit more then click edit button
+                        setTimeout(() => {
+                            const editBtn = gameWindow.document.getElementById('editBtn');
+                            if (editBtn) {
+                                console.log('[Editor] Clicking edit button...');
+                                editBtn.click();
+                                console.log('[Editor] ✅ Entered editor mode');
+                            } else {
+                                console.error('[Editor] ❌ Edit button not found');
+                            }
+                        }, 300);
+                        
+                        // Override play button to start actual race (not just test)
+                        setTimeout(() => {
+                            const playBtn = gameWindow.document.getElementById('playBtn');
+                            if (playBtn) {
+                                playBtn.onclick = async (e) => {
+                                    e.preventDefault();
+                                    console.log('[Editor] Play button clicked - starting actual race');
+                                    
+                                    // Save config first
+                                    await saveConfig();
+                                    
+                                    // Launch race
+                                    const params = new URLSearchParams({
+                                        raceId: raceId,
+                                        v: Date.now()
+                                    });
+                                    window.open(`/race-launcher.html?${params.toString()}`, '_blank');
+                                };
+                                console.log('[Editor] ✅ Overrode play button');
+                            }
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('[Editor] Error enabling editor:', error);
+                    }
+                    
+                    // NOTE: race-save-injector.js will handle loading race data, 
+                    // horses injection, and saved map config automatically
+                    console.log('[Editor] ✅ race-save-injector.js will handle data loading');
+                };
+                
+            } catch (error) {
+                console.error('[Editor] Init error:', error);
+                alert('Failed to load editor: ' + error.message);
+            }
+        }
+        
+        async function saveConfig() {
+            try {
+                if (!gameWindow || !gameWindow.mapDef) {
+                    alert('Game not loaded');
+                    return;
+                }
+                
+                // Extract config from game
+                const config = {
+                    // Map elements
+                    walls: gameWindow.mapDef.walls || [],
+                    carrots: gameWindow.mapDef.carrots || [],
+                    spawnPoints: gameWindow.mapDef.spawnPoints || [],
+                    waitingRoom: gameWindow.mapDef.waitingRoom,
+                    startLine: gameWindow.mapDef.startLine,
+                    
+                    // Settings
+                    hpSystemEnabled: gameWindow.mapDef.hpSystemEnabled || false,
+                    lastHorseWins: gameWindow.mapDef.lastHorseWins || false,
+                    wallDamageEnabled: gameWindow.mapDef.wallDamageEnabled || false,
+                    wallDamageAmount: gameWindow.mapDef.wallDamageAmount || 10,
+                    borderDamageEnabled: gameWindow.mapDef.borderDamageEnabled || false,
+                    borderDamageAmount: gameWindow.mapDef.borderDamageAmount || 5,
+                    horseRadius: gameWindow.mapDef.horseRadius,
+                    carrotRadius: gameWindow.mapDef.carrotRadius,
+                    
+                    // Power-ups
+                    boosts: gameWindow.mapDef.boosts || [],
+                    shields: gameWindow.mapDef.shields || [],
+                    turbos: gameWindow.mapDef.turbos || [],
+                    traps: gameWindow.mapDef.traps || [],
+                    muds: gameWindow.mapDef.muds || [],
+                    ices: gameWindow.mapDef.ices || []
+                };
+                
+                console.log('[Editor] Saving config:', config);
+                
+                // Get token from Zustand storage
+                let token = null;
+                const authStorage = localStorage.getItem('auth-storage');
+                
+                if (authStorage) {
+                    try {
+                        const parsed = JSON.parse(authStorage);
+                        token = parsed.state?.token || parsed.token;
+                    } catch (e) {
+                        console.error('[Editor] Failed to parse auth-storage:', e);
+                    }
+                }
+                
+                // Fallback to direct token
+                if (!token) {
+                    token = localStorage.getItem('token');
+                }
+                
+                if (!token) {
+                    alert('❌ No authentication token found. Please login first.');
+                    window.close();
+                    return;
+                }
+                
+                console.log('[Editor] Token:', token ? token.substring(0, 20) + '...' : 'NOT FOUND');
+                
+                // Decode token to check admin status (client-side only, for debugging)
+                try {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        console.log('[Editor] Token payload:', payload);
+                        console.log('[Editor] Token has is_admin:', payload.is_admin);
+                        console.log('[Editor] Username:', payload.username);
+                        
+                        if (!payload.is_admin && payload.username !== 'admin') {
+                            alert('❌ Admin access required. Please login as admin.');
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error('[Editor] Failed to decode token:', e);
+                }
+                
+                // Save to server
+                const response = await fetch(`${API_BASE}/race/${raceId}/config`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ mapData: config })
+                });
+                
+                console.log('[Editor] Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('[Editor] Error response:', errorData);
+                    throw new Error(errorData.error || 'Failed to save config');
+                }
+                
+                alert('✅ Map config saved successfully!');
+                
+            } catch (error) {
+                console.error('[Editor] Save error:', error);
+                alert('❌ Failed to save config: ' + error.message);
+            }
+        }
+        
+        // Keyboard shortcut: Ctrl+S to save
+        window.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveConfig();
+            }
+        });
+        
+        // Auto-init
+        init();
+    </script>
+</body>
+</html>

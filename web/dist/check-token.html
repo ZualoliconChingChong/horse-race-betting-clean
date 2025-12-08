@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Token Checker</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+        }
+        .box {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .ok { color: #4ade80; }
+        .error { color: #ef4444; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        .btn-danger {
+            background: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        pre {
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Token Debug Checker</h1>
+    
+    <div class="box">
+        <h2>Step 1: Check Token</h2>
+        <button onclick="checkToken()">🔍 Check Current Token</button>
+        <div id="tokenResult"></div>
+    </div>
+    
+    <div class="box">
+        <h2>Step 2: Fix Token</h2>
+        <button class="btn-danger" onclick="clearAll()">🗑️ Clear All & Logout</button>
+        <button onclick="goToLogin()">🔑 Go to Login</button>
+        <div id="clearResult"></div>
+    </div>
+    
+    <div class="box">
+        <h2>Step 3: Test Save</h2>
+        <input type="number" id="raceId" placeholder="Race ID" value="2" style="padding: 8px; margin-right: 10px;">
+        <button onclick="testSave()">💾 Test Save Config</button>
+        <div id="saveResult"></div>
+    </div>
+
+    <script>
+        function checkToken() {
+            const result = document.getElementById('tokenResult');
+            
+            // Check Zustand auth-storage
+            const authStorage = localStorage.getItem('auth-storage');
+            let token = null;
+            
+            if (authStorage) {
+                try {
+                    const parsed = JSON.parse(authStorage);
+                    token = parsed.state?.token || parsed.token;
+                } catch (e) {
+                    console.error('Failed to parse auth-storage:', e);
+                }
+            }
+            
+            // Fallback to direct token
+            if (!token) {
+                token = localStorage.getItem('token');
+            }
+            
+            if (!token) {
+                result.innerHTML = '<p class="error">❌ NO TOKEN FOUND!</p><p>You need to login first.</p><p>Auth storage: ' + (authStorage ? 'exists but no token' : 'not found') + '</p>';
+                return;
+            }
+            
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    result.innerHTML = '<p class="error">❌ Invalid token format</p>';
+                    return;
+                }
+                
+                const payload = JSON.parse(atob(parts[1]));
+                
+                let html = '<h3 class="ok">✅ Token Found</h3>';
+                html += '<pre>' + JSON.stringify(payload, null, 2) + '</pre>';
+                
+                if (payload.is_admin === 1 || payload.username === 'admin') {
+                    html += '<p class="ok">✅ Has admin access!</p>';
+                } else {
+                    html += '<p class="error">❌ NO ADMIN ACCESS!</p>';
+                    html += '<p>is_admin: ' + payload.is_admin + '</p>';
+                    html += '<p>You need to logout and login again with admin account.</p>';
+                }
+                
+                // Check expiry
+                if (payload.exp) {
+                    const expDate = new Date(payload.exp * 1000);
+                    const now = new Date();
+                    if (expDate < now) {
+                        html += '<p class="error">❌ Token EXPIRED at ' + expDate.toLocaleString() + '</p>';
+                    } else {
+                        html += '<p class="ok">✅ Token valid until ' + expDate.toLocaleString() + '</p>';
+                    }
+                }
+                
+                result.innerHTML = html;
+                
+            } catch (e) {
+                result.innerHTML = '<p class="error">❌ Failed to decode token: ' + e.message + '</p>';
+            }
+        }
+        
+        function clearAll() {
+            if (!confirm('Clear all data and logout?')) return;
+            
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Clear cookies
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            document.getElementById('clearResult').innerHTML = '<p class="ok">✅ All cleared! Now login again.</p>';
+            
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        }
+        
+        function goToLogin() {
+            window.location.href = '/';
+        }
+        
+        async function testSave() {
+            const result = document.getElementById('saveResult');
+            const raceId = document.getElementById('raceId').value;
+            
+            // Get token from Zustand storage
+            const authStorage = localStorage.getItem('auth-storage');
+            let token = null;
+            
+            if (authStorage) {
+                try {
+                    const parsed = JSON.parse(authStorage);
+                    token = parsed.state?.token || parsed.token;
+                } catch (e) {
+                    console.error('Failed to parse auth-storage:', e);
+                }
+            }
+            
+            if (!token) {
+                token = localStorage.getItem('token');
+            }
+            
+            if (!token) {
+                result.innerHTML = '<p class="error">❌ No token! Login first.</p>';
+                return;
+            }
+            
+            result.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const response = await fetch(`http://localhost:4000/api/race/${raceId}/config`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        mapData: { 
+                            test: true,
+                            walls: [],
+                            timestamp: new Date().toISOString()
+                        } 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = '<p class="ok">✅ SUCCESS! Status: ' + response.status + '</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    result.innerHTML = '<p class="error">❌ FAILED! Status: ' + response.status + '</p><pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                }
+                
+            } catch (error) {
+                result.innerHTML = '<p class="error">❌ Error: ' + error.message + '</p>';
+            }
+        }
+        
+        // Auto-check on load
+        window.onload = () => {
+            checkToken();
+        };
+    </script>
+</body>
+</html>

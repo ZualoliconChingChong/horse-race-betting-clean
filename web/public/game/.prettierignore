@@ -1,0 +1,5 @@
+dist/
+node_modules/
+assets/
+# Temporarily ignore index.html until we fully validate structure for Prettier
+index.html

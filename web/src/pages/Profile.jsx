@@ -4,11 +4,17 @@ import useAuthStore from '../stores/authStore'
 import api from '../services/api'
 
 function Profile() {
-  const { user } = useAuthStore()
+  const { user, updateAvatar } = useAuthStore()
   const [transactions, setTransactions] = useState([])
   const [bets, setBets] = useState([])
   const [activeTab, setActiveTab] = useState('transactions')
   const [isLoading, setIsLoading] = useState(true)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [pwMessage, setPwMessage] = useState('')
+  const [pwError, setPwError] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,13 +39,15 @@ function Profile() {
     ? Math.round((user.total_wins / user.total_races) * 100) 
     : 0
 
+  const avatarOptions = ['🐎', '🔥', '⭐', '👑', '🎲', '🏆']
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Profile Card */}
       <div className="bg-dark-900 rounded-2xl p-6">
         <div className="flex items-center gap-6">
           <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center text-3xl">
-            🐎
+            {user?.avatar || '🐎'}
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -57,6 +65,126 @@ function Profile() {
             </div>
             <p className="text-dark-400 text-sm">Số dư hiện tại</p>
           </div>
+        </div>
+      </div>
+
+      {/* Avatar section */}
+      <div className="bg-dark-900 rounded-2xl p-6 space-y-4">
+        <h2 className="text-xl font-bold mb-2">Ảnh đại diện</h2>
+        <p className="text-dark-400 text-sm mb-2">Chọn một biểu tượng để làm avatar của bạn.</p>
+        <div className="flex flex-wrap gap-3">
+          {avatarOptions.map((a) => {
+            const selected = user?.avatar === a
+            return (
+              <button
+                key={a}
+                onClick={async () => {
+                  try {
+                    await api.post('/user/avatar', { avatar: a })
+                    updateAvatar(a)
+                  } catch (error) {
+                    console.error('Failed to update avatar', error)
+                  }
+                }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl border transition 
+                  ${selected ? 'border-primary-400 bg-primary-500/20' : 'border-dark-600 hover:border-primary-400'}`}
+              >
+                {a}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Change password section */}
+      <div className="bg-dark-900 rounded-2xl p-6 space-y-4">
+        <h2 className="text-xl font-bold mb-2">Đổi mật khẩu</h2>
+        {pwError && (
+          <div className="bg-red-500/10 border border-red-500 text-red-400 px-3 py-2 rounded text-sm">
+            {pwError}
+          </div>
+        )}
+        {pwMessage && (
+          <div className="bg-green-500/10 border border-green-500 text-green-400 px-3 py-2 rounded text-sm">
+            {pwMessage}
+          </div>
+        )}
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-dark-300">Mật khẩu hiện tại</label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="px-3 py-2 rounded bg-dark-800 border border-dark-700 focus:outline-none focus:border-primary-500"
+              placeholder="Nhập mật khẩu hiện tại"
+              disabled={pwLoading}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-dark-300">Mật khẩu mới</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="px-3 py-2 rounded bg-dark-800 border border-dark-700 focus:outline-none focus:border-primary-500"
+              placeholder="Ít nhất 4 ký tự"
+              disabled={pwLoading}
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-dark-300">Nhập lại mật khẩu mới</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="px-3 py-2 rounded bg-dark-800 border border-dark-700 focus:outline-none focus:border-primary-500"
+              placeholder="Nhập lại để xác nhận"
+              disabled={pwLoading}
+            />
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <button
+            onClick={async () => {
+              setPwError('')
+              setPwMessage('')
+
+              if (!currentPassword || !newPassword || !confirmPassword) {
+                setPwError('Vui lòng nhập đầy đủ các trường')
+                return
+              }
+              if (newPassword.length < 4) {
+                setPwError('Mật khẩu mới phải có ít nhất 4 ký tự')
+                return
+              }
+              if (newPassword !== confirmPassword) {
+                setPwError('Mật khẩu mới và xác nhận không khớp')
+                return
+              }
+
+              try {
+                setPwLoading(true)
+                await api.post('/user/change-password', {
+                  currentPassword,
+                  newPassword
+                })
+                setPwMessage('Đổi mật khẩu thành công')
+                setCurrentPassword('')
+                setNewPassword('')
+                setConfirmPassword('')
+              } catch (error) {
+                const msg = error.response?.data?.error || 'Đổi mật khẩu thất bại'
+                setPwError(msg)
+              } finally {
+                setPwLoading(false)
+              }
+            }}
+            disabled={pwLoading}
+            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 rounded-lg font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {pwLoading ? 'Đang lưu...' : 'Đổi mật khẩu'}
+          </button>
         </div>
       </div>
 

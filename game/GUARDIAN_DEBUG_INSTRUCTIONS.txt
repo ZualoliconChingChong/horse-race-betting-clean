@@ -1,0 +1,98 @@
+╔════════════════════════════════════════════════════════════╗
+║  DIVINE GUARDIAN SHIELD - DEBUG INSTRUCTIONS                ║
+╚════════════════════════════════════════════════════════════╝
+
+🔍 STEPS TO DEBUG:
+
+1. RELOAD GAME
+   - Press Ctrl+R hoặc F5 để reload lại game
+   - Đảm bảo code mới được load
+
+2. MỞ DEVELOPER CONSOLE
+   - Press F12 hoặc Ctrl+Shift+I
+   - Click vào tab "Console"
+
+3. SETUP HORSE WITH GUARDIAN SKILL
+   - Click vào "Horse Editor" 
+   - Chọn một ngựa (horse #1, #2, etc.)
+   - Trong dropdown "⚡ Special Skill", chọn "Divine Guardian"
+   - Click "Apply"
+
+4. START RACE MODE
+   - Click "Start Race" button
+   - Đợi 10 giây (activation time)
+
+5. CHECK CONSOLE LOGS
+   Bạn sẽ thấy logs như sau:
+
+   ✅ KHI SKILL ACTIVATE (sau 10 giây):
+   [GUARDIAN DEBUG] Activating shield for horse 0 HorseName
+   [GUARDIAN DEBUG] hasShield= true guardianShieldActive= true
+   
+   ✅ KHI CHẠM VÀO ICE POWER-UP:
+   [GUARDIAN DEBUG] Ice power-up hit! Horse 0 hasShield= true
+   [GUARDIAN DEBUG] BLOCKED ice freeze!
+   
+   ❌ NẾU KHÔNG THẤY LOGS:
+   - Skill chưa được chọn đúng
+   - Skill chưa activate (chưa đủ 10 giây)
+   - Có lỗi khác trong code
+
+6. TEST SHIELD VISUAL
+   Khi shield activate, bạn phải thấy:
+   - ✨ Golden shield aura (màu vàng kim) quanh ngựa
+   - 💬 Text "Divine Shield!" màu vàng bay lên
+   - 💥 Golden explosion effect
+
+7. TEST BLOCKING
+   Chạm vào power-ups xấu (Ice, Poison, Trap):
+   - 🛡️ Text "Blocked!" màu vàng xuất hiện
+   - ❌ Không bị freeze/poison/slow
+   - Console log shows "BLOCKED"
+
+╔════════════════════════════════════════════════════════════╗
+║  COMMON ISSUES & FIXES                                      ║
+╚════════════════════════════════════════════════════════════╝
+
+❌ PROBLEM: Không thấy console logs
+   ✅ FIX: Mở F12 console, click Clear, reload game (Ctrl+R)
+
+❌ PROBLEM: Skill không activate sau 10 giây
+   ✅ FIX: Kiểm tra trong Horse Editor xem skill có được chọn không
+           Reload lại page sau khi sửa file horse-customization-ui.js
+
+❌ PROBLEM: hasShield = false khi activate
+   ✅ FIX: File horse-customization-ui.js chưa có cooldown property
+           Xem lại line 133, phải có: cooldown: 60000
+
+❌ PROBLEM: Shield visual không xuất hiện
+   ✅ FIX: Kiểm tra rendering code ở line ~12620 trong extracted-inline.js
+
+╔════════════════════════════════════════════════════════════╗
+║  SEND ME THIS INFO                                          ║
+╚════════════════════════════════════════════════════════════╝
+
+Sau khi test, gửi cho tôi:
+
+1. Screenshot của Console (F12) với tất cả logs
+2. Screenshot của Horse Editor với Guardian skill được chọn
+3. Có thấy golden shield visual không? (Yes/No)
+4. Có thấy "Divine Shield!" text không? (Yes/No)
+5. Khi chạm Ice power-up, có thấy "Blocked!" không? (Yes/No)
+
+╔════════════════════════════════════════════════════════════╗
+║  QUICK TEST CHECKLIST                                       ║
+╚════════════════════════════════════════════════════════════╝
+
+□ Đã reload game (Ctrl+R)
+□ Đã mở Console (F12)
+□ Đã chọn Guardian skill trong Horse Editor
+□ Đã click Apply
+□ Đã Start Race
+□ Đã đợi 10 giây
+□ Đã check Console logs
+□ Đã test với Ice/Poison power-up
+
+═══════════════════════════════════════════════════════════════
+Last Updated: Oct 22, 2025 10:05am UTC+07:00
+═══════════════════════════════════════════════════════════════
