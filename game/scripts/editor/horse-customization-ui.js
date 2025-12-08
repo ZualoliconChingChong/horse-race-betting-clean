@@ -157,7 +157,7 @@
       h.skillState = { name: 'chill_guy', status: 'active' };
     } else if (skill === 'energy_ball') {
       // Energy Ball: After 1s cast, creates large slow-moving energy ball that deals 30% HP damage
-      h.skillState = { name: 'energy_ball', status: 'ready', activationTime: 10000, castTime: 1000, duration: 8000, cooldown: 50000, damagePercent: 30, ballSpeed: 2, ballRadius: 25 };
+      h.skillState = { name: 'energy_ball', status: 'ready', activationTime: 10000, castTime: 1000, duration: 20000, cooldown: 35000, damagePercent: 30, ballSpeed: 1, ballRadius: 30 };
     } else {
       h.skillState = null;
     }

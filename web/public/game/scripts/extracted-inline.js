@@ -5454,7 +5454,7 @@ const skillDescriptions = {
   oguri_fat: { vi: "x2 tốc độ, x1.5 sát thương va chạm, aura lửa 5s. CD: 60s", en: "x2 speed, x1.5 collision damage, fire aura 5s. CD: 60s" },
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
   fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
-  energy_ball: { vi: "Sau 1s tích sức, bắn quả cầu năng lượng lớn di chuyển chậm gây 30% HP đối phương. CD: 50s", en: "After 1s cast, fires large slow energy ball dealing 30% of target's HP. CD: 50s" }
+  energy_ball: { vi: "Sau 1s tích sức, bắn quả cầu năng lượng lớn di chuyển chậm gây 30% HP đối phương. CD: 35s", en: "After 1s cast, fires large slow energy ball dealing 30% of target's HP. CD: 35s" }
 };
 
 // Skill description auto-update (always visible)
@@ -9103,11 +9103,12 @@ function spawnRandomLuckItem(){
                 // Phase 2: Ball is moving
                 if (h.skillState.castComplete && h.energyBall) {
                   const ball = h.energyBall;
-                  const scaleFactor = (typeof dt === 'number' && isFinite(dt)) ? (dt * 60) : 1;
+                  // Use fixed slow movement, not scaled by dt (for consistent slow speed)
+                  const moveSpeed = 0.8; // Very slow, consistent speed
                   
-                  // Move the ball
-                  ball.x += ball.vx * scaleFactor;
-                  ball.y += ball.vy * scaleFactor;
+                  // Move the ball slowly
+                  ball.x += ball.vx * moveSpeed;
+                  ball.y += ball.vy * moveSpeed;
                   
                   // Check for collision with horses
                   for (const o of horses) {
@@ -9165,21 +9166,20 @@ function spawnRandomLuckItem(){
                   const maxW = canvas?.width || 1920;
                   const maxH = canvas?.height || 1080;
                   const ballAge = now - ball.createdAt;
-                  const maxBallDuration = 6000; // Ball lasts max 6 seconds
+                  const maxBallDuration = 15000; // Ball lasts max 15 seconds (slow ball needs more time)
                   
-                  if (ball.x < -50 || ball.x > maxW + 50 || ball.y < -50 || ball.y > maxH + 50 || ballAge > maxBallDuration) {
+                  if (ball.x < -100 || ball.x > maxW + 100 || ball.y < -100 || ball.y > maxH + 100 || ballAge > maxBallDuration) {
                     h.energyBall = null; // Ball expired or left screen
                   }
                 }
                 
-                // Skill duration ended
-                if (now >= h.skillState.endTime) {
-                  h.energyBall = null;
+                // Skill duration ended - only go to cooldown when ball is gone or expired
+                if (now >= h.skillState.endTime && !h.energyBall) {
                   h.skillState.castComplete = false;
+                  h.skillState.castStartTime = null;
                   h.skillState.status = 'cooldown';
                   h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
                   h._lastLuckCheck = now;
-                  floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1000, text: 'Energy Depleted', color: '#87CEEB' });
                 }
               }
               break;

@@ -338,11 +338,11 @@ function startRace(){
           status: 'ready',
           activationTime: 10000, // 10s delay
           castTime: 1000,        // 1s cast time
-          duration: 8000,        // 8s active window
-          cooldown: 50000,       // 50s cooldown
+          duration: 20000,       // 20s active window (ball travels slowly)
+          cooldown: 35000,       // 35s cooldown (reduced for more usage)
           damagePercent: 30,     // 30% of target's max HP
-          ballSpeed: 2,          // slow moving
-          ballRadius: 25         // large ball
+          ballSpeed: 1,          // direction unit vector
+          ballRadius: 30         // large ball (bigger for visibility)
         };
       }
     }
