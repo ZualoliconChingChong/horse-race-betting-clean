@@ -181,6 +181,16 @@
       });
     }
 
+    // Fullscreen toggle button
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    if (fullscreenToggle) {
+      fullscreenToggle.addEventListener('click', toggleFullscreen);
+    }
+
+    // Listen for fullscreen change to update button icon
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
       if (e.key === 'F3') {
@@ -191,7 +201,46 @@
         e.preventDefault();
         setupPlayerHorse(true); // Reset retry count
       }
+      if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
     });
+  }
+
+  /**
+   * Toggle fullscreen mode
+   */
+  function toggleFullscreen() {
+    const gameContainer = document.getElementById('gameWrapper') || document.documentElement;
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      // Enter fullscreen
+      if (gameContainer.requestFullscreen) {
+        gameContainer.requestFullscreen();
+      } else if (gameContainer.webkitRequestFullscreen) {
+        gameContainer.webkitRequestFullscreen();
+      }
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+
+  /**
+   * Update fullscreen button icon based on current state
+   */
+  function updateFullscreenButton() {
+    const icon = document.getElementById('fullscreenIcon');
+    const text = document.getElementById('fullscreenText');
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    
+    if (icon) icon.textContent = isFullscreen ? '⛶' : '⛶';
+    if (text) text.textContent = isFullscreen ? 'Exit' : 'Full';
   }
 
   /**
