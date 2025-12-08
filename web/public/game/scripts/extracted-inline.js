@@ -9103,8 +9103,8 @@ function spawnRandomLuckItem(){
                 // Phase 2: Ball is moving
                 if (h.skillState.castComplete && h.energyBall) {
                   const ball = h.energyBall;
-                  // Use fixed slow movement, not scaled by dt (for consistent slow speed)
-                  const moveSpeed = 1.6; // Slow but visible speed (x2)
+                  // Use fixed movement speed
+                  const moveSpeed = 2.5; // Faster speed
                   
                   // Move the ball slowly
                   ball.x += ball.vx * moveSpeed;
