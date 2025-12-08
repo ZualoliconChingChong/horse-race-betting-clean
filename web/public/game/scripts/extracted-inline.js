@@ -5453,7 +5453,8 @@ const skillDescriptions = {
   shockwave: { vi: "Vòng sóng 7s đẩy lùi và -30% tốc độ ngựa tại vành sóng. CD: 45s", en: "Ring 7s pushes and -30% slow at wavefront. CD: 45s" },
   oguri_fat: { vi: "x2 tốc độ, x1.5 sát thương va chạm, aura lửa 5s. CD: 60s", en: "x2 speed, x1.5 collision damage, fire aura 5s. CD: 60s" },
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
-  fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" }
+  fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
+  energy_ball: { vi: "Sau 1s tích sức, bắn quả cầu năng lượng lớn di chuyển chậm gây 30% HP đối phương. CD: 50s", en: "After 1s cast, fires large slow energy ball dealing 30% of target's HP. CD: 50s" }
 };
 
 // Skill description auto-update (always visible)
@@ -8665,7 +8666,8 @@ function spawnRandomLuckItem(){
                 chill_guy: "Chill Guy",
                 oguri_fat: "Oguri Fat",
                 silence_shizuka: "Silence Shizuka",
-                fireball: "Fireball"
+                fireball: "Fireball",
+                energy_ball: "Energy Ball"
               };
               const _sname = _skillNames[h.skillState.name] || h.skillState.name;
               const _hname = (h && (h.name || ('#' + ((h.i!=null? h.i+1 : (h.idx||'')))))) || 'Ngựa';
@@ -8860,6 +8862,15 @@ function spawnRandomLuckItem(){
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1200, text: '🔥 FIREBALL! 🔥', color: '#FF4500' });
                 try { playSfx('powerup'); } catch {}
                 break;
+              case 'energy_ball':
+                // Energy Ball: After 1s cast time, create a large slow-moving projectile
+                h.skillState.endTime = now + (h.skillState.duration || 8000);
+                h.skillState.castComplete = false;
+                h.skillState.castStartTime = now;
+                // Show casting effect
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1000, text: '⚡ Charging...', color: '#00BFFF' });
+                try { playSfx('powerup'); } catch {}
+                break;
             }
           }
           }
@@ -9043,6 +9054,133 @@ function spawnRandomLuckItem(){
                 h.skillState.status = 'cooldown';
                 h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 40000);
                 h._lastLuckCheck = now;
+              }
+              break;
+            case 'energy_ball':
+              {
+                const castTime = h.skillState.castTime || 1000;
+                const castElapsed = now - (h.skillState.castStartTime || now);
+                
+                // Phase 1: Casting (1 second charge)
+                if (!h.skillState.castComplete && castElapsed >= castTime) {
+                  h.skillState.castComplete = true;
+                  
+                  // Calculate direction based on horse's current velocity or last movement
+                  let dirX = 1, dirY = 0;
+                  if (h.vx !== 0 || h.vy !== 0) {
+                    const mag = Math.hypot(h.vx, h.vy) || 1;
+                    dirX = h.vx / mag;
+                    dirY = h.vy / mag;
+                  } else if (h.dir) {
+                    // Fallback to direction flag
+                    if (h.dir === 'L') { dirX = -1; dirY = 0; }
+                    else if (h.dir === 'R') { dirX = 1; dirY = 0; }
+                    else if (h.dir === 'U') { dirX = 0; dirY = -1; }
+                    else if (h.dir === 'D') { dirX = 0; dirY = 1; }
+                  }
+                  
+                  // Create the energy ball projectile
+                  const ballSpeed = h.skillState.ballSpeed || 2;
+                  const ballRadius = h.skillState.ballRadius || 25;
+                  h.energyBall = {
+                    x: h.x + dirX * (h.r + ballRadius + 5),
+                    y: h.y + dirY * (h.r + ballRadius + 5),
+                    vx: dirX * ballSpeed,
+                    vy: dirY * ballSpeed,
+                    radius: ballRadius,
+                    damagePercent: h.skillState.damagePercent || 30,
+                    hitTargets: new Set(),
+                    createdAt: now
+                  };
+                  
+                  // Visual effects
+                  createExplosion(h.x, h.y, '#00BFFF', 35);
+                  createExplosion(h.x, h.y, '#87CEEB', 25);
+                  floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1200, text: '⚡ ENERGY BALL! ⚡', color: '#00BFFF' });
+                  try { playSfx('powerup'); } catch {}
+                }
+                
+                // Phase 2: Ball is moving
+                if (h.skillState.castComplete && h.energyBall) {
+                  const ball = h.energyBall;
+                  const scaleFactor = (typeof dt === 'number' && isFinite(dt)) ? (dt * 60) : 1;
+                  
+                  // Move the ball
+                  ball.x += ball.vx * scaleFactor;
+                  ball.y += ball.vy * scaleFactor;
+                  
+                  // Check for collision with horses
+                  for (const o of horses) {
+                    if (!o || o === h || o.eliminated) continue;
+                    if (ball.hitTargets.has(o.i || o.idx)) continue; // Already hit this target
+                    
+                    const dx = o.x - ball.x;
+                    const dy = o.y - ball.y;
+                    const dist = Math.hypot(dx, dy);
+                    const hitDist = ball.radius + (o.r || 8);
+                    
+                    if (dist < hitDist) {
+                      ball.hitTargets.add(o.i || o.idx);
+                      
+                      // Divine Guardian shield blocks energy ball
+                      if (o.hasShield) {
+                        o.hasShield = false;
+                        o.guardianShieldActive = false;
+                        o.shieldUntil = 0;
+                        floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 800, text: 'SHIELD BROKEN!', color: '#FFD700' });
+                        createExplosion(o.x, o.y, '#FFD700', 15);
+                        continue;
+                      }
+                      
+                      // Calculate 30% of target's MAX HP as damage
+                      const targetMaxHP = o.maxHP || mapDef.horseMaxHP || 100;
+                      const damage = Math.round(targetMaxHP * (ball.damagePercent / 100));
+                      
+                      if (typeof o.hp !== 'number') o.hp = targetMaxHP;
+                      o.hp = Math.max(0, o.hp - damage);
+                      o.damageImpactUntil = now + 300;
+                      
+                      // Visual effects
+                      floatingTexts.push({ x: o.x, y: o.y - (o.r||8) - 6, t: performance.now(), life: 800, text: `-${damage} HP (30%)`, color: '#00BFFF' });
+                      createExplosion(ball.x, ball.y, '#87CEEB', 18);
+                      
+                      // Energy particles on impact
+                      try {
+                        for (let k = 0; k < 8; k++) {
+                          particles.push({
+                            x: ball.x,
+                            y: ball.y,
+                            vx: (Math.random() - 0.5) * 3,
+                            vy: (Math.random() - 0.5) * 3,
+                            life: 20 + Math.random() * 15,
+                            color: Math.random() > 0.5 ? '#00BFFF' : '#87CEEB'
+                          });
+                        }
+                      } catch {}
+                    }
+                  }
+                  
+                  // Check if ball is out of bounds or expired
+                  const canvas = document.getElementById('cv') || document.getElementById('canvas');
+                  const maxW = canvas?.width || 1920;
+                  const maxH = canvas?.height || 1080;
+                  const ballAge = now - ball.createdAt;
+                  const maxBallDuration = 6000; // Ball lasts max 6 seconds
+                  
+                  if (ball.x < -50 || ball.x > maxW + 50 || ball.y < -50 || ball.y > maxH + 50 || ballAge > maxBallDuration) {
+                    h.energyBall = null; // Ball expired or left screen
+                  }
+                }
+                
+                // Skill duration ended
+                if (now >= h.skillState.endTime) {
+                  h.energyBall = null;
+                  h.skillState.castComplete = false;
+                  h.skillState.status = 'cooldown';
+                  h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
+                  h._lastLuckCheck = now;
+                  floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1000, text: 'Energy Depleted', color: '#87CEEB' });
+                }
               }
               break;
             case 'shockwave':
@@ -13977,6 +14115,78 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
               });
             } catch {}
           }
+        }
+        
+        ctx.restore();
+      }
+
+      // Render Energy Ball projectile
+      if (h.energyBall) {
+        ctx.save();
+        const ball = h.energyBall;
+        const ballR = ball.radius || 25;
+        
+        // Outer glow (pulsating)
+        const pulse = 1 + Math.sin(now / 100) * 0.15;
+        const outerGlow = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ballR * 2.5 * pulse);
+        outerGlow.addColorStop(0, 'rgba(0, 191, 255, 0.6)');
+        outerGlow.addColorStop(0.3, 'rgba(0, 191, 255, 0.3)');
+        outerGlow.addColorStop(0.6, 'rgba(135, 206, 235, 0.15)');
+        outerGlow.addColorStop(1, 'rgba(135, 206, 235, 0)');
+        ctx.fillStyle = outerGlow;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ballR * 2.5 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Main ball body
+        const coreGradient = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, ballR);
+        coreGradient.addColorStop(0, '#FFFFFF');
+        coreGradient.addColorStop(0.2, '#E0FFFF');
+        coreGradient.addColorStop(0.5, '#00BFFF');
+        coreGradient.addColorStop(0.8, '#1E90FF');
+        coreGradient.addColorStop(1, '#0000CD');
+        ctx.fillStyle = coreGradient;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ballR, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Electric arcs inside
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+          const startAngle = (now / 50 + i * Math.PI * 2 / 3) % (Math.PI * 2);
+          const endAngle = startAngle + Math.PI * 0.6;
+          const innerR = ballR * 0.3;
+          const outerR = ballR * 0.8;
+          ctx.beginPath();
+          ctx.moveTo(ball.x + Math.cos(startAngle) * innerR, ball.y + Math.sin(startAngle) * innerR);
+          const midAngle = (startAngle + endAngle) / 2;
+          const jitter = (Math.random() - 0.5) * 6;
+          ctx.quadraticCurveTo(
+            ball.x + Math.cos(midAngle) * outerR + jitter,
+            ball.y + Math.sin(midAngle) * outerR + jitter,
+            ball.x + Math.cos(endAngle) * innerR,
+            ball.y + Math.sin(endAngle) * innerR
+          );
+          ctx.stroke();
+        }
+        
+        // Energy trail particles
+        if (Math.random() < 0.7) {
+          try {
+            const trailX = ball.x - ball.vx * 5 + (Math.random() - 0.5) * ballR;
+            const trailY = ball.y - ball.vy * 5 + (Math.random() - 0.5) * ballR;
+            particles.push({
+              x: trailX,
+              y: trailY,
+              vx: -ball.vx * 0.3 + (Math.random() - 0.5) * 0.5,
+              vy: -ball.vy * 0.3 + (Math.random() - 0.5) * 0.5,
+              life: 15 + Math.random() * 10,
+              color: Math.random() > 0.5 ? '#00BFFF' : '#87CEEB',
+              alpha: 0.8,
+              size: 3 + Math.random() * 3
+            });
+          } catch {}
         }
         
         ctx.restore();

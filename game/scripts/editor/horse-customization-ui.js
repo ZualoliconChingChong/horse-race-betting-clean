@@ -155,6 +155,9 @@
       h.skillState = { name: 'gravity_well', status: 'ready', activationTime: 10000, duration: 1400, cooldown: 80000, pullStrength: 0.8 };
     } else if (skill === 'chill_guy') {
       h.skillState = { name: 'chill_guy', status: 'active' };
+    } else if (skill === 'energy_ball') {
+      // Energy Ball: After 1s cast, creates large slow-moving energy ball that deals 30% HP damage
+      h.skillState = { name: 'energy_ball', status: 'ready', activationTime: 10000, castTime: 1000, duration: 8000, cooldown: 50000, damagePercent: 30, ballSpeed: 2, ballRadius: 25 };
     } else {
       h.skillState = null;
     }
