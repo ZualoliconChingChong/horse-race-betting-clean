@@ -9185,15 +9185,39 @@ function spawnRandomLuckItem(){
                     }
                   }
                   
-                  // Check if ball is out of bounds or expired
-                  const canvas = document.getElementById('cv') || document.getElementById('canvas');
-                  const maxW = canvas?.width || 1920;
-                  const maxH = canvas?.height || 1080;
+                  // Check if ball is out of map bounds or expired
+                  const mapBounds = mapDef.mapBounds || { x: 0, y: 0, w: 1920, h: 1080 };
+                  const minX = mapBounds.x || 0;
+                  const minY = mapBounds.y || 0;
+                  const maxX = minX + (mapBounds.w || 1920);
+                  const maxY = minY + (mapBounds.h || 1080);
                   const ballAge = now - ball.createdAt;
-                  const maxBallDuration = 15000; // Ball lasts max 15 seconds (slow ball needs more time)
+                  const maxBallDuration = 15000; // Ball lasts max 15 seconds
                   
-                  if (ball.x < -100 || ball.x > maxW + 100 || ball.y < -100 || ball.y > maxH + 100 || ballAge > maxBallDuration) {
-                    h.energyBall = null; // Ball expired or left screen
+                  // Bounce off map walls instead of disappearing
+                  if (ball.x - ball.radius < minX) {
+                    ball.x = minX + ball.radius;
+                    ball.vx = Math.abs(ball.vx); // Bounce right
+                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  } else if (ball.x + ball.radius > maxX) {
+                    ball.x = maxX - ball.radius;
+                    ball.vx = -Math.abs(ball.vx); // Bounce left
+                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  }
+                  if (ball.y - ball.radius < minY) {
+                    ball.y = minY + ball.radius;
+                    ball.vy = Math.abs(ball.vy); // Bounce down
+                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  } else if (ball.y + ball.radius > maxY) {
+                    ball.y = maxY - ball.radius;
+                    ball.vy = -Math.abs(ball.vy); // Bounce up
+                    createExplosion(ball.x, ball.y, '#00BFFF', 12);
+                  }
+                  
+                  // Only expire by time, not by leaving bounds
+                  if (ballAge > maxBallDuration) {
+                    h.energyBall = null; // Ball expired
+                    floatingTexts.push({ x: ball.x, y: ball.y, t: performance.now(), life: 800, text: 'Energy Faded', color: '#87CEEB' });
                   }
                 }
                 
