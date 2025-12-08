@@ -11495,9 +11495,83 @@ function spawnRandomLuckItem(){
       if (!h.eliminated && h.hp <= 0) {
         h.eliminated = true;
         h.eliminatedTime = performance.now(); // Track when eliminated for ranking
-        createExplosion(h.x, h.y, '#FF0000', 30);
+        
+        // === EPIC EXPLOSION EFFECT ===
+        // Layer 1: Core explosion (bright white/yellow)
+        createExplosion(h.x, h.y, '#FFFFFF', 50);
+        createExplosion(h.x, h.y, '#FFFF00', 45);
+        createExplosion(h.x, h.y, '#FF6600', 40);
+        createExplosion(h.x, h.y, '#FF0000', 35);
+        
+        // Layer 2: Shockwave ring particles
+        for (let ring = 0; ring < 24; ring++) {
+          const angle = (Math.PI * 2 * ring) / 24;
+          const speed = 6 + Math.random() * 4;
+          particles.push({
+            x: h.x, y: h.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 40 + Math.random() * 20,
+            color: ['#FFFFFF', '#FFFF00', '#FF6600', '#FF0000'][Math.floor(Math.random() * 4)]
+          });
+        }
+        
+        // Layer 3: Debris/sparks flying outward
+        for (let spark = 0; spark < 30; spark++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 3 + Math.random() * 6;
+          particles.push({
+            x: h.x + (Math.random() - 0.5) * 20,
+            y: h.y + (Math.random() - 0.5) * 20,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 2, // Slight upward bias
+            life: 30 + Math.random() * 40,
+            color: ['#FF4444', '#FF8800', '#FFCC00', '#FFFFFF'][Math.floor(Math.random() * 4)]
+          });
+        }
+        
+        // Layer 4: Smoke particles (slower, longer lasting)
+        for (let smoke = 0; smoke < 15; smoke++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1 + Math.random() * 2;
+          particles.push({
+            x: h.x + (Math.random() - 0.5) * 30,
+            y: h.y + (Math.random() - 0.5) * 30,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1,
+            life: 60 + Math.random() * 40,
+            color: ['#666666', '#888888', '#444444'][Math.floor(Math.random() * 3)]
+          });
+        }
+        
+        // Floating text
+        floatingTexts.push({ 
+          x: h.x, 
+          y: h.y - 20, 
+          t: performance.now(), 
+          life: 2000, 
+          text: '💀 ELIMINATED! 💀', 
+          color: '#FF0000' 
+        });
+        floatingTexts.push({ 
+          x: h.x, 
+          y: h.y - 40, 
+          t: performance.now(), 
+          life: 1500, 
+          text: h.name || ('#' + (h.i + 1)), 
+          color: '#FFFFFF' 
+        });
+        
+        // Screen shake effect
+        if (typeof window.screenShakeUntil !== 'undefined') {
+          window.screenShakeUntil = performance.now() + 400;
+          window.screenShakeIntensity = 8;
+        }
+        
+        // Play death sound
         try { playDeathSfx(); } catch {}
-        logEvent(`Ngựa ${h.name || ('#'+(h.i+1))} đã bị loại bỏ do hết máu!`);
+        
+        logEvent(`💀 Ngựa ${h.name || ('#'+(h.i+1))} đã bị tiêu diệt!`);
       }
     }
     

@@ -165,49 +165,86 @@ function playSfx(kind) {
 
 /**
  * Play death sound effect
- * Explosion-fade with noise burst and lowpass sweep + low thump
+ * Epic explosion with multiple layers: boom, crackle, debris, reverb tail
  */
 function playDeathSfx() {
   if (!AC) return;
   const t0 = AC.currentTime;
   
-  // Noise burst with decaying envelope and sweeping lowpass
-  const dur = 0.36;
-  const buf = AC.createBuffer(1, Math.floor(AC.sampleRate * dur), AC.sampleRate);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < data.length; i++) {
-    const d = i / data.length;
-    data[i] = (Math.random() * 2 - 1) * (1 - Math.pow(d, 0.9));
+  // === LAYER 1: Initial BOOM (loud, punchy) ===
+  const boomDur = 0.5;
+  const boomBuf = AC.createBuffer(1, Math.floor(AC.sampleRate * boomDur), AC.sampleRate);
+  const boomData = boomBuf.getChannelData(0);
+  for (let i = 0; i < boomData.length; i++) {
+    const d = i / boomData.length;
+    boomData[i] = (Math.random() * 2 - 1) * Math.pow(1 - d, 1.5) * (1 + Math.sin(d * 50) * 0.3);
   }
-  const src = AC.createBufferSource();
-  src.buffer = buf;
-  const lp = AC.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(2000, t0);
-  lp.frequency.exponentialRampToValueAtTime(220, t0 + dur);
-  const g = AC.createGain();
-  g.gain.setValueAtTime(0.0001, t0);
-  g.gain.exponentialRampToValueAtTime(0.12, t0 + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.00008, t0 + dur);
-  src.connect(lp);
-  lp.connect(g);
-  g.connect(AC.destination);
-  src.start(t0);
-  src.stop(t0 + dur + 0.02);
+  const boomSrc = AC.createBufferSource();
+  boomSrc.buffer = boomBuf;
+  const boomLp = AC.createBiquadFilter();
+  boomLp.type = 'lowpass';
+  boomLp.frequency.setValueAtTime(3000, t0);
+  boomLp.frequency.exponentialRampToValueAtTime(100, t0 + boomDur);
+  const boomGain = AC.createGain();
+  boomGain.gain.setValueAtTime(0.0001, t0);
+  boomGain.gain.exponentialRampToValueAtTime(0.25, t0 + 0.015);
+  boomGain.gain.exponentialRampToValueAtTime(0.0001, t0 + boomDur);
+  boomSrc.connect(boomLp);
+  boomLp.connect(boomGain);
+  boomGain.connect(AC.destination);
+  boomSrc.start(t0);
+  boomSrc.stop(t0 + boomDur + 0.02);
 
-  // Low thump underlay
-  const o = AC.createOscillator();
-  const g2 = AC.createGain();
-  o.type = 'sine';
-  o.frequency.setValueAtTime(160, t0);
-  o.frequency.exponentialRampToValueAtTime(80, t0 + 0.22);
-  g2.gain.setValueAtTime(0.0001, t0);
-  g2.gain.exponentialRampToValueAtTime(0.08, t0 + 0.01);
-  g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.24);
-  o.connect(g2);
-  g2.connect(AC.destination);
-  o.start(t0);
-  o.stop(t0 + 0.26);
+  // === LAYER 2: Deep sub bass thump ===
+  const subOsc = AC.createOscillator();
+  const subGain = AC.createGain();
+  subOsc.type = 'sine';
+  subOsc.frequency.setValueAtTime(80, t0);
+  subOsc.frequency.exponentialRampToValueAtTime(30, t0 + 0.4);
+  subGain.gain.setValueAtTime(0.0001, t0);
+  subGain.gain.exponentialRampToValueAtTime(0.15, t0 + 0.02);
+  subGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.45);
+  subOsc.connect(subGain);
+  subGain.connect(AC.destination);
+  subOsc.start(t0);
+  subOsc.stop(t0 + 0.5);
+
+  // === LAYER 3: Crackle/debris (high freq noise) ===
+  const crackleDur = 0.8;
+  const crackleBuf = AC.createBuffer(1, Math.floor(AC.sampleRate * crackleDur), AC.sampleRate);
+  const crackleData = crackleBuf.getChannelData(0);
+  for (let i = 0; i < crackleData.length; i++) {
+    const d = i / crackleData.length;
+    // Sparse crackles
+    crackleData[i] = Math.random() < 0.1 ? (Math.random() * 2 - 1) * (1 - d) : 0;
+  }
+  const crackleSrc = AC.createBufferSource();
+  crackleSrc.buffer = crackleBuf;
+  const crackleHp = AC.createBiquadFilter();
+  crackleHp.type = 'highpass';
+  crackleHp.frequency.value = 2000;
+  const crackleGain = AC.createGain();
+  crackleGain.gain.setValueAtTime(0.08, t0 + 0.05);
+  crackleGain.gain.exponentialRampToValueAtTime(0.0001, t0 + crackleDur);
+  crackleSrc.connect(crackleHp);
+  crackleHp.connect(crackleGain);
+  crackleGain.connect(AC.destination);
+  crackleSrc.start(t0 + 0.05);
+  crackleSrc.stop(t0 + crackleDur + 0.02);
+
+  // === LAYER 4: Reverb tail (fading echo) ===
+  const tailOsc = AC.createOscillator();
+  const tailGain = AC.createGain();
+  tailOsc.type = 'triangle';
+  tailOsc.frequency.setValueAtTime(200, t0 + 0.1);
+  tailOsc.frequency.exponentialRampToValueAtTime(60, t0 + 0.8);
+  tailGain.gain.setValueAtTime(0.0001, t0 + 0.1);
+  tailGain.gain.exponentialRampToValueAtTime(0.04, t0 + 0.15);
+  tailGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.9);
+  tailOsc.connect(tailGain);
+  tailGain.connect(AC.destination);
+  tailOsc.start(t0 + 0.1);
+  tailOsc.stop(t0 + 1.0);
 }
 
 /**
