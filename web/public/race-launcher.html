@@ -72,17 +72,9 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const raceId = urlParams.get('raceId');
                 
-                // Default race settings (will be overridden by saved config if exists)
-                const settings = {
-                    mode: urlParams.get('mode') || 'survivor',
-                    hpSystem: urlParams.get('hpSystem') === 'true' || true,
-                    wallDamage: urlParams.get('wallDamage') === 'true' || true,
-                    wallDamageAmount: parseInt(urlParams.get('wallDamageAmount')) || 10,
-                    borderDamage: urlParams.get('borderDamage') === 'true' || true,
-                    borderDamageAmount: parseInt(urlParams.get('borderDamageAmount')) || 5
-                };
-                
-                console.log('[Launcher] Initial settings:', settings);
+                // Settings will come from saved map config only
+                // No default forcing - let map editor control everything
+                console.log('[Launcher] Will use map editor settings only');
                 document.getElementById('statusText').textContent = 'Loading race data...';
                 
                 // Fetch race data
@@ -109,7 +101,7 @@
                     document.getElementById('statusText').textContent = 'Starting race...';
                     
                     setTimeout(() => {
-                        injectRaceData(gameFrame.contentWindow, data, settings);
+                        injectRaceData(gameFrame.contentWindow, data);
                         document.getElementById('loading').style.display = 'none';
                         gameFrame.style.display = 'block';
                     }, 1000);
@@ -126,7 +118,7 @@
             }
         }
         
-        function injectRaceData(gameWindow, data, settings) {
+        function injectRaceData(gameWindow, data) {
             try {
                 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
                 console.log('[Launcher] 🎯 INJECTING RACE DATA');
@@ -365,15 +357,9 @@
                         if (gameWindow.stage?.draw) gameWindow.stage.draw();
                     }, 300);
                 } else {
-                    console.warn('[Launcher] ⚠️ No saved map config found - using default settings');
-                    
-                    // Apply default settings only if no saved config
-                    gameWindow.mapDef.hpSystemEnabled = settings.hpSystem;
-                    gameWindow.mapDef.lastHorseWins = (settings.mode === 'survivor');
-                    gameWindow.mapDef.wallDamageEnabled = settings.wallDamage;
-                    gameWindow.mapDef.wallDamageAmount = settings.wallDamageAmount;
-                    gameWindow.mapDef.borderDamageEnabled = settings.borderDamage;
-                    gameWindow.mapDef.borderDamageAmount = settings.borderDamageAmount;
+                    console.warn('[Launcher] ⚠️ No saved map config found - using game defaults');
+                    // Don't force any settings - let game use its own defaults
+                    // User should save map config via editor to customize settings
                 }
                 
                 console.log('[Launcher] ✅ Final game settings:');
