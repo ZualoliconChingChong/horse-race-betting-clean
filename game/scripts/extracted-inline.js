@@ -5923,7 +5923,7 @@ try{
       carrotRadiusVal.textContent = String(mapDef.carrotRadius ?? 30);
     }
     if (maxVelEl && maxVelVal){
-      const v = (typeof mapDef.maxVel === 'number' && isFinite(mapDef.maxVel)) ? mapDef.maxVel : 4;
+      const v = (typeof mapDef.maxVel === 'number' && isFinite(mapDef.maxVel)) ? mapDef.maxVel : 30;
       maxVelEl.value = String(v);
       maxVelVal.textContent = String(v);
     }
@@ -9991,17 +9991,16 @@ function spawnRandomLuckItem(){
         console.log(`   draftMult=${draftMult}, gravityWellBoost=${gravityWellBoost}`);
       }
       
-      // SAFETY CAP: Respect editor speed settings by capping finalModifier
-      const speedEl = document.getElementById('speed');
-      const editorSpeed = speedEl ? parseFloat(speedEl.value) || 1.0 : 1.0;
-      const maxAllowedModifier = Math.max(1.0, editorSpeed * 3.0); // Allow up to 3x editor speed
+      // SAFETY CAP: Use Max Horse Speed setting from editor
+      const maxHorseSpeedSetting = mapDef.maxHorseSpeed || 30.0;
+      const maxAllowedModifier = maxHorseSpeedSetting; // Use max horse speed setting directly
       const cappedFinalModifier = Math.min(finalModifier, maxAllowedModifier);
       
       // Store effective speed multiplier for display purposes
       h._effectiveSpeedMultiplier = cappedFinalModifier;
       
       if (finalModifier !== cappedFinalModifier && h === horses[0] && Math.random() < 0.2) {
-        console.log(`🚨 CAPPED finalModifier: ${finalModifier.toFixed(2)} → ${cappedFinalModifier.toFixed(2)} (editorSpeed=${editorSpeed})`);
+        console.log(`🚨 CAPPED finalModifier: ${finalModifier.toFixed(2)} → ${cappedFinalModifier.toFixed(2)} (maxHorseSpeed=${maxHorseSpeedSetting})`);
       }
       
       // Extra damping while stunned to reduce sliding
