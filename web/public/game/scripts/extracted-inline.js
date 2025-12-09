@@ -11751,12 +11751,15 @@ function spawnRandomLuckItem(){
       }
       
       
-      // Cap to max velocity - but allow custom speed horses to exceed default cap
+      // Cap to max velocity - use editor's Max Horse Speed setting
       const editorMaxSpeed = mapDef.maxHorseSpeed || 30.0; // Map editor max speed limit
-      // If horse has custom speed, use the higher of editorMaxSpeed or custom speed
-      const effectiveMaxVel = (h.baseSpeed && h.baseSpeed > editorMaxSpeed) 
-        ? Math.max(maxVel, h.baseSpeed * 1.2)  // Allow 20% over custom speed
-        : Math.min(maxVel, editorMaxSpeed);
+      // Apply speed modifiers (skills, power-ups) to the cap
+      const speedMod = h.speedMod || 1.0;
+      // If horse has custom speed, allow that custom speed (with modifiers)
+      // Otherwise use editor's max speed setting (with modifiers)
+      const effectiveMaxVel = (h.baseSpeed && h.baseSpeed > 0) 
+        ? Math.max(editorMaxSpeed, h.baseSpeed) * speedMod  // Custom speed horses can go faster
+        : editorMaxSpeed * speedMod;
       
       if (vel > effectiveMaxVel) {
         const ratioMax = effectiveMaxVel / vel;
