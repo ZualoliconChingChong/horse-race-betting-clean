@@ -349,9 +349,9 @@ function startRace(){
           name: 'supersonic_speed',
           status: 'ready',
           activationTime: 10000,   // 10s delay before activation
-          duration: 4000,          // 4s of x5 speed
+          duration: 4000,          // 4s of x10 speed
           cooldown: 60000,         // 60s cooldown
-          boostMultiplier: 5.0,    // x5 speed during boost
+          boostMultiplier: 10.0,   // x10 speed during boost
           slowMultiplier: 0.5,     // 0.5x speed after boost
           recoveryDuration: 15000  // 15s to recover back to 1.0x
         };

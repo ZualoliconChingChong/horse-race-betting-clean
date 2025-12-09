@@ -5455,7 +5455,7 @@ const skillDescriptions = {
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
   fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
   energy_ball: { vi: "Bắn quả cầu năng lượng nảy trong map, đẩy lùi và gây -1 HP liên tục. CD: 35s", en: "Fires bouncing energy ball, pushes and deals -1 HP continuously. CD: 35s" },
-  supersonic_speed: { vi: "Siêu tốc x5 trong 4s, sau đó giảm còn 0.5x và phục hồi dần trong 15s. CD: 60s", en: "x5 speed for 4s, then 0.5x speed recovering over 15s. CD: 60s" }
+  supersonic_speed: { vi: "Siêu tốc x10 trong 4s, sau đó giảm còn 0.5x và phục hồi dần trong 15s. CD: 60s", en: "x10 speed for 4s, then 0.5x speed recovering over 15s. CD: 60s" }
 };
 
 // Skill description auto-update (always visible)
@@ -8876,7 +8876,7 @@ function spawnRandomLuckItem(){
               case 'supersonic_speed':
                 // Supersonic Speed: x5 speed for 4s
                 h.skillState.endTime = now + (h.skillState.duration || 4000);
-                h.speedMod = h.skillState.boostMultiplier || 5.0;
+                h.speedMod = h.skillState.boostMultiplier || 10.0;
                 h.supersonicAuraUntil = h.skillState.endTime; // Aura effect
                 h.supersonicBaseSpeed = h.baseSpeedMod || 1.0; // Store original speed
                 createExplosion(h.x, h.y, '#00FFFF', 35);
