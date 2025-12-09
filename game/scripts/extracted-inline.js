@@ -1695,7 +1695,7 @@ const mapDef = {
     return horseSpeed * 0.5; // Horse speed * 0.5 for min cruise  
   },
   horseSpeed: 1.0, // Default horse speed from map editor
-  maxHorseSpeed: 4.0, // Max horse speed limit from map editor
+  maxHorseSpeed: 30.0, // Max horse speed limit from map editor
   carrotRadius: 30, // Default carrot radius
   horseHitScale: 0.85, // New: scale collision radius to better match sprite visuals
   horseHitInset: 2, // New: subtract fixed pixels from hitbox for finer tuning
@@ -5387,13 +5387,13 @@ if (maxHorseSpeedEl && maxHorseSpeedVal) {
   // Load saved max horse speed from localStorage
   const savedMaxSpeed = localStorage.getItem('editorMaxHorseSpeed');
   if (savedMaxSpeed) {
-    const maxSpeed = parseFloat(savedMaxSpeed) || 4.0;
+    const maxSpeed = parseFloat(savedMaxSpeed) || 30.0;
     maxHorseSpeedEl.value = maxSpeed;
     maxHorseSpeedVal.textContent = maxSpeed.toFixed(1) + '×';
     mapDef.maxHorseSpeed = maxSpeed;
     console.log(`🐎 Loaded Max Horse Speed: ${maxSpeed}`);
   } else {
-    mapDef.maxHorseSpeed = 4.0;
+    mapDef.maxHorseSpeed = 30.0;
   }
   
   maxHorseSpeedEl.addEventListener('input', (e) => {
@@ -11752,7 +11752,7 @@ function spawnRandomLuckItem(){
       
       
       // Cap to max velocity - but allow custom speed horses to exceed default cap
-      const editorMaxSpeed = mapDef.maxHorseSpeed || 4.0; // Map editor max speed limit
+      const editorMaxSpeed = mapDef.maxHorseSpeed || 30.0; // Map editor max speed limit
       // If horse has custom speed, use the higher of editorMaxSpeed or custom speed
       const effectiveMaxVel = (h.baseSpeed && h.baseSpeed > editorMaxSpeed) 
         ? Math.max(maxVel, h.baseSpeed * 1.2)  // Allow 20% over custom speed

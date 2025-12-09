@@ -101,7 +101,7 @@
         horse.vy *= friction;
 
         // Limit maximum speed
-        const maxSpeed = (config.physics?.horse?.maxSpeed || 4) * (horse.speedMultiplier || 1);
+        const maxSpeed = (config.physics?.horse?.maxSpeed || 30) * (horse.speedMultiplier || 1);
         const speed = Math.sqrt(horse.vx * horse.vx + horse.vy * horse.vy);
         if (speed > maxSpeed) {
           horse.vx = (horse.vx / speed) * maxSpeed;
@@ -133,7 +133,7 @@
       
       // Debug logging to verify speed setting
       if (Math.random() < 0.01) { // Only log occasionally
-        console.log(`🎯 Speed Check: window.runtimeSpeed=${window.runtimeSpeed}, baseSpeed=${baseSpeed}, maxSpeed=${config.physics?.horse?.maxSpeed || 4}`);
+        console.log(`🎯 Speed Check: window.runtimeSpeed=${window.runtimeSpeed}, baseSpeed=${baseSpeed}, maxSpeed=${config.physics?.horse?.maxSpeed || 30}`);
       }
       const acceleration = config.physics?.horse?.acceleration || 0.15; // Reduced for smoother control
       const keys = this.gameState.keys || {};
