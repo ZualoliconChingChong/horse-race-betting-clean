@@ -780,7 +780,7 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000;
+    background: var(--bg);
     width: 100vw !important;
     height: 100vh !important;
   }
