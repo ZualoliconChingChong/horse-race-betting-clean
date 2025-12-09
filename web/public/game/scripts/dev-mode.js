@@ -187,9 +187,23 @@
       fullscreenToggle.addEventListener('click', toggleFullscreen);
     }
 
-    // Listen for fullscreen change to update button icon
-    document.addEventListener('fullscreenchange', updateFullscreenButton);
-    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    // Listen for fullscreen change to update button icon and resize canvas
+    document.addEventListener('fullscreenchange', () => {
+      updateFullscreenButton();
+      // Delay resize to ensure fullscreen transition is complete
+      setTimeout(resizeCanvasForFullscreen, 100);
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      updateFullscreenButton();
+      setTimeout(resizeCanvasForFullscreen, 100);
+    });
+    
+    // Also resize on window resize (for when fullscreen mode changes window size)
+    window.addEventListener('resize', () => {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        resizeCanvasForFullscreen();
+      }
+    });
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -220,13 +234,19 @@
     
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       // Enter fullscreen
+      console.log('[Fullscreen] Entering fullscreen...');
       if (gameContainer.requestFullscreen) {
-        gameContainer.requestFullscreen();
+        gameContainer.requestFullscreen().then(() => {
+          console.log('[Fullscreen] Entered fullscreen, resizing canvas...');
+          setTimeout(resizeCanvasForFullscreen, 150);
+        });
       } else if (gameContainer.webkitRequestFullscreen) {
         gameContainer.webkitRequestFullscreen();
+        setTimeout(resizeCanvasForFullscreen, 150);
       }
     } else {
       // Exit fullscreen
+      console.log('[Fullscreen] Exiting fullscreen...');
       if (document.exitFullscreen) {
         document.exitFullscreen();
       } else if (document.webkitExitFullscreen) {
@@ -241,9 +261,13 @@
   function resizeCanvasForFullscreen() {
     const canvas = document.getElementById('cv');
     const stage = document.querySelector('.stage');
-    if (!canvas) return;
+    if (!canvas) {
+      console.log('[Fullscreen] Canvas not found!');
+      return;
+    }
 
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    console.log('[Fullscreen] resizeCanvasForFullscreen called, isFullscreen:', isFullscreen);
     
     if (isFullscreen) {
       // Save original size
@@ -254,6 +278,7 @@
           cssWidth: canvas.style.width,
           cssHeight: canvas.style.height
         };
+        console.log('[Fullscreen] Saved original size:', originalCanvasSize);
       }
       
       // Calculate scale to fit screen (with padding for HUD)
@@ -263,10 +288,14 @@
       const canvasW = canvas.width;
       const canvasH = canvas.height;
       
+      console.log('[Fullscreen] Screen:', screenW, 'x', screenH, 'Canvas:', canvasW, 'x', canvasH);
+      
       // Calculate scale factor
       const scaleX = screenW / canvasW;
       const scaleY = screenH / canvasH;
       const scale = Math.min(scaleX, scaleY);
+      
+      console.log('[Fullscreen] Scale factor:', scale);
       
       // Apply transform scale to canvas
       canvas.style.transformOrigin = 'top left';
@@ -278,13 +307,17 @@
       const offsetX = (screenW - scaledW) / 2;
       const offsetY = (screenH - scaledH) / 2;
       
+      console.log('[Fullscreen] Offset:', offsetX, offsetY);
+      
       if (stage) {
         stage.style.position = 'absolute';
         stage.style.left = offsetX + 'px';
         stage.style.top = offsetY + 'px';
+        console.log('[Fullscreen] Stage repositioned');
       }
       
     } else if (originalCanvasSize) {
+      console.log('[Fullscreen] Restoring original size');
       // Restore original state
       canvas.style.transform = '';
       canvas.style.transformOrigin = '';
