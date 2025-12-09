@@ -9045,25 +9045,15 @@ function spawnRandomLuckItem(){
                 try { playSfx('ultimate'); } catch {}
                 break;
               case 'dimension_rift':
-                // Dimension Rift: Create portal AHEAD of horse
-                h.skillState.endTime = now + (h.skillState.duration || 10000);
-                window.dimensionRifts = window.dimensionRifts || [];
+                // Dimension Rift: Create portal AHEAD of horse after 2s delay
+                h.skillState.endTime = now + (h.skillState.duration || 12000);
+                h.dimensionRiftPending = true;
+                h.dimensionRiftSpawnAt = now + 2000; // Spawn after 2 seconds
                 const riftVel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
-                const riftOffsetX = (h.vx || 1) / riftVel * 100;
-                const riftOffsetY = (h.vy || 0) / riftVel * 100;
-                const riftX = h.x + riftOffsetX;
-                const riftY = h.y + riftOffsetY;
-                window.dimensionRifts.push({
-                  x: riftX, y: riftY,
-                  radius: h.skillState.portalRadius || 80,
-                  owner: h.i,
-                  endTime: h.skillState.endTime,
-                  spawnTime: now
-                });
-                createExplosion(riftX, riftY, '#8B00FF', 60);
-                createExplosion(riftX, riftY, '#FF00FF', 45);
-                floatingTexts.push({ x: riftX, y: riftY - 40, t: now, life: 2000, text: '🌌 DIMENSION RIFT!', color: '#FF00FF' });
-                try { playSfx('portal'); } catch {}
+                h.dimensionRiftX = h.x + (h.vx || 1) / riftVel * 120;
+                h.dimensionRiftY = h.y + (h.vy || 0) / riftVel * 120;
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 2000, text: '🌌 Rift charging...', color: '#8B00FF' });
+                try { playSfx('powerup'); } catch {}
                 break;
               case 'rainbow_trail':
                 // Rainbow Trail: Speed boost with trail
@@ -10010,24 +10000,44 @@ function spawnRandomLuckItem(){
     }
 
     // --- DIMENSION RIFT PER-FRAME EFFECT ---
-    if (h.skillState && h.skillState.name === 'dimension_rift' && window.dimensionRifts && window.dimensionRifts.length > 0) {
-      for (const rift of window.dimensionRifts) {
-        if (rift.owner !== h.i || now > rift.endTime) continue;
-        for (const other of horses) {
-          if (other === h || other.eliminated) continue;
-          if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
-          const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
-          if (dist < rift.radius) {
-            const mapWidth = window.mapDef?.canvasWidth || 1200;
-            const mapHeight = window.mapDef?.canvasHeight || 800;
-            const newX = 100 + Math.random() * (mapWidth - 200);
-            const newY = 100 + Math.random() * (mapHeight - 200);
-            createExplosion(other.x, other.y, '#FF00FF', 30);
-            other.x = newX;
-            other.y = newY;
-            other.riftTeleportCooldown = now + 3000;
-            createExplosion(other.x, other.y, '#8B00FF', 35);
-            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 10, t: now, life: 1200, text: '🌀 TELEPORTED!', color: '#FF00FF' });
+    if (h.skillState && h.skillState.name === 'dimension_rift') {
+      // Spawn portal after 2s delay
+      if (h.dimensionRiftPending && now >= h.dimensionRiftSpawnAt) {
+        h.dimensionRiftPending = false;
+        window.dimensionRifts = window.dimensionRifts || [];
+        window.dimensionRifts.push({
+          x: h.dimensionRiftX, y: h.dimensionRiftY,
+          radius: 100,
+          owner: h.i,
+          endTime: h.skillState.endTime,
+          spawnTime: now
+        });
+        createExplosion(h.dimensionRiftX, h.dimensionRiftY, '#8B00FF', 80);
+        createExplosion(h.dimensionRiftX, h.dimensionRiftY, '#FF00FF', 60);
+        floatingTexts.push({ x: h.dimensionRiftX, y: h.dimensionRiftY - 50, t: now, life: 2000, text: '🌌 PORTAL OPEN!', color: '#FF00FF' });
+        try { playSfx('portal'); } catch {}
+      }
+      
+      // Teleport horses entering portal
+      if (window.dimensionRifts && window.dimensionRifts.length > 0) {
+        for (const rift of window.dimensionRifts) {
+          if (rift.owner !== h.i || now > rift.endTime) continue;
+          for (const other of horses) {
+            if (other === h || other.eliminated) continue;
+            if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
+            const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
+            if (dist < rift.radius) {
+              const mapWidth = window.mapDef?.canvasWidth || 1200;
+              const mapHeight = window.mapDef?.canvasHeight || 800;
+              const newX = 100 + Math.random() * (mapWidth - 200);
+              const newY = 100 + Math.random() * (mapHeight - 200);
+              createExplosion(other.x, other.y, '#FF00FF', 40);
+              other.x = newX;
+              other.y = newY;
+              other.riftTeleportCooldown = now + 5000;
+              createExplosion(other.x, other.y, '#8B00FF', 45);
+              floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 10, t: now, life: 1500, text: '🌀 TELEPORTED!', color: '#FF00FF' });
+            }
           }
         }
       }
@@ -10036,23 +10046,23 @@ function spawnRandomLuckItem(){
     // --- RAINBOW TRAIL PER-FRAME EFFECT ---
     if (h.skillState && h.skillState.name === 'rainbow_trail' && h.rainbowTrailActive && now < h.skillState.endTime) {
       h.rainbowTrailPoints = h.rainbowTrailPoints || [];
-      // Add trail points as horse moves
-      if (h.rainbowTrailPoints.length === 0 || Math.hypot(h.x - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].x, h.y - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].y) > 15) {
-        h.rainbowTrailPoints.push({ x: h.x, y: h.y, time: now, boost: 1.2 });
+      // Add trail points more frequently (every 10px)
+      if (h.rainbowTrailPoints.length === 0 || Math.hypot(h.x - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].x, h.y - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].y) > 10) {
+        h.rainbowTrailPoints.push({ x: h.x, y: h.y, time: now, boost: 1.25, size: 40 }); // Bigger size
       }
-      while (h.rainbowTrailPoints.length > 50) h.rainbowTrailPoints.shift();
+      while (h.rainbowTrailPoints.length > 100) h.rainbowTrailPoints.shift(); // More points
       
       // Boost other horses that pass through trail
       for (const other of horses) {
         if (other === h || other.eliminated) continue;
         for (const pt of h.rainbowTrailPoints) {
-          if (now - pt.time > 3000) continue; // Trail lasts 3s
+          if (now - pt.time > 8000) continue; // Trail lasts 8 SECONDS
           const dist = Math.hypot(other.x - pt.x, other.y - pt.y);
-          if (dist < 30) {
+          if (dist < 50) { // Bigger detection radius
             if (!other.rainbowBoostUntil || now > other.rainbowBoostUntil) {
-              other.speedMod = (other.speedMod || 1.0) * 1.2;
-              other.rainbowBoostUntil = now + 1500;
-              floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 800, text: '🌈 +20%', color: '#FF69B4' });
+              other.speedMod = (other.speedMod || 1.0) * 1.25;
+              other.rainbowBoostUntil = now + 2000;
+              floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 1000, text: '🌈 +25% BOOST!', color: '#FF69B4' });
             }
             break;
           }
@@ -15138,27 +15148,61 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
       }
       
       
-      // Rocket Boost Visual
+      // Rocket Boost Visual - ENHANCED
       if (h.rocketBoostActive) {
         ctx.save();
-        const rocketPhase = now / 30;
-        // Flame trail
-        const flameLength = 30 + Math.sin(rocketPhase) * 10;
+        const rocketPhase = now / 20;
         const vel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
-        const tailX = h.x - (h.vx / vel) * flameLength;
-        const tailY = h.y - (h.vy / vel) * flameLength;
+        const dirX = (h.vx || 1) / vel;
+        const dirY = (h.vy || 0) / vel;
         
-        const flameGrad = ctx.createLinearGradient(h.x, h.y, tailX, tailY);
-        flameGrad.addColorStop(0, 'rgba(255, 255, 0, 0.9)');
-        flameGrad.addColorStop(0.3, 'rgba(255, 140, 0, 0.7)');
-        flameGrad.addColorStop(1, 'rgba(255, 69, 0, 0)');
-        ctx.fillStyle = flameGrad;
+        // Multiple flame layers
+        for (let layer = 0; layer < 3; layer++) {
+          const flameLength = (50 + layer * 20) + Math.sin(rocketPhase + layer) * 15;
+          const flameWidth = 15 - layer * 3;
+          const tailX = h.x - dirX * flameLength;
+          const tailY = h.y - dirY * flameLength;
+          
+          const flameGrad = ctx.createLinearGradient(h.x, h.y, tailX, tailY);
+          if (layer === 0) {
+            flameGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            flameGrad.addColorStop(0.2, 'rgba(255, 255, 0, 0.9)');
+            flameGrad.addColorStop(0.5, 'rgba(255, 100, 0, 0.7)');
+            flameGrad.addColorStop(1, 'rgba(255, 0, 0, 0)');
+          } else {
+            flameGrad.addColorStop(0, 'rgba(255, 200, 0, 0.6)');
+            flameGrad.addColorStop(1, 'rgba(255, 69, 0, 0)');
+          }
+          
+          ctx.fillStyle = flameGrad;
+          ctx.beginPath();
+          ctx.moveTo(h.x - dirY * flameWidth, h.y + dirX * flameWidth);
+          ctx.lineTo(tailX + (Math.random() - 0.5) * 10, tailY + (Math.random() - 0.5) * 10);
+          ctx.lineTo(h.x + dirY * flameWidth, h.y - dirX * flameWidth);
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        // Smoke particles
+        ctx.globalAlpha = 0.4;
+        for (let s = 0; s < 5; s++) {
+          const smokeX = h.x - dirX * (30 + s * 15) + (Math.random() - 0.5) * 20;
+          const smokeY = h.y - dirY * (30 + s * 15) + (Math.random() - 0.5) * 20;
+          const smokeSize = 5 + s * 3;
+          ctx.fillStyle = `rgba(100, 100, 100, ${0.3 - s * 0.05})`;
+          ctx.beginPath();
+          ctx.arc(smokeX, smokeY, smokeSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Shockwave ring
+        const ringPhase = (now % 300) / 300;
+        ctx.strokeStyle = `rgba(255, 200, 0, ${1 - ringPhase})`;
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(h.x - (h.vy / vel) * 8, h.y + (h.vx / vel) * 8);
-        ctx.lineTo(tailX, tailY);
-        ctx.lineTo(h.x + (h.vy / vel) * 8, h.y - (h.vx / vel) * 8);
-        ctx.closePath();
-        ctx.fill();
+        ctx.arc(h.x, h.y, h.r + 10 + ringPhase * 30, 0, Math.PI * 2);
+        ctx.stroke();
+        
         ctx.restore();
       }
       
@@ -15207,7 +15251,7 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
         ctx.restore();
       }
       
-      // Rainbow Trail Visual
+      // Rainbow Trail Visual - BIGGER and LONGER LASTING
       if (h.rainbowTrailActive && h.rainbowTrailPoints && h.rainbowTrailPoints.length > 1) {
         ctx.save();
         const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
@@ -15215,15 +15259,26 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
           const p1 = h.rainbowTrailPoints[i - 1];
           const p2 = h.rainbowTrailPoints[i];
           const age = now - p1.time;
-          if (age > 3000) continue;
-          const alpha = Math.max(0, 1 - age / 3000);
+          if (age > 8000) continue; // Lasts 8 seconds
+          const alpha = Math.max(0, 1 - age / 8000);
+          
+          // Draw thick rainbow line
           ctx.strokeStyle = colors[i % colors.length];
-          ctx.globalAlpha = alpha * 0.7;
-          ctx.lineWidth = 4;
+          ctx.globalAlpha = alpha * 0.9;
+          ctx.lineWidth = 12; // Much thicker
+          ctx.lineCap = 'round';
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
           ctx.stroke();
+          
+          // Add glow effect
+          ctx.shadowColor = colors[i % colors.length];
+          ctx.shadowBlur = 15;
+          ctx.lineWidth = 6;
+          ctx.globalAlpha = alpha * 0.6;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
         }
         ctx.restore();
       }
