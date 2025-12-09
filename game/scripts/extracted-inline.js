@@ -8939,25 +8939,25 @@ function spawnRandomLuckItem(){
                 try { playSfx('explosion'); } catch {}
                 break;
               case 'black_hole':
-                // Black Hole: Create pulling vortex
-                h.skillState.endTime = now + (h.skillState.duration || 3000);
+                // Black Hole: Create pulling vortex - LARGE RADIUS
+                h.skillState.endTime = now + (h.skillState.duration || 4000);
                 h.blackHoleActive = true;
                 h.blackHoleX = h.x;
                 h.blackHoleY = h.y;
-                h.blackHoleRadius = h.skillState.radius || 200;
-                h.blackHolePullStrength = h.skillState.pullStrength || 2.0;
+                h.blackHoleRadius = h.skillState.radius || 300;
+                h.blackHolePullStrength = h.skillState.pullStrength || 5.0;
                 createExplosion(h.x, h.y, '#4B0082', 50);
                 createExplosion(h.x, h.y, '#8B00FF', 40);
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '🕳️ BLACK HOLE!', color: '#8B00FF' });
                 try { playSfx('powerup'); } catch {}
                 break;
               case 'ice_age':
-                // Ice Age: Freeze area around horse
-                h.skillState.endTime = now + (h.skillState.duration || 4000);
+                // Ice Age: Freeze area around horse - LARGE RADIUS
+                h.skillState.endTime = now + (h.skillState.duration || 5000);
                 h.iceAgeActive = true;
                 h.iceAgeX = h.x;
                 h.iceAgeY = h.y;
-                h.iceAgeRadius = h.skillState.radius || 180;
+                h.iceAgeRadius = h.skillState.radius || 300;
                 createExplosion(h.x, h.y, '#00FFFF', 45);
                 createExplosion(h.x, h.y, '#FFFFFF', 35);
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '❄️ ICE AGE!', color: '#00FFFF' });
@@ -9078,10 +9078,10 @@ function spawnRandomLuckItem(){
                 try { playSfx('powerup'); } catch {}
                 break;
               case 'disco_chaos':
-                // Disco Chaos: Confuse nearby horses
-                h.skillState.endTime = now + (h.skillState.duration || 4000);
+                // Disco Chaos: Confuse nearby horses - LARGE RADIUS
+                h.skillState.endTime = now + (h.skillState.duration || 5000);
                 h.discoChaosActive = true;
-                h.discoChaosRadius = h.skillState.radius || 150;
+                h.discoChaosRadius = h.skillState.radius || 250;
                 h.lastRedirectTime = now;
                 createExplosion(h.x, h.y, '#FF00FF', 35);
                 createExplosion(h.x, h.y, '#FFFF00', 30);
@@ -9483,22 +9483,26 @@ function spawnRandomLuckItem(){
               }
               break;
             case 'black_hole':
-              // Black Hole: Pull horses toward center
+              // Black Hole: Pull horses toward center - EVERY FRAME
               if (h.blackHoleActive && now < h.skillState.endTime) {
-                const allHorses = window.horses || horses || [];
-                for (const other of allHorses) {
-                  if (other.i === h.i || other.eliminated) continue;
+                for (const other of horses) {
+                  if (other === h || other.i === h.i || other.eliminated) continue;
                   const dx = h.blackHoleX - other.x;
                   const dy = h.blackHoleY - other.y;
                   const dist = Math.hypot(dx, dy);
-                  if (dist < h.blackHoleRadius && dist > 10) {
-                    const pullForce = h.blackHolePullStrength * (1 - dist / h.blackHoleRadius);
-                    // Strong pull force
-                    other.vx += (dx / dist) * pullForce * 0.8;
-                    other.vy += (dy / dist) * pullForce * 0.8;
-                    // Visual feedback
-                    if (Math.random() < 0.1) {
-                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 500, text: '🕳️', color: '#8B00FF' });
+                  // Pull ALL horses within radius
+                  if (dist < h.blackHoleRadius && dist > 5) {
+                    const pullForce = (h.blackHolePullStrength || 2.0) * (1 - dist / h.blackHoleRadius) * 2.0;
+                    // STRONG pull - directly modify position AND velocity
+                    const pullX = (dx / dist) * pullForce;
+                    const pullY = (dy / dist) * pullForce;
+                    other.x += pullX * 0.5;
+                    other.y += pullY * 0.5;
+                    other.vx += pullX * 0.3;
+                    other.vy += pullY * 0.3;
+                    // Visual feedback - more frequent
+                    if (Math.random() < 0.3) {
+                      floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 400, text: '🕳️ PULL!', color: '#8B00FF' });
                     }
                   }
                 }
@@ -9511,26 +9515,26 @@ function spawnRandomLuckItem(){
               }
               break;
             case 'ice_age':
-              // Ice Age: Slow and slide horses in area
+              // Ice Age: Slow and slide horses in area - EVERY FRAME
               if (h.iceAgeActive && now < h.skillState.endTime) {
-                const allHorses = window.horses || horses || [];
-                for (const other of allHorses) {
-                  if (other.i === h.i || other.eliminated) continue;
+                for (const other of horses) {
+                  if (other === h || other.i === h.i || other.eliminated) continue;
                   const dx = other.x - h.iceAgeX;
                   const dy = other.y - h.iceAgeY;
                   const dist = Math.hypot(dx, dy);
                   if (dist < h.iceAgeRadius) {
-                    // Direct speed reduction
-                    other.speedMod = (other.speedMod || 1.0) * (h.skillState.slowMultiplier || 0.3);
-                    other.iceFrozenUntil = now + 500;
-                    // Sliding effect
-                    other.vx *= 0.7;
-                    other.vy *= 0.7;
-                    other.vx += (Math.random() - 0.5) * 1.5;
-                    other.vy += (Math.random() - 0.5) * 1.5;
-                    // Visual feedback
-                    if (Math.random() < 0.15) {
-                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 600, text: '❄️ FROZEN', color: '#00FFFF' });
+                    // HARD SLOW - set speedMod directly to 0.3
+                    other.speedMod = 0.3;
+                    other.iceFrozenUntil = now + 200;
+                    // Reduce velocity directly
+                    other.vx *= 0.5;
+                    other.vy *= 0.5;
+                    // Random sliding
+                    other.vx += (Math.random() - 0.5) * 2;
+                    other.vy += (Math.random() - 0.5) * 2;
+                    // Visual feedback - more frequent
+                    if (Math.random() < 0.25) {
+                      floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 500, text: '❄️ FROZEN!', color: '#00FFFF' });
                     }
                   }
                 }
@@ -9702,22 +9706,23 @@ function spawnRandomLuckItem(){
               }
               break;
             case 'disco_chaos':
-              // Disco Chaos: Redirect nearby horses
+              // Disco Chaos: Redirect nearby horses - EVERY redirect interval
               if (h.discoChaosActive && now < h.skillState.endTime) {
                 const redirectInterval = h.skillState.redirectInterval || 500;
-                if (now - h.lastRedirectTime >= redirectInterval) {
+                if (!h.lastRedirectTime || now - h.lastRedirectTime >= redirectInterval) {
                   h.lastRedirectTime = now;
-                  const allHorses = window.horses || horses || [];
-                  for (const other of allHorses) {
-                    if (other.i === h.i || other.eliminated) continue;
+                  for (const other of horses) {
+                    if (other === h || other.i === h.i || other.eliminated) continue;
                     const dist = Math.hypot(other.x - h.x, other.y - h.y);
-                    if (dist < h.discoChaosRadius) {
+                    const radius = h.discoChaosRadius || 150;
+                    if (dist < radius) {
+                      // Random direction - STRONG effect
                       const randomAngle = Math.random() * Math.PI * 2;
-                      const speed = Math.hypot(other.vx, other.vy) || 2;
-                      other.vx = Math.cos(randomAngle) * speed * 1.5;
-                      other.vy = Math.sin(randomAngle) * speed * 1.5;
-                      // Visual feedback
-                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 400, text: '🩩 DISCO!', color: ['#FF00FF', '#FFFF00', '#00FFFF'][Math.floor(Math.random()*3)] });
+                      const speed = Math.max(Math.hypot(other.vx, other.vy), 3);
+                      other.vx = Math.cos(randomAngle) * speed * 2.0;
+                      other.vy = Math.sin(randomAngle) * speed * 2.0;
+                      // Visual feedback - always show
+                      floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 500, text: '🪩 DISCO!', color: ['#FF00FF', '#FFFF00', '#00FFFF', '#FF0000', '#00FF00'][Math.floor(Math.random()*5)] });
                     }
                   }
                 }
