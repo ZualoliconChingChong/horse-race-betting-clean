@@ -208,6 +208,9 @@
     });
   }
 
+  // Store original canvas size for restoring
+  let originalCanvasSize = null;
+
   /**
    * Toggle fullscreen mode
    */
@@ -233,6 +236,58 @@
   }
 
   /**
+   * Resize canvas to fit fullscreen
+   */
+  function resizeCanvasForFullscreen() {
+    const canvas = document.getElementById('cv');
+    if (!canvas) return;
+
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    
+    if (isFullscreen) {
+      // Save original size
+      if (!originalCanvasSize) {
+        originalCanvasSize = {
+          width: canvas.width,
+          height: canvas.height
+        };
+      }
+      
+      // Calculate new size to fit screen (with padding for HUD)
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight - 60; // Reserve space for HUD
+      
+      // Keep aspect ratio
+      const aspectRatio = originalCanvasSize.width / originalCanvasSize.height;
+      let newW = screenW;
+      let newH = screenW / aspectRatio;
+      
+      if (newH > screenH) {
+        newH = screenH;
+        newW = screenH * aspectRatio;
+      }
+      
+      // Update canvas size
+      canvas.style.width = newW + 'px';
+      canvas.style.height = newH + 'px';
+      
+      // Also update mapDef if exists to scale game content
+      if (window.mapDef) {
+        window.mapDef._fullscreenScale = newW / originalCanvasSize.width;
+      }
+      
+    } else if (originalCanvasSize) {
+      // Restore original size
+      canvas.style.width = '';
+      canvas.style.height = '';
+      
+      if (window.mapDef) {
+        window.mapDef._fullscreenScale = 1;
+      }
+    }
+  }
+
+  /**
    * Update fullscreen button icon based on current state
    */
   function updateFullscreenButton() {
@@ -242,6 +297,9 @@
     
     if (icon) icon.textContent = isFullscreen ? '⛶' : '⛶';
     if (text) text.textContent = isFullscreen ? 'Exit' : 'Full';
+    
+    // Resize canvas when fullscreen state changes
+    resizeCanvasForFullscreen();
   }
 
   /**
