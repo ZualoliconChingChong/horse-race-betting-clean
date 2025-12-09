@@ -348,13 +348,43 @@ function startRace(){
         h.skillState = {
           name: 'supersonic_speed',
           status: 'ready',
-          activationTime: 10000,   // 10s delay before activation
-          duration: 4000,          // 4s of x10 speed
-          cooldown: 60000,         // 60s cooldown
-          boostMultiplier: 10.0,   // x10 speed during boost
-          slowMultiplier: 0.5,     // 0.5x speed after boost
-          recoveryDuration: 15000  // 15s to recover back to 1.0x
+          activationTime: 10000,
+          duration: 4000,
+          cooldown: 60000,
+          boostMultiplier: 10.0,
+          slowMultiplier: 0.5,
+          recoveryDuration: 15000
         };
+      } else if (custom.skill === 'meteor_strike') {
+        h.skillState = { name: 'meteor_strike', status: 'ready', activationTime: 12000, cooldown: 45000, meteorCount: 4, damage: 15, stunDuration: 1000 };
+      } else if (custom.skill === 'black_hole') {
+        h.skillState = { name: 'black_hole', status: 'ready', activationTime: 15000, duration: 3000, cooldown: 50000, radius: 200, pullStrength: 2.0 };
+      } else if (custom.skill === 'ice_age') {
+        h.skillState = { name: 'ice_age', status: 'ready', activationTime: 12000, duration: 4000, cooldown: 55000, radius: 180, slowMultiplier: 0.3 };
+      } else if (custom.skill === 'mirror_image') {
+        h.skillState = { name: 'mirror_image', status: 'ready', activationTime: 8000, duration: 8000, cooldown: 40000, cloneCount: 2 };
+      } else if (custom.skill === 'time_warp') {
+        h.skillState = { name: 'time_warp', status: 'ready', activationTime: 20000, cooldown: 90000, rewindDuration: 2000 };
+      } else if (custom.skill === 'stealth_mode') {
+        h.skillState = { name: 'stealth_mode', status: 'ready', activationTime: 10000, duration: 5000, cooldown: 50000 };
+      } else if (custom.skill === 'blink') {
+        h.skillState = { name: 'blink', status: 'ready', activationTime: 5000, cooldown: 15000, distance: 150 };
+      } else if (custom.skill === 'rocket_boost') {
+        h.skillState = { name: 'rocket_boost', status: 'ready', activationTime: 10000, duration: 1500, cooldown: 35000, speedMultiplier: 8.0, knockbackForce: 3.0 };
+      } else if (custom.skill === 'gravity_flip') {
+        h.skillState = { name: 'gravity_flip', status: 'ready', activationTime: 12000, duration: 3000, cooldown: 40000 };
+      } else if (custom.skill === 'phoenix_rebirth') {
+        h.skillState = { name: 'phoenix_rebirth', status: 'passive', used: false, revivePercent: 0.5, invincibleDuration: 3000 };
+      } else if (custom.skill === 'avatar_state') {
+        h.skillState = { name: 'avatar_state', status: 'ready', activationTime: 25000, duration: 6000, cooldown: 120000, speedMultiplier: 3.0, damageMultiplier: 2.0 };
+      } else if (custom.skill === 'dimension_rift') {
+        h.skillState = { name: 'dimension_rift', status: 'ready', activationTime: 15000, duration: 10000, cooldown: 60000, portalRadius: 50 };
+      } else if (custom.skill === 'rainbow_trail') {
+        h.skillState = { name: 'rainbow_trail', status: 'ready', activationTime: 8000, duration: 5000, cooldown: 45000, speedBoost: 1.3, trailBoost: 1.15 };
+      } else if (custom.skill === 'disco_chaos') {
+        h.skillState = { name: 'disco_chaos', status: 'ready', activationTime: 12000, duration: 4000, cooldown: 50000, radius: 150, redirectInterval: 500 };
+      } else if (custom.skill === 'aurora_shield') {
+        h.skillState = { name: 'aurora_shield', status: 'ready', activationTime: 10000, duration: 6000, cooldown: 55000, shieldHP: 30, reflectPercent: 0.5 };
       }
     }
   

@@ -5455,7 +5455,23 @@ const skillDescriptions = {
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
   fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
   energy_ball: { vi: "Bắn quả cầu năng lượng nảy trong map, đẩy lùi và gây -1 HP liên tục. CD: 35s", en: "Fires bouncing energy ball, pushes and deals -1 HP continuously. CD: 35s" },
-  supersonic_speed: { vi: "Siêu tốc x10 trong 4s, sau đó giảm còn 0.5x và phục hồi dần trong 15s. CD: 60s", en: "x10 speed for 4s, then 0.5x speed recovering over 15s. CD: 60s" }
+  supersonic_speed: { vi: "Siêu tốc x10 trong 4s, sau đó giảm còn 0.5x và phục hồi dần trong 15s. CD: 60s", en: "x10 speed for 4s, then 0.5x speed recovering over 15s. CD: 60s" },
+  // New skills batch
+  meteor_strike: { vi: "☄️ Triệu hồi 3-5 thiên thạch rơi phía trước, gây 15 HP + stun 1s. CD: 45s", en: "☄️ Summon 3-5 meteors ahead, deal 15 HP + stun 1s. CD: 45s" },
+  black_hole: { vi: "🕳️ Tạo hố đen hút ngựa trong bán kính 200 về tâm trong 3s. CD: 50s", en: "🕳️ Create black hole pulling horses (200 radius) for 3s. CD: 50s" },
+  ice_age: { vi: "❄️ Đóng băng vùng xung quanh, slow 70% + trượt không kiểm soát 4s. CD: 55s", en: "❄️ Freeze area, 70% slow + uncontrollable sliding 4s. CD: 55s" },
+  mirror_image: { vi: "🪞 Tạo 2 bản sao ảo chạy cùng, hấp thụ 1 đòn skill mỗi bản. CD: 40s", en: "🪞 Create 2 mirror clones, each absorbs 1 skill hit. CD: 40s" },
+  time_warp: { vi: "⏰ Quay ngược 2s - trở về vị trí và HP cũ. CD: 90s", en: "⏰ Rewind 2s - return to previous position and HP. CD: 90s" },
+  stealth_mode: { vi: "👻 Vô hình 5s, xuyên ngựa, không bị target bởi skill. CD: 50s", en: "👻 Invisible 5s, phase through horses, immune to targeting. CD: 50s" },
+  blink: { vi: "✨ Dịch chuyển tức thì 150px về phía trước, xuyên tường. CD: 15s", en: "✨ Instant teleport 150px forward, through walls. CD: 15s" },
+  rocket_boost: { vi: "🚀 Phóng về phía trước tốc độ cực đại, bật ngựa khác ra 2 bên 1.5s. CD: 35s", en: "🚀 Launch forward at max speed, knock horses aside 1.5s. CD: 35s" },
+  gravity_flip: { vi: "🔄 Đảo ngược trọng lực 3s - bay lên trần rồi rơi xuống, né skill. CD: 40s", en: "🔄 Flip gravity 3s - fly up then fall, dodge skills. CD: 40s" },
+  phoenix_rebirth: { vi: "🔥 THỤ ĐỘNG: Khi HP=0, hồi sinh 50% HP + bất tử 3s (1 lần/race)", en: "🔥 PASSIVE: On death, revive 50% HP + invincible 3s (once/race)" },
+  avatar_state: { vi: "🌀 x3 tốc độ + x2 damage + miễn slow 6s. CD: 120s", en: "🌀 x3 speed + x2 damage + slow immune 6s. CD: 120s" },
+  dimension_rift: { vi: "🌌 Tạo portal 10s, ngựa đi vào bị teleport random trên map. CD: 60s", en: "🌌 Create portal 10s, horses entering teleport randomly. CD: 60s" },
+  rainbow_trail: { vi: "🌈 +30% speed, để lại vệt cầu vồng boost 15% cho ngựa đi sau 5s. CD: 45s", en: "🌈 +30% speed, leave rainbow trail +15% boost for followers 5s. CD: 45s" },
+  disco_chaos: { vi: "🪩 Ngựa trong bán kính bị random direction mỗi 0.5s trong 4s. CD: 50s", en: "🪩 Horses in radius get random direction every 0.5s for 4s. CD: 50s" },
+  aurora_shield: { vi: "🌌 Shield hấp thụ 30 HP + reflect 50% damage về attacker 6s. CD: 55s", en: "🌌 Shield absorbs 30 HP + reflects 50% damage back 6s. CD: 55s" }
 };
 
 // Skill description auto-update (always visible)
@@ -8669,7 +8685,22 @@ function spawnRandomLuckItem(){
                 silence_shizuka: "Silence Shizuka",
                 fireball: "Fireball",
                 energy_ball: "Energy Ball",
-                supersonic_speed: "Supersonic Speed"
+                supersonic_speed: "Supersonic Speed",
+                meteor_strike: "Meteor Strike",
+                black_hole: "Black Hole",
+                ice_age: "Ice Age",
+                mirror_image: "Mirror Image",
+                time_warp: "Time Warp",
+                stealth_mode: "Stealth Mode",
+                blink: "Blink",
+                rocket_boost: "Rocket Boost",
+                gravity_flip: "Gravity Flip",
+                phoenix_rebirth: "Phoenix Rebirth",
+                avatar_state: "Avatar State",
+                dimension_rift: "Dimension Rift",
+                rainbow_trail: "Rainbow Trail",
+                disco_chaos: "Disco Chaos",
+                aurora_shield: "Aurora Shield"
               };
               const _sname = _skillNames[h.skillState.name] || h.skillState.name;
               const _hname = (h && (h.name || ('#' + ((h.i!=null? h.i+1 : (h.idx||'')))))) || 'Ngựa';
@@ -8874,15 +8905,204 @@ function spawnRandomLuckItem(){
                 try { playSfx('powerup'); } catch {}
                 break;
               case 'supersonic_speed':
-                // Supersonic Speed: x5 speed for 4s
+                // Supersonic Speed: x10 speed for 4s
                 h.skillState.endTime = now + (h.skillState.duration || 4000);
                 h.speedMod = h.skillState.boostMultiplier || 10.0;
-                h.supersonicAuraUntil = h.skillState.endTime; // Aura effect
-                h.supersonicBaseSpeed = h.baseSpeedMod || 1.0; // Store original speed
+                h.supersonicAuraUntil = h.skillState.endTime;
+                h.supersonicBaseSpeed = h.baseSpeedMod || 1.0;
                 createExplosion(h.x, h.y, '#00FFFF', 35);
                 createExplosion(h.x, h.y, '#FFFF00', 25);
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1500, text: '🚀 SUPERSONIC! 🚀', color: '#00FFFF' });
                 try { playSfx('powerup'); } catch {}
+                break;
+              case 'meteor_strike':
+                // Meteor Strike: Spawn meteors ahead of horse
+                h.skillState.endTime = now + 2000;
+                const meteorCount = h.skillState.meteorCount || 4;
+                const vel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
+                const dirX = (h.vx || 1) / vel;
+                const dirY = (h.vy || 0) / vel;
+                for (let m = 0; m < meteorCount; m++) {
+                  const dist = 100 + Math.random() * 150;
+                  const spread = (Math.random() - 0.5) * 100;
+                  const meteorX = h.x + dirX * dist + dirY * spread;
+                  const meteorY = h.y + dirY * dist - dirX * spread;
+                  window.activeMeteors = window.activeMeteors || [];
+                  window.activeMeteors.push({
+                    x: meteorX, y: meteorY - 200,
+                    targetX: meteorX, targetY: meteorY,
+                    owner: h.i, damage: h.skillState.damage || 15,
+                    stunDuration: h.skillState.stunDuration || 1000,
+                    spawnTime: now, fallDuration: 800 + m * 200
+                  });
+                }
+                createExplosion(h.x, h.y, '#FF4500', 30);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '☄️ METEOR STRIKE!', color: '#FF4500' });
+                try { playSfx('explosion'); } catch {}
+                break;
+              case 'black_hole':
+                // Black Hole: Create pulling vortex
+                h.skillState.endTime = now + (h.skillState.duration || 3000);
+                h.blackHoleActive = true;
+                h.blackHoleX = h.x;
+                h.blackHoleY = h.y;
+                h.blackHoleRadius = h.skillState.radius || 200;
+                h.blackHolePullStrength = h.skillState.pullStrength || 2.0;
+                createExplosion(h.x, h.y, '#4B0082', 50);
+                createExplosion(h.x, h.y, '#8B00FF', 40);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '🕳️ BLACK HOLE!', color: '#8B00FF' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'ice_age':
+                // Ice Age: Freeze area around horse
+                h.skillState.endTime = now + (h.skillState.duration || 4000);
+                h.iceAgeActive = true;
+                h.iceAgeX = h.x;
+                h.iceAgeY = h.y;
+                h.iceAgeRadius = h.skillState.radius || 180;
+                createExplosion(h.x, h.y, '#00FFFF', 45);
+                createExplosion(h.x, h.y, '#FFFFFF', 35);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '❄️ ICE AGE!', color: '#00FFFF' });
+                try { playSfx('freeze'); } catch {}
+                break;
+              case 'mirror_image':
+                // Mirror Image: Create clones
+                h.skillState.endTime = now + (h.skillState.duration || 8000);
+                h.mirrorClones = [];
+                const cloneCount = h.skillState.cloneCount || 2;
+                for (let c = 0; c < cloneCount; c++) {
+                  h.mirrorClones.push({
+                    offsetAngle: (c + 1) * (Math.PI * 2 / (cloneCount + 1)),
+                    distance: 40,
+                    hp: 1,
+                    alpha: 0.6
+                  });
+                }
+                createExplosion(h.x, h.y, '#E0E0FF', 30);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1200, text: '🪞 MIRROR IMAGE!', color: '#E0E0FF' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'time_warp':
+                // Time Warp: Save current state for rewind
+                h.timeWarpSavedX = h.x;
+                h.timeWarpSavedY = h.y;
+                h.timeWarpSavedHP = h.hp;
+                h.timeWarpSavedVx = h.vx;
+                h.timeWarpSavedVy = h.vy;
+                h.skillState.endTime = now + (h.skillState.rewindDuration || 2000);
+                h.timeWarpActive = true;
+                createExplosion(h.x, h.y, '#FFD700', 35);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1000, text: '⏰ TIME WARP!', color: '#FFD700' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'stealth_mode':
+                // Stealth Mode: Become invisible
+                h.skillState.endTime = now + (h.skillState.duration || 5000);
+                h.stealthActive = true;
+                h.stealthAlpha = 0.2;
+                createExplosion(h.x, h.y, '#808080', 25);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1000, text: '👻 STEALTH!', color: '#808080' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'blink':
+                // Blink: Instant teleport forward
+                const blinkDist = h.skillState.distance || 150;
+                const blinkVel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
+                const blinkDirX = (h.vx || 1) / blinkVel;
+                const blinkDirY = (h.vy || 0) / blinkVel;
+                createExplosion(h.x, h.y, '#00FFFF', 20);
+                h.x += blinkDirX * blinkDist;
+                h.y += blinkDirY * blinkDist;
+                createExplosion(h.x, h.y, '#00FFFF', 25);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 800, text: '✨ BLINK!', color: '#00FFFF' });
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState.cooldown || 15000);
+                try { playSfx('teleport'); } catch {}
+                break;
+              case 'rocket_boost':
+                // Rocket Boost: Launch forward at max speed
+                h.skillState.endTime = now + (h.skillState.duration || 1500);
+                h.rocketBoostActive = true;
+                h.speedMod = h.skillState.speedMultiplier || 8.0;
+                h.rocketKnockback = h.skillState.knockbackForce || 3.0;
+                createExplosion(h.x, h.y, '#FF4500', 35);
+                createExplosion(h.x, h.y, '#FFD700', 25);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1200, text: '🚀 ROCKET BOOST!', color: '#FF4500' });
+                try { playSfx('boost'); } catch {}
+                break;
+              case 'gravity_flip':
+                // Gravity Flip: Horse floats up
+                h.skillState.endTime = now + (h.skillState.duration || 3000);
+                h.gravityFlipActive = true;
+                h.gravityFlipPhase = 'rising';
+                h.originalY = h.y;
+                h.floatHeight = 80;
+                createExplosion(h.x, h.y, '#9932CC', 30);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1000, text: '🔄 GRAVITY FLIP!', color: '#9932CC' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'avatar_state':
+                // Avatar State: Ultimate power mode
+                h.skillState.endTime = now + (h.skillState.duration || 6000);
+                h.avatarStateActive = true;
+                h.speedMod = h.skillState.speedMultiplier || 3.0;
+                h.avatarDamageBonus = h.skillState.damageMultiplier || 2.0;
+                h.avatarSlowImmune = true;
+                createExplosion(h.x, h.y, '#FFD700', 50);
+                createExplosion(h.x, h.y, '#FF4500', 40);
+                createExplosion(h.x, h.y, '#00FF00', 30);
+                createExplosion(h.x, h.y, '#00BFFF', 20);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 2000, text: '🌀 AVATAR STATE!', color: '#FFD700' });
+                try { playSfx('ultimate'); } catch {}
+                break;
+              case 'dimension_rift':
+                // Dimension Rift: Create portal
+                h.skillState.endTime = now + (h.skillState.duration || 10000);
+                window.dimensionRifts = window.dimensionRifts || [];
+                window.dimensionRifts.push({
+                  x: h.x, y: h.y,
+                  radius: h.skillState.portalRadius || 50,
+                  owner: h.i,
+                  endTime: h.skillState.endTime
+                });
+                createExplosion(h.x, h.y, '#8B00FF', 40);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '🌌 DIMENSION RIFT!', color: '#8B00FF' });
+                try { playSfx('portal'); } catch {}
+                break;
+              case 'rainbow_trail':
+                // Rainbow Trail: Speed boost with trail
+                h.skillState.endTime = now + (h.skillState.duration || 5000);
+                h.rainbowTrailActive = true;
+                h.speedMod = h.skillState.speedBoost || 1.3;
+                h.rainbowTrailPoints = [];
+                createExplosion(h.x, h.y, '#FF0000', 20);
+                createExplosion(h.x, h.y, '#00FF00', 20);
+                createExplosion(h.x, h.y, '#0000FF', 20);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1200, text: '🌈 RAINBOW TRAIL!', color: '#FF69B4' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'disco_chaos':
+                // Disco Chaos: Confuse nearby horses
+                h.skillState.endTime = now + (h.skillState.duration || 4000);
+                h.discoChaosActive = true;
+                h.discoChaosRadius = h.skillState.radius || 150;
+                h.lastRedirectTime = now;
+                createExplosion(h.x, h.y, '#FF00FF', 35);
+                createExplosion(h.x, h.y, '#FFFF00', 30);
+                createExplosion(h.x, h.y, '#00FFFF', 25);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '🪩 DISCO CHAOS!', color: '#FF00FF' });
+                try { playSfx('disco'); } catch {}
+                break;
+              case 'aurora_shield':
+                // Aurora Shield: Protective barrier
+                h.skillState.endTime = now + (h.skillState.duration || 6000);
+                h.auroraShieldActive = true;
+                h.auroraShieldHP = h.skillState.shieldHP || 30;
+                h.auroraReflectPercent = h.skillState.reflectPercent || 0.5;
+                createExplosion(h.x, h.y, '#00FF7F', 35);
+                createExplosion(h.x, h.y, '#FF69B4', 30);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1200, text: '🛡️ AURORA SHIELD!', color: '#00FF7F' });
+                try { playSfx('shield'); } catch {}
                 break;
             }
           }
@@ -9232,29 +9452,21 @@ function spawnRandomLuckItem(){
               }
               break;
             case 'supersonic_speed':
-              // Supersonic Speed: x5 for 4s, then recovery phase
+              // Supersonic Speed: x10 for 4s, then recovery phase
               if (now >= h.skillState.endTime) {
-                // Boost phase ended, enter recovery phase
                 if (!h.supersonicRecoveryStartTime) {
-                  // Start recovery phase
                   h.supersonicRecoveryStartTime = now;
                   h.speedMod = h.skillState.slowMultiplier || 0.5;
-                  h.supersonicAuraUntil = 0; // Remove boost aura
+                  h.supersonicAuraUntil = 0;
                   createExplosion(h.x, h.y, '#FF6600', 20);
                   floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1200, text: '💨 Recovering...', color: '#FF6600' });
                 }
-                
-                // Gradual recovery from 0.5x to 1.0x over 15s
                 const recoveryDuration = h.skillState.recoveryDuration || 15000;
                 const recoveryElapsed = now - h.supersonicRecoveryStartTime;
                 const recoveryProgress = Math.min(1, recoveryElapsed / recoveryDuration);
-                
-                // Linear interpolation from slowMultiplier to baseSpeed
                 const slowMult = h.skillState.slowMultiplier || 0.5;
                 const baseMult = h.supersonicBaseSpeed || 1.0;
                 h.speedMod = slowMult + (baseMult - slowMult) * recoveryProgress;
-                
-                // Recovery complete
                 if (recoveryProgress >= 1) {
                   h.speedMod = baseMult;
                   h.supersonicRecoveryStartTime = null;
@@ -9264,6 +9476,219 @@ function spawnRandomLuckItem(){
                   h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 60000);
                   h._lastLuckCheck = now;
                 }
+              }
+              break;
+            case 'meteor_strike':
+              // Meteor Strike: Wait for meteors to land, then cooldown
+              if (now >= h.skillState.endTime) {
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 45000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'black_hole':
+              // Black Hole: Pull horses toward center
+              if (h.blackHoleActive && now < h.skillState.endTime) {
+                for (const other of horses) {
+                  if (other.i === h.i || other.eliminated) continue;
+                  const dx = h.blackHoleX - other.x;
+                  const dy = h.blackHoleY - other.y;
+                  const dist = Math.hypot(dx, dy);
+                  if (dist < h.blackHoleRadius && dist > 10) {
+                    const pullForce = h.blackHolePullStrength * (1 - dist / h.blackHoleRadius);
+                    other.vx += (dx / dist) * pullForce * 0.15;
+                    other.vy += (dy / dist) * pullForce * 0.15;
+                  }
+                }
+              }
+              if (now >= h.skillState.endTime) {
+                h.blackHoleActive = false;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'ice_age':
+              // Ice Age: Slow and slide horses in area
+              if (h.iceAgeActive && now < h.skillState.endTime) {
+                for (const other of horses) {
+                  if (other.i === h.i || other.eliminated) continue;
+                  const dx = other.x - h.iceAgeX;
+                  const dy = other.y - h.iceAgeY;
+                  const dist = Math.hypot(dx, dy);
+                  if (dist < h.iceAgeRadius) {
+                    other.iceSlowMultiplier = h.skillState.slowMultiplier || 0.3;
+                    other.iceFrozenUntil = now + 200;
+                    // Add sliding effect
+                    other.vx += (Math.random() - 0.5) * 0.3;
+                    other.vy += (Math.random() - 0.5) * 0.3;
+                  }
+                }
+              }
+              if (now >= h.skillState.endTime) {
+                h.iceAgeActive = false;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 55000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'mirror_image':
+              // Mirror Image: Clones follow horse
+              if (now >= h.skillState.endTime) {
+                h.mirrorClones = null;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 40000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'time_warp':
+              // Time Warp: Rewind to saved position
+              if (now >= h.skillState.endTime && h.timeWarpActive) {
+                createExplosion(h.x, h.y, '#FFD700', 25);
+                h.x = h.timeWarpSavedX;
+                h.y = h.timeWarpSavedY;
+                h.hp = h.timeWarpSavedHP;
+                h.vx = h.timeWarpSavedVx;
+                h.vy = h.timeWarpSavedVy;
+                createExplosion(h.x, h.y, '#FFD700', 30);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 1000, text: '⏰ REWOUND!', color: '#FFD700' });
+                h.timeWarpActive = false;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 90000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'stealth_mode':
+              // Stealth Mode: Stay invisible
+              if (now >= h.skillState.endTime) {
+                h.stealthActive = false;
+                h.stealthAlpha = 1.0;
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 800, text: '👁️ Revealed!', color: '#FFFFFF' });
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'rocket_boost':
+              // Rocket Boost: Knockback nearby horses
+              if (h.rocketBoostActive && now < h.skillState.endTime) {
+                for (const other of horses) {
+                  if (other.i === h.i || other.eliminated) continue;
+                  const dx = other.x - h.x;
+                  const dy = other.y - h.y;
+                  const dist = Math.hypot(dx, dy);
+                  if (dist < 60 && dist > 5) {
+                    const knockback = h.rocketKnockback || 3.0;
+                    other.vx += (dx / dist) * knockback;
+                    other.vy += (dy / dist) * knockback;
+                  }
+                }
+              }
+              if (now >= h.skillState.endTime) {
+                h.rocketBoostActive = false;
+                h.speedMod = 1.0;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 35000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'gravity_flip':
+              // Gravity Flip: Float up then down
+              if (h.gravityFlipActive) {
+                const elapsed = now - (h.skillState.endTime - (h.skillState.duration || 3000));
+                const duration = h.skillState.duration || 3000;
+                const progress = elapsed / duration;
+                if (progress < 0.5) {
+                  // Rising phase
+                  h.gravityFlipOffset = Math.sin(progress * Math.PI) * h.floatHeight;
+                } else {
+                  // Falling phase
+                  h.gravityFlipOffset = Math.sin(progress * Math.PI) * h.floatHeight;
+                }
+              }
+              if (now >= h.skillState.endTime) {
+                h.gravityFlipActive = false;
+                h.gravityFlipOffset = 0;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 40000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'avatar_state':
+              // Avatar State: Maintain power mode
+              if (now >= h.skillState.endTime) {
+                h.avatarStateActive = false;
+                h.speedMod = 1.0;
+                h.avatarDamageBonus = 1.0;
+                h.avatarSlowImmune = false;
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 1200, text: '🌀 Avatar Ends', color: '#808080' });
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 120000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'dimension_rift':
+              // Dimension Rift: Portal stays active
+              if (now >= h.skillState.endTime) {
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 60000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'rainbow_trail':
+              // Rainbow Trail: Leave trail points
+              if (h.rainbowTrailActive && now < h.skillState.endTime) {
+                h.rainbowTrailPoints = h.rainbowTrailPoints || [];
+                if (h.rainbowTrailPoints.length === 0 || Math.hypot(h.x - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].x, h.y - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].y) > 15) {
+                  h.rainbowTrailPoints.push({ x: h.x, y: h.y, time: now, boost: h.skillState.trailBoost || 1.15 });
+                }
+                // Limit trail length
+                while (h.rainbowTrailPoints.length > 50) h.rainbowTrailPoints.shift();
+              }
+              if (now >= h.skillState.endTime) {
+                h.rainbowTrailActive = false;
+                h.speedMod = 1.0;
+                h.rainbowTrailPoints = null;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 45000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'disco_chaos':
+              // Disco Chaos: Redirect nearby horses
+              if (h.discoChaosActive && now < h.skillState.endTime) {
+                const redirectInterval = h.skillState.redirectInterval || 500;
+                if (now - h.lastRedirectTime >= redirectInterval) {
+                  h.lastRedirectTime = now;
+                  for (const other of horses) {
+                    if (other.i === h.i || other.eliminated) continue;
+                    const dist = Math.hypot(other.x - h.x, other.y - h.y);
+                    if (dist < h.discoChaosRadius) {
+                      const randomAngle = Math.random() * Math.PI * 2;
+                      const speed = Math.hypot(other.vx, other.vy) || 1;
+                      other.vx = Math.cos(randomAngle) * speed;
+                      other.vy = Math.sin(randomAngle) * speed;
+                    }
+                  }
+                }
+              }
+              if (now >= h.skillState.endTime) {
+                h.discoChaosActive = false;
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
+                h._lastLuckCheck = now;
+              }
+              break;
+            case 'aurora_shield':
+              // Aurora Shield: Absorb damage
+              if (now >= h.skillState.endTime || h.auroraShieldHP <= 0) {
+                h.auroraShieldActive = false;
+                if (h.auroraShieldHP <= 0) {
+                  floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 800, text: '💔 Shield Broken!', color: '#FF0000' });
+                }
+                h.skillState.status = 'cooldown';
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 55000);
+                h._lastLuckCheck = now;
               }
               break;
             case 'shockwave':
@@ -11667,6 +12092,122 @@ function spawnRandomLuckItem(){
     }
   }
   
+  // ============ GLOBAL SKILL EFFECTS PROCESSING ============
+  
+  // Process Meteors (Meteor Strike skill)
+  if (window.activeMeteors && window.activeMeteors.length > 0) {
+    const now = performance.now();
+    for (let i = window.activeMeteors.length - 1; i >= 0; i--) {
+      const meteor = window.activeMeteors[i];
+      const elapsed = now - meteor.spawnTime;
+      const progress = Math.min(1, elapsed / meteor.fallDuration);
+      
+      // Update meteor position (falling animation)
+      meteor.currentY = meteor.y + (meteor.targetY - meteor.y + 200) * progress;
+      meteor.currentX = meteor.targetX;
+      
+      // Meteor has landed
+      if (progress >= 1) {
+        // Create impact explosion
+        try { createExplosion(meteor.targetX, meteor.targetY, '#FF4500', 40); } catch {}
+        try { createExplosion(meteor.targetX, meteor.targetY, '#FFD700', 30); } catch {}
+        
+        // Damage and stun horses in impact area
+        for (const h of horses) {
+          if (h.eliminated || h.i === meteor.owner) continue;
+          const dist = Math.hypot(h.x - meteor.targetX, h.y - meteor.targetY);
+          if (dist < 50) {
+            // Deal damage
+            if (typeof h.hp === 'number') {
+              h.hp -= meteor.damage;
+              floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 1000, text: `-${meteor.damage} ☄️`, color: '#FF4500' });
+            }
+            // Stun
+            h.meteorStunUntil = now + meteor.stunDuration;
+            h.vx *= 0.2;
+            h.vy *= 0.2;
+          }
+        }
+        
+        // Remove meteor
+        window.activeMeteors.splice(i, 1);
+      }
+    }
+  }
+  
+  // Process Dimension Rifts
+  if (window.dimensionRifts && window.dimensionRifts.length > 0) {
+    const now = performance.now();
+    for (let i = window.dimensionRifts.length - 1; i >= 0; i--) {
+      const rift = window.dimensionRifts[i];
+      
+      // Remove expired rifts
+      if (now >= rift.endTime) {
+        window.dimensionRifts.splice(i, 1);
+        continue;
+      }
+      
+      // Check for horses entering the rift
+      for (const h of horses) {
+        if (h.eliminated || h.i === rift.owner) continue;
+        if (h.riftCooldownUntil && now < h.riftCooldownUntil) continue;
+        
+        const dist = Math.hypot(h.x - rift.x, h.y - rift.y);
+        if (dist < rift.radius) {
+          // Teleport to random location
+          const mapW = mapDef.w || 800;
+          const mapH = mapDef.h || 600;
+          const padding = 50;
+          h.x = padding + Math.random() * (mapW - padding * 2);
+          h.y = padding + Math.random() * (mapH - padding * 2);
+          h.riftCooldownUntil = now + 3000; // 3s cooldown
+          
+          try { createExplosion(rift.x, rift.y, '#8B00FF', 25); } catch {}
+          try { createExplosion(h.x, h.y, '#8B00FF', 20); } catch {}
+          floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 1200, text: '🌌 RIFTED!', color: '#8B00FF' });
+        }
+      }
+    }
+  }
+  
+  // Process Phoenix Rebirth (passive)
+  for (const h of horses) {
+    if (h.skillState?.name === 'phoenix_rebirth' && h.skillState.status === 'passive' && !h.skillState.used) {
+      if (h.hp <= 0 && !h.eliminated) {
+        // Trigger rebirth
+        h.skillState.used = true;
+        const maxHP = mapDef.horseMaxHP || 100;
+        h.hp = Math.floor(maxHP * (h.skillState.revivePercent || 0.5));
+        h.phoenixInvincibleUntil = performance.now() + (h.skillState.invincibleDuration || 3000);
+        
+        // Epic visual effects
+        try {
+          for (let burst = 0; burst < 5; burst++) {
+            createExplosion(h.x, h.y, ['#FF4500', '#FFD700', '#FF6347'][burst % 3], 35 + burst * 8);
+          }
+        } catch {}
+        
+        floatingTexts.push({ x: h.x, y: h.y - h.r - 20, t: performance.now(), life: 2500, text: '🔥 PHOENIX REBIRTH! 🔥', color: '#FFD700' });
+        floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1500, text: `+${h.hp} HP`, color: '#00FF00' });
+        
+        try { playSfx('ultimate'); } catch {}
+        logEvent(`🔥 Ngựa ${h.name || ('#'+(h.i+1))} đã hồi sinh với Phoenix Rebirth!`);
+      }
+    }
+    
+    // Phoenix invincibility protection
+    if (h.phoenixInvincibleUntil && performance.now() < h.phoenixInvincibleUntil) {
+      // Prevent elimination during invincibility
+      if (h.hp < 1) h.hp = 1;
+    }
+    
+    // Meteor stun effect
+    if (h.meteorStunUntil && performance.now() < h.meteorStunUntil) {
+      h.vx *= 0.9;
+      h.vy *= 0.9;
+    }
+  }
+  
   // Apply Fan forces to horses
   try {
     const fans = mapDef.fans || [];
@@ -13679,6 +14220,75 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
             }
             ctx.restore();
           }
+          
+          // Render falling meteors (Meteor Strike skill)
+          if (window.activeMeteors && window.activeMeteors.length > 0) {
+            ctx.save();
+            for (const meteor of window.activeMeteors) {
+              const x = meteor.currentX || meteor.targetX;
+              const y = meteor.currentY || meteor.y;
+              
+              // Meteor trail
+              ctx.strokeStyle = 'rgba(255, 69, 0, 0.6)';
+              ctx.lineWidth = 8;
+              ctx.beginPath();
+              ctx.moveTo(x, y - 30);
+              ctx.lineTo(x, y);
+              ctx.stroke();
+              
+              // Meteor body
+              const meteorGrad = ctx.createRadialGradient(x, y, 0, x, y, 15);
+              meteorGrad.addColorStop(0, '#FFFF00');
+              meteorGrad.addColorStop(0.3, '#FF8C00');
+              meteorGrad.addColorStop(0.7, '#FF4500');
+              meteorGrad.addColorStop(1, '#8B0000');
+              ctx.fillStyle = meteorGrad;
+              ctx.beginPath();
+              ctx.arc(x, y, 15, 0, Math.PI * 2);
+              ctx.fill();
+              
+              // Target indicator
+              ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+              ctx.setLineDash([5, 5]);
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(meteor.targetX, meteor.targetY, 30, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            ctx.restore();
+          }
+          
+          // Render dimension rifts
+          if (window.dimensionRifts && window.dimensionRifts.length > 0) {
+            const now = performance.now();
+            ctx.save();
+            for (const rift of window.dimensionRifts) {
+              const riftPhase = now / 100;
+              const riftRadius = rift.radius || 50;
+              
+              // Swirling portal effect
+              for (let ring = 0; ring < 4; ring++) {
+                const ringR = riftRadius * (0.3 + ring * 0.2);
+                ctx.strokeStyle = `hsla(${(riftPhase * 3 + ring * 30) % 360}, 100%, 60%, ${0.6 - ring * 0.1})`;
+                ctx.lineWidth = 3 - ring * 0.5;
+                ctx.beginPath();
+                ctx.arc(rift.x, rift.y, ringR, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+              
+              // Portal center
+              const portalGrad = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, riftRadius * 0.5);
+              portalGrad.addColorStop(0, 'rgba(139, 0, 255, 0.8)');
+              portalGrad.addColorStop(0.5, 'rgba(75, 0, 130, 0.5)');
+              portalGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+              ctx.fillStyle = portalGrad;
+              ctx.beginPath();
+              ctx.arc(rift.x, rift.y, riftRadius * 0.5, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
         } catch {}
       }
     } catch {}
@@ -14216,6 +14826,248 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
           } catch {}
         }
         
+        ctx.restore();
+      }
+
+      // ============ NEW SKILL VISUAL EFFECTS ============
+      
+      // Black Hole Visual
+      if (h.blackHoleActive) {
+        ctx.save();
+        const bhPhase = now / 50;
+        const bhRadius = h.blackHoleRadius || 200;
+        
+        // Swirling vortex
+        for (let ring = 0; ring < 5; ring++) {
+          const ringRadius = bhRadius * (0.2 + ring * 0.16);
+          const ringAlpha = 0.6 - ring * 0.1;
+          ctx.strokeStyle = `rgba(75, 0, 130, ${ringAlpha})`;
+          ctx.lineWidth = 3 - ring * 0.4;
+          ctx.beginPath();
+          for (let a = 0; a < Math.PI * 2; a += 0.1) {
+            const wobble = Math.sin(a * 3 + bhPhase + ring) * 5;
+            const rx = h.blackHoleX + Math.cos(a + bhPhase * 0.02 * (ring + 1)) * (ringRadius + wobble);
+            const ry = h.blackHoleY + Math.sin(a + bhPhase * 0.02 * (ring + 1)) * (ringRadius + wobble);
+            if (a === 0) ctx.moveTo(rx, ry);
+            else ctx.lineTo(rx, ry);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+        
+        // Dark center
+        const centerGrad = ctx.createRadialGradient(h.blackHoleX, h.blackHoleY, 0, h.blackHoleX, h.blackHoleY, 40);
+        centerGrad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+        centerGrad.addColorStop(0.5, 'rgba(75, 0, 130, 0.6)');
+        centerGrad.addColorStop(1, 'rgba(139, 0, 255, 0)');
+        ctx.fillStyle = centerGrad;
+        ctx.beginPath();
+        ctx.arc(h.blackHoleX, h.blackHoleY, 40, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // Ice Age Visual
+      if (h.iceAgeActive) {
+        ctx.save();
+        const icePhase = now / 100;
+        const iceRadius = h.iceAgeRadius || 180;
+        
+        // Frost circle
+        const iceGrad = ctx.createRadialGradient(h.iceAgeX, h.iceAgeY, 0, h.iceAgeX, h.iceAgeY, iceRadius);
+        iceGrad.addColorStop(0, 'rgba(200, 255, 255, 0.4)');
+        iceGrad.addColorStop(0.5, 'rgba(135, 206, 250, 0.25)');
+        iceGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = iceGrad;
+        ctx.beginPath();
+        ctx.arc(h.iceAgeX, h.iceAgeY, iceRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Ice crystals
+        for (let c = 0; c < 8; c++) {
+          const angle = (c / 8) * Math.PI * 2 + icePhase * 0.01;
+          const dist = iceRadius * 0.6 + Math.sin(icePhase + c) * 20;
+          const cx = h.iceAgeX + Math.cos(angle) * dist;
+          const cy = h.iceAgeY + Math.sin(angle) * dist;
+          ctx.fillStyle = 'rgba(200, 255, 255, 0.8)';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy - 10);
+          ctx.lineTo(cx + 5, cy);
+          ctx.lineTo(cx, cy + 10);
+          ctx.lineTo(cx - 5, cy);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      
+      // Mirror Image Clones
+      if (h.mirrorClones && h.mirrorClones.length > 0) {
+        for (const clone of h.mirrorClones) {
+          if (clone.hp <= 0) continue;
+          const cx = h.x + Math.cos(clone.offsetAngle + now * 0.002) * clone.distance;
+          const cy = h.y + Math.sin(clone.offsetAngle + now * 0.002) * clone.distance;
+          ctx.save();
+          ctx.globalAlpha = clone.alpha;
+          ctx.fillStyle = h.color || '#00BFFF';
+          ctx.beginPath();
+          ctx.arc(cx, cy, h.r * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(224, 224, 255, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      
+      // Stealth Mode Visual
+      if (h.stealthActive) {
+        ctx.save();
+        ctx.globalAlpha = h.stealthAlpha || 0.2;
+        // Ripple effect
+        const ripplePhase = now / 200;
+        ctx.strokeStyle = 'rgba(128, 128, 128, 0.3)';
+        ctx.lineWidth = 1;
+        for (let r = 0; r < 3; r++) {
+          const rippleR = h.r + 5 + r * 8 + Math.sin(ripplePhase + r) * 3;
+          ctx.beginPath();
+          ctx.arc(h.x, h.y, rippleR, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      
+      // Rocket Boost Visual
+      if (h.rocketBoostActive) {
+        ctx.save();
+        const rocketPhase = now / 30;
+        // Flame trail
+        const flameLength = 30 + Math.sin(rocketPhase) * 10;
+        const vel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
+        const tailX = h.x - (h.vx / vel) * flameLength;
+        const tailY = h.y - (h.vy / vel) * flameLength;
+        
+        const flameGrad = ctx.createLinearGradient(h.x, h.y, tailX, tailY);
+        flameGrad.addColorStop(0, 'rgba(255, 255, 0, 0.9)');
+        flameGrad.addColorStop(0.3, 'rgba(255, 140, 0, 0.7)');
+        flameGrad.addColorStop(1, 'rgba(255, 69, 0, 0)');
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.moveTo(h.x - (h.vy / vel) * 8, h.y + (h.vx / vel) * 8);
+        ctx.lineTo(tailX, tailY);
+        ctx.lineTo(h.x + (h.vy / vel) * 8, h.y - (h.vx / vel) * 8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // Gravity Flip Visual
+      if (h.gravityFlipActive) {
+        ctx.save();
+        const flipPhase = now / 100;
+        // Purple gravity distortion
+        ctx.strokeStyle = `rgba(153, 50, 204, ${0.5 + Math.sin(flipPhase) * 0.2})`;
+        ctx.lineWidth = 2;
+        for (let r = 0; r < 3; r++) {
+          ctx.beginPath();
+          ctx.arc(h.x, h.y - (h.gravityFlipOffset || 0), h.r + 8 + r * 6, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      
+      // Avatar State Visual
+      if (h.avatarStateActive) {
+        ctx.save();
+        const avatarPhase = now / 60;
+        // Four elemental orbs
+        const elements = [
+          { color: '#FF4500', angle: 0 },        // Fire
+          { color: '#00BFFF', angle: Math.PI/2 }, // Water
+          { color: '#8B4513', angle: Math.PI },   // Earth
+          { color: '#FFFFFF', angle: 3*Math.PI/2 } // Air
+        ];
+        for (const elem of elements) {
+          const orbX = h.x + Math.cos(elem.angle + avatarPhase * 0.05) * (h.r + 20);
+          const orbY = h.y + Math.sin(elem.angle + avatarPhase * 0.05) * (h.r + 20);
+          ctx.fillStyle = elem.color;
+          ctx.beginPath();
+          ctx.arc(orbX, orbY, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Golden aura
+        const avatarGrad = ctx.createRadialGradient(h.x, h.y, h.r, h.x, h.y, h.r + 25);
+        avatarGrad.addColorStop(0, 'rgba(255, 215, 0, 0.3)');
+        avatarGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        ctx.fillStyle = avatarGrad;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.r + 25, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      
+      // Rainbow Trail Visual
+      if (h.rainbowTrailActive && h.rainbowTrailPoints && h.rainbowTrailPoints.length > 1) {
+        ctx.save();
+        const colors = ['#FF0000', '#FF7F00', '#FFFF00', '#00FF00', '#0000FF', '#4B0082', '#9400D3'];
+        for (let i = 1; i < h.rainbowTrailPoints.length; i++) {
+          const p1 = h.rainbowTrailPoints[i - 1];
+          const p2 = h.rainbowTrailPoints[i];
+          const age = now - p1.time;
+          if (age > 3000) continue;
+          const alpha = Math.max(0, 1 - age / 3000);
+          ctx.strokeStyle = colors[i % colors.length];
+          ctx.globalAlpha = alpha * 0.7;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      
+      // Disco Chaos Visual
+      if (h.discoChaosActive) {
+        ctx.save();
+        const discoPhase = now / 50;
+        const discoRadius = h.discoChaosRadius || 150;
+        // Disco ball effect
+        const discoColors = ['#FF00FF', '#FFFF00', '#00FFFF', '#FF0000', '#00FF00', '#0000FF'];
+        for (let ray = 0; ray < 12; ray++) {
+          const angle = (ray / 12) * Math.PI * 2 + discoPhase * 0.1;
+          ctx.strokeStyle = discoColors[ray % discoColors.length];
+          ctx.globalAlpha = 0.4 + Math.sin(discoPhase + ray) * 0.2;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(h.x, h.y);
+          ctx.lineTo(h.x + Math.cos(angle) * discoRadius, h.y + Math.sin(angle) * discoRadius);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      
+      // Aurora Shield Visual
+      if (h.auroraShieldActive) {
+        ctx.save();
+        const auroraPhase = now / 80;
+        const shieldRadius = h.r + 12;
+        // Aurora colors
+        const auroraGrad = ctx.createRadialGradient(h.x, h.y, h.r, h.x, h.y, shieldRadius + 8);
+        const hue1 = (auroraPhase * 2) % 360;
+        const hue2 = (hue1 + 60) % 360;
+        auroraGrad.addColorStop(0, `hsla(${hue1}, 100%, 70%, 0.1)`);
+        auroraGrad.addColorStop(0.5, `hsla(${hue2}, 100%, 60%, 0.4)`);
+        auroraGrad.addColorStop(1, `hsla(${hue1}, 100%, 50%, 0)`);
+        ctx.fillStyle = auroraGrad;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, shieldRadius + 8, 0, Math.PI * 2);
+        ctx.fill();
+        // Shield HP indicator
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`🛡️${Math.ceil(h.auroraShieldHP)}`, h.x, h.y - h.r - 18);
         ctx.restore();
       }
 
