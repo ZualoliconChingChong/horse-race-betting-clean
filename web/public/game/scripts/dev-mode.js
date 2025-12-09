@@ -212,9 +212,6 @@
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
   }
   
-  // Store original canvas size for restore
-  let originalCanvasSize = { width: 0, height: 0 };
-  
   /**
    * Toggle fullscreen mode for the stage
    */
@@ -240,48 +237,6 @@
   }
   
   /**
-   * Resize canvas to fit fullscreen
-   */
-  function resizeCanvasForFullscreen(isFullscreen) {
-    const canvas = document.getElementById('cv');
-    if (!canvas) return;
-    
-    if (isFullscreen) {
-      // Save original size
-      if (originalCanvasSize.width === 0) {
-        originalCanvasSize.width = canvas.width;
-        originalCanvasSize.height = canvas.height;
-      }
-      
-      // Get screen size minus HUB height
-      const hubHeight = 70; // Approximate HUB height
-      const notifHeight = 45; // Approximate notification bar height
-      const screenW = window.screen.width;
-      const screenH = window.screen.height - hubHeight - notifHeight;
-      
-      // Resize canvas to fill screen
-      canvas.width = screenW;
-      canvas.height = screenH;
-      canvas.style.width = screenW + 'px';
-      canvas.style.height = screenH + 'px';
-      
-      console.log('[Fullscreen] Canvas resized to:', screenW, 'x', screenH);
-    } else {
-      // Restore original size
-      if (originalCanvasSize.width > 0) {
-        canvas.width = originalCanvasSize.width;
-        canvas.height = originalCanvasSize.height;
-        canvas.style.width = '';
-        canvas.style.height = '';
-        console.log('[Fullscreen] Canvas restored to:', originalCanvasSize.width, 'x', originalCanvasSize.height);
-      }
-    }
-    
-    // Trigger resize event for game to update
-    window.dispatchEvent(new Event('resize'));
-  }
-  
-  /**
    * Update fullscreen button appearance
    */
   function updateFullscreenButton() {
@@ -291,9 +246,6 @@
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     const icon = btn.querySelector('.btn-icon');
     const text = btn.querySelector('.btn-text');
-    
-    // Resize canvas when fullscreen changes
-    resizeCanvasForFullscreen(isFullscreen);
     
     if (isFullscreen) {
       if (icon) icon.textContent = '⛶';
