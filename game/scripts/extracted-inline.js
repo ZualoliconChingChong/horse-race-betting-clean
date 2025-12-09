@@ -9989,6 +9989,77 @@ function spawnRandomLuckItem(){
       }
     }
 
+    // --- ROCKET BOOST PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'rocket_boost' && h.rocketBoostActive && now < h.skillState.endTime) {
+      for (const other of horses) {
+        if (other === h || other.eliminated) continue;
+        const dx = other.x - h.x;
+        const dy = other.y - h.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 80 && dist > 5) {
+          const knockback = (h.rocketKnockback || 3.0) * 2;
+          other.vx += (dx / dist) * knockback;
+          other.vy += (dy / dist) * knockback;
+          other.x += (dx / dist) * knockback * 0.5;
+          other.y += (dy / dist) * knockback * 0.5;
+          if (Math.random() < 0.2) {
+            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 400, text: '🚀 PUSHED!', color: '#FF4500' });
+          }
+        }
+      }
+    }
+
+    // --- DIMENSION RIFT PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'dimension_rift' && window.dimensionRifts && window.dimensionRifts.length > 0) {
+      for (const rift of window.dimensionRifts) {
+        if (rift.owner !== h.i || now > rift.endTime) continue;
+        for (const other of horses) {
+          if (other === h || other.eliminated) continue;
+          if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
+          const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
+          if (dist < rift.radius) {
+            const mapWidth = window.mapDef?.canvasWidth || 1200;
+            const mapHeight = window.mapDef?.canvasHeight || 800;
+            const newX = 100 + Math.random() * (mapWidth - 200);
+            const newY = 100 + Math.random() * (mapHeight - 200);
+            createExplosion(other.x, other.y, '#FF00FF', 30);
+            other.x = newX;
+            other.y = newY;
+            other.riftTeleportCooldown = now + 3000;
+            createExplosion(other.x, other.y, '#8B00FF', 35);
+            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 10, t: now, life: 1200, text: '🌀 TELEPORTED!', color: '#FF00FF' });
+          }
+        }
+      }
+    }
+
+    // --- RAINBOW TRAIL PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'rainbow_trail' && h.rainbowTrailActive && now < h.skillState.endTime) {
+      h.rainbowTrailPoints = h.rainbowTrailPoints || [];
+      // Add trail points as horse moves
+      if (h.rainbowTrailPoints.length === 0 || Math.hypot(h.x - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].x, h.y - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].y) > 15) {
+        h.rainbowTrailPoints.push({ x: h.x, y: h.y, time: now, boost: 1.2 });
+      }
+      while (h.rainbowTrailPoints.length > 50) h.rainbowTrailPoints.shift();
+      
+      // Boost other horses that pass through trail
+      for (const other of horses) {
+        if (other === h || other.eliminated) continue;
+        for (const pt of h.rainbowTrailPoints) {
+          if (now - pt.time > 3000) continue; // Trail lasts 3s
+          const dist = Math.hypot(other.x - pt.x, other.y - pt.y);
+          if (dist < 30) {
+            if (!other.rainbowBoostUntil || now > other.rainbowBoostUntil) {
+              other.speedMod = (other.speedMod || 1.0) * 1.2;
+              other.rainbowBoostUntil = now + 1500;
+              floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 800, text: '🌈 +20%', color: '#FF69B4' });
+            }
+            break;
+          }
+        }
+      }
+    }
+
     // Check for Ram expiration
     if (h.hasRam && performance.now() > h.ramUntil) {
       h.hasRam = false;
