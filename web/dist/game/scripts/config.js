@@ -99,7 +99,7 @@ const CONFIG = {
   physics: {
     horse: {
       defaultRadius: 8,
-      maxSpeed: 4,
+      maxSpeed: 30,
       acceleration: 0.3,
       friction: 0.85,
       bounceDamping: 0.7

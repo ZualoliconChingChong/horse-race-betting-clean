@@ -155,6 +155,38 @@
       h.skillState = { name: 'gravity_well', status: 'ready', activationTime: 10000, duration: 1400, cooldown: 80000, pullStrength: 0.8 };
     } else if (skill === 'chill_guy') {
       h.skillState = { name: 'chill_guy', status: 'active' };
+    } else if (skill === 'energy_ball') {
+      // Energy Ball: After 1s cast, creates large slow-moving energy ball that deals 30% HP damage
+      h.skillState = { name: 'energy_ball', status: 'ready', activationTime: 10000, castTime: 1000, duration: 20000, cooldown: 35000, damagePercent: 30, ballSpeed: 1, ballRadius: 30 };
+    } else if (skill === 'supersonic_speed') {
+      // Supersonic Speed: x10 speed for 4s, then 0.5x recovering over 15s
+      h.skillState = { name: 'supersonic_speed', status: 'ready', activationTime: 10000, duration: 4000, cooldown: 60000, boostMultiplier: 10.0, slowMultiplier: 0.5, recoveryDuration: 15000 };
+    } else if (skill === 'meteor_strike') {
+      h.skillState = { name: 'meteor_strike', status: 'ready', activationTime: 12000, cooldown: 45000, meteorCount: 4, damage: 15, stunDuration: 1000 };
+    } else if (skill === 'black_hole') {
+      h.skillState = { name: 'black_hole', status: 'ready', activationTime: 15000, duration: 3000, cooldown: 50000, radius: 200, pullStrength: 2.0 };
+    } else if (skill === 'ice_age') {
+      h.skillState = { name: 'ice_age', status: 'ready', activationTime: 12000, duration: 4000, cooldown: 55000, radius: 180, slowMultiplier: 0.3 };
+    } else if (skill === 'mirror_image') {
+      h.skillState = { name: 'mirror_image', status: 'ready', activationTime: 8000, duration: 8000, cooldown: 40000, cloneCount: 2 };
+    } else if (skill === 'time_warp') {
+      h.skillState = { name: 'time_warp', status: 'ready', activationTime: 8000, cooldown: 60000, rewindDuration: 8000 };
+    } else if (skill === 'blink') {
+      h.skillState = { name: 'blink', status: 'ready', activationTime: 5000, cooldown: 15000, distance: 150 };
+    } else if (skill === 'rocket_boost') {
+      h.skillState = { name: 'rocket_boost', status: 'ready', activationTime: 10000, duration: 1500, cooldown: 35000, speedMultiplier: 8.0, knockbackForce: 3.0 };
+    } else if (skill === 'gravity_flip') {
+      h.skillState = { name: 'gravity_flip', status: 'ready', activationTime: 12000, duration: 3000, cooldown: 40000 };
+    } else if (skill === 'phoenix_rebirth') {
+      h.skillState = { name: 'phoenix_rebirth', status: 'passive', used: false, revivePercent: 0.5, invincibleDuration: 3000 };
+    } else if (skill === 'avatar_state') {
+      h.skillState = { name: 'avatar_state', status: 'ready', activationTime: 10000, duration: 6000, cooldown: 90000, speedMultiplier: 3.0, damageMultiplier: 2.0 };
+    } else if (skill === 'rainbow_trail') {
+      h.skillState = { name: 'rainbow_trail', status: 'ready', activationTime: 8000, duration: 5000, cooldown: 45000, speedBoost: 1.3, trailBoost: 1.15 };
+    } else if (skill === 'disco_chaos') {
+      h.skillState = { name: 'disco_chaos', status: 'ready', activationTime: 12000, duration: 4000, cooldown: 50000, radius: 150, redirectInterval: 500 };
+    } else if (skill === 'aurora_shield') {
+      h.skillState = { name: 'aurora_shield', status: 'ready', activationTime: 10000, duration: 6000, cooldown: 55000, shieldHP: 30, reflectPercent: 0.5 };
     } else {
       h.skillState = null;
     }

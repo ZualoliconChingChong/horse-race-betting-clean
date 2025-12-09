@@ -112,23 +112,60 @@
         if (!mapDef) throw new Error('Map definition not found');
         
         const config = {
+            // Map elements
             walls: mapDef.walls || [],
             brushes: mapDef.brushes || [],
             pipes: mapDef.pipes || [],
             semis: mapDef.semis || [],
             arcs: mapDef.arcs || [],
             textWalls: mapDef.textWalls || [],
+            
+            // Race elements
             spawns: mapDef.spawnPoints || [],
             carrotA: mapDef.carrotA || null,
             carrotB: mapDef.carrotB || null,
             room: mapDef.room || null,
             startGate: mapDef.startGate || null,
+            
+            // Power-ups (ALL types)
             boosts: mapDef.boosts || [],
             shields: mapDef.shields || [],
             turbos: mapDef.turbos || [],
+            ghosts: mapDef.ghosts || [],
+            rams: mapDef.rams || [],
+            teleports: mapDef.teleports || [],
+            magnets: mapDef.magnets || [],
+            timeFreezes: mapDef.timeFreezes || [],
+            icefreezers: mapDef.icefreezers || [],
+            poisons: mapDef.poisons || [],
+            tornados: mapDef.tornados || [],
+            spinners: mapDef.spinners || [],
+            
+            // Obstacles
             traps: mapDef.traps || [],
             muds: mapDef.muds || [],
             ices: mapDef.ices || [],
+            
+            // Power-up settings
+            magnetSettings: mapDef.magnetSettings || null,
+            turboSettings: mapDef.turboSettings || null,
+            shieldSettings: mapDef.shieldSettings || null,
+            poisonSettings: mapDef.poisonSettings || null,
+            timeFreezeSettings: mapDef.timeFreezeSettings || null,
+            teleportSettings: mapDef.teleportSettings || null,
+            warpzoneSettings: mapDef.warpzoneSettings || null,
+            quantumdashSettings: mapDef.quantumdashSettings || null,
+            
+            // Physics settings
+            horseRadius: mapDef.horseRadius,
+            carrotRadius: mapDef.carrotRadius,
+            maxVel: mapDef.maxVel,
+            minCruise: mapDef.minCruise,
+            horseHitScale: mapDef.horseHitScale,
+            horseHitInset: mapDef.horseHitInset,
+            
+            // Weather
+            weather: mapDef.weather || null,
             lastHorseWins: mapDef.lastHorseWins,
             hpSystemEnabled: mapDef.hpSystemEnabled,
             horseMaxHP: mapDef.horseMaxHP,
@@ -224,17 +261,53 @@
             if (mapData.semis) window.mapDef.semis = mapData.semis;
             if (mapData.arcs) window.mapDef.arcs = mapData.arcs;
             if (mapData.textWalls) window.mapDef.textWalls = mapData.textWalls;
+            
+            // Race elements
             if (mapData.spawns) window.mapDef.spawnPoints = mapData.spawns;
             if (mapData.carrotA) window.mapDef.carrotA = mapData.carrotA;
             if (mapData.carrotB) window.mapDef.carrotB = mapData.carrotB;
             if (mapData.room) window.mapDef.room = mapData.room;
             if (mapData.startGate) window.mapDef.startGate = mapData.startGate;
+            
+            // Power-ups (ALL types)
             if (mapData.boosts) window.mapDef.boosts = mapData.boosts;
             if (mapData.shields) window.mapDef.shields = mapData.shields;
             if (mapData.turbos) window.mapDef.turbos = mapData.turbos;
+            if (mapData.ghosts) window.mapDef.ghosts = mapData.ghosts;
+            if (mapData.rams) window.mapDef.rams = mapData.rams;
+            if (mapData.teleports) window.mapDef.teleports = mapData.teleports;
+            if (mapData.magnets) window.mapDef.magnets = mapData.magnets;
+            if (mapData.timeFreezes) window.mapDef.timeFreezes = mapData.timeFreezes;
+            if (mapData.icefreezers) window.mapDef.icefreezers = mapData.icefreezers;
+            if (mapData.poisons) window.mapDef.poisons = mapData.poisons;
+            if (mapData.tornados) window.mapDef.tornados = mapData.tornados;
+            if (mapData.spinners) window.mapDef.spinners = mapData.spinners;
+            
+            // Obstacles
             if (mapData.traps) window.mapDef.traps = mapData.traps;
             if (mapData.muds) window.mapDef.muds = mapData.muds;
             if (mapData.ices) window.mapDef.ices = mapData.ices;
+            
+            // Power-up settings
+            if (mapData.magnetSettings) window.mapDef.magnetSettings = mapData.magnetSettings;
+            if (mapData.turboSettings) window.mapDef.turboSettings = mapData.turboSettings;
+            if (mapData.shieldSettings) window.mapDef.shieldSettings = mapData.shieldSettings;
+            if (mapData.poisonSettings) window.mapDef.poisonSettings = mapData.poisonSettings;
+            if (mapData.timeFreezeSettings) window.mapDef.timeFreezeSettings = mapData.timeFreezeSettings;
+            if (mapData.teleportSettings) window.mapDef.teleportSettings = mapData.teleportSettings;
+            if (mapData.warpzoneSettings) window.mapDef.warpzoneSettings = mapData.warpzoneSettings;
+            if (mapData.quantumdashSettings) window.mapDef.quantumdashSettings = mapData.quantumdashSettings;
+            
+            // Physics settings
+            if (mapData.horseRadius !== undefined) window.mapDef.horseRadius = mapData.horseRadius;
+            if (mapData.carrotRadius !== undefined) window.mapDef.carrotRadius = mapData.carrotRadius;
+            if (mapData.maxVel !== undefined) window.mapDef.maxVel = mapData.maxVel;
+            if (mapData.minCruise !== undefined) window.mapDef.minCruise = mapData.minCruise;
+            if (mapData.horseHitScale !== undefined) window.mapDef.horseHitScale = mapData.horseHitScale;
+            if (mapData.horseHitInset !== undefined) window.mapDef.horseHitInset = mapData.horseHitInset;
+            
+            // Weather
+            if (mapData.weather) window.mapDef.weather = mapData.weather;
             
             // Apply settings
             if (mapData.lastHorseWins !== undefined) window.mapDef.lastHorseWins = mapData.lastHorseWins;
