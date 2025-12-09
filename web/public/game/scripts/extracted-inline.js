@@ -5461,8 +5461,7 @@ const skillDescriptions = {
   black_hole: { vi: "🕳️ Tạo hố đen hút ngựa trong bán kính 200 về tâm trong 3s. CD: 50s", en: "🕳️ Create black hole pulling horses (200 radius) for 3s. CD: 50s" },
   ice_age: { vi: "❄️ Đóng băng vùng xung quanh, slow 70% + trượt không kiểm soát 4s. CD: 55s", en: "❄️ Freeze area, 70% slow + uncontrollable sliding 4s. CD: 55s" },
   mirror_image: { vi: "🪞 Tạo 2 bản sao ảo chạy cùng, hấp thụ 1 đòn skill mỗi bản. CD: 40s", en: "🪞 Create 2 mirror clones, each absorbs 1 skill hit. CD: 40s" },
-  time_warp: { vi: "⏰ Quay ngược 2s - trở về vị trí và HP cũ. CD: 90s", en: "⏰ Rewind 2s - return to previous position and HP. CD: 90s" },
-  stealth_mode: { vi: "👻 Vô hình 5s, xuyên ngựa, không bị target bởi skill. CD: 50s", en: "👻 Invisible 5s, phase through horses, immune to targeting. CD: 50s" },
+  time_warp: { vi: "⏰ Quay ngược 2s - trở về vị trí và HP cũ. CD: 60s", en: "⏰ Rewind 2s - return to previous position and HP. CD: 60s" },
   blink: { vi: "✨ Dịch chuyển tức thì 150px về phía trước, xuyên tường. CD: 15s", en: "✨ Instant teleport 150px forward, through walls. CD: 15s" },
   rocket_boost: { vi: "🚀 Phóng về phía trước tốc độ cực đại, bật ngựa khác ra 2 bên 1.5s. CD: 35s", en: "🚀 Launch forward at max speed, knock horses aside 1.5s. CD: 35s" },
   gravity_flip: { vi: "🔄 Đảo ngược trọng lực 3s - bay lên trần rồi rơi xuống, né skill. CD: 40s", en: "🔄 Flip gravity 3s - fly up then fall, dodge skills. CD: 40s" },
@@ -8691,7 +8690,6 @@ function spawnRandomLuckItem(){
                 ice_age: "Ice Age",
                 mirror_image: "Mirror Image",
                 time_warp: "Time Warp",
-                stealth_mode: "Stealth Mode",
                 blink: "Blink",
                 rocket_boost: "Rocket Boost",
                 gravity_flip: "Gravity Flip",
@@ -8995,15 +8993,6 @@ function spawnRandomLuckItem(){
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1000, text: '⏰ TIME WARP!', color: '#FFD700' });
                 try { playSfx('powerup'); } catch {}
                 break;
-              case 'stealth_mode':
-                // Stealth Mode: Become invisible
-                h.skillState.endTime = now + (h.skillState.duration || 5000);
-                h.stealthActive = true;
-                h.stealthAlpha = 0.2;
-                createExplosion(h.x, h.y, '#808080', 25);
-                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1000, text: '👻 STEALTH!', color: '#808080' });
-                try { playSfx('powerup'); } catch {}
-                break;
               case 'blink':
                 // Blink: Instant teleport forward
                 const blinkDist = h.skillState.distance || 150;
@@ -9056,17 +9045,24 @@ function spawnRandomLuckItem(){
                 try { playSfx('ultimate'); } catch {}
                 break;
               case 'dimension_rift':
-                // Dimension Rift: Create portal
+                // Dimension Rift: Create portal AHEAD of horse
                 h.skillState.endTime = now + (h.skillState.duration || 10000);
                 window.dimensionRifts = window.dimensionRifts || [];
+                const riftVel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
+                const riftOffsetX = (h.vx || 1) / riftVel * 100;
+                const riftOffsetY = (h.vy || 0) / riftVel * 100;
+                const riftX = h.x + riftOffsetX;
+                const riftY = h.y + riftOffsetY;
                 window.dimensionRifts.push({
-                  x: h.x, y: h.y,
-                  radius: h.skillState.portalRadius || 50,
+                  x: riftX, y: riftY,
+                  radius: h.skillState.portalRadius || 80,
                   owner: h.i,
-                  endTime: h.skillState.endTime
+                  endTime: h.skillState.endTime,
+                  spawnTime: now
                 });
-                createExplosion(h.x, h.y, '#8B00FF', 40);
-                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 1500, text: '🌌 DIMENSION RIFT!', color: '#8B00FF' });
+                createExplosion(riftX, riftY, '#8B00FF', 60);
+                createExplosion(riftX, riftY, '#FF00FF', 45);
+                floatingTexts.push({ x: riftX, y: riftY - 40, t: now, life: 2000, text: '🌌 DIMENSION RIFT!', color: '#FF00FF' });
                 try { playSfx('portal'); } catch {}
                 break;
               case 'rainbow_trail':
@@ -9489,15 +9485,21 @@ function spawnRandomLuckItem(){
             case 'black_hole':
               // Black Hole: Pull horses toward center
               if (h.blackHoleActive && now < h.skillState.endTime) {
-                for (const other of horses) {
+                const allHorses = window.horses || horses || [];
+                for (const other of allHorses) {
                   if (other.i === h.i || other.eliminated) continue;
                   const dx = h.blackHoleX - other.x;
                   const dy = h.blackHoleY - other.y;
                   const dist = Math.hypot(dx, dy);
                   if (dist < h.blackHoleRadius && dist > 10) {
                     const pullForce = h.blackHolePullStrength * (1 - dist / h.blackHoleRadius);
-                    other.vx += (dx / dist) * pullForce * 0.15;
-                    other.vy += (dy / dist) * pullForce * 0.15;
+                    // Strong pull force
+                    other.vx += (dx / dist) * pullForce * 0.8;
+                    other.vy += (dy / dist) * pullForce * 0.8;
+                    // Visual feedback
+                    if (Math.random() < 0.1) {
+                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 500, text: '🕳️', color: '#8B00FF' });
+                    }
                   }
                 }
               }
@@ -9511,17 +9513,25 @@ function spawnRandomLuckItem(){
             case 'ice_age':
               // Ice Age: Slow and slide horses in area
               if (h.iceAgeActive && now < h.skillState.endTime) {
-                for (const other of horses) {
+                const allHorses = window.horses || horses || [];
+                for (const other of allHorses) {
                   if (other.i === h.i || other.eliminated) continue;
                   const dx = other.x - h.iceAgeX;
                   const dy = other.y - h.iceAgeY;
                   const dist = Math.hypot(dx, dy);
                   if (dist < h.iceAgeRadius) {
-                    other.iceSlowMultiplier = h.skillState.slowMultiplier || 0.3;
-                    other.iceFrozenUntil = now + 200;
-                    // Add sliding effect
-                    other.vx += (Math.random() - 0.5) * 0.3;
-                    other.vy += (Math.random() - 0.5) * 0.3;
+                    // Direct speed reduction
+                    other.speedMod = (other.speedMod || 1.0) * (h.skillState.slowMultiplier || 0.3);
+                    other.iceFrozenUntil = now + 500;
+                    // Sliding effect
+                    other.vx *= 0.7;
+                    other.vy *= 0.7;
+                    other.vx += (Math.random() - 0.5) * 1.5;
+                    other.vy += (Math.random() - 0.5) * 1.5;
+                    // Visual feedback
+                    if (Math.random() < 0.15) {
+                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 600, text: '❄️ FROZEN', color: '#00FFFF' });
+                    }
                   }
                 }
               }
@@ -9555,17 +9565,6 @@ function spawnRandomLuckItem(){
                 h.timeWarpActive = false;
                 h.skillState.status = 'cooldown';
                 h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 90000);
-                h._lastLuckCheck = now;
-              }
-              break;
-            case 'stealth_mode':
-              // Stealth Mode: Stay invisible
-              if (now >= h.skillState.endTime) {
-                h.stealthActive = false;
-                h.stealthAlpha = 1.0;
-                floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 800, text: '👁️ Revealed!', color: '#FFFFFF' });
-                h.skillState.status = 'cooldown';
-                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
                 h._lastLuckCheck = now;
               }
               break;
@@ -9628,15 +9627,43 @@ function spawnRandomLuckItem(){
               }
               break;
             case 'dimension_rift':
-              // Dimension Rift: Portal stays active
+              // Dimension Rift: Check for horses entering portal and teleport them
+              if (window.dimensionRifts && window.dimensionRifts.length > 0) {
+                const allHorses = window.horses || horses || [];
+                for (const rift of window.dimensionRifts) {
+                  if (rift.owner !== h.i || now > rift.endTime) continue;
+                  for (const other of allHorses) {
+                    if (other.i === h.i || other.eliminated) continue;
+                    if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
+                    const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
+                    if (dist < rift.radius) {
+                      // Teleport to random location on map
+                      const mapWidth = window.mapDef?.canvasWidth || 1200;
+                      const mapHeight = window.mapDef?.canvasHeight || 800;
+                      const newX = 100 + Math.random() * (mapWidth - 200);
+                      const newY = 100 + Math.random() * (mapHeight - 200);
+                      createExplosion(other.x, other.y, '#FF00FF', 30);
+                      other.x = newX;
+                      other.y = newY;
+                      other.riftTeleportCooldown = now + 3000; // 3s cooldown per horse
+                      createExplosion(other.x, other.y, '#8B00FF', 35);
+                      floatingTexts.push({ x: other.x, y: other.y - other.r - 10, t: now, life: 1200, text: '🌀 TELEPORTED!', color: '#FF00FF' });
+                    }
+                  }
+                }
+              }
               if (now >= h.skillState.endTime) {
+                // Clean up rifts owned by this horse
+                if (window.dimensionRifts) {
+                  window.dimensionRifts = window.dimensionRifts.filter(r => r.owner !== h.i);
+                }
                 h.skillState.status = 'cooldown';
-                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 60000);
+                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
                 h._lastLuckCheck = now;
               }
               break;
             case 'rainbow_trail':
-              // Rainbow Trail: Leave trail points
+              // Rainbow Trail: Leave trail points AND boost horses behind
               if (h.rainbowTrailActive && now < h.skillState.endTime) {
                 h.rainbowTrailPoints = h.rainbowTrailPoints || [];
                 if (h.rainbowTrailPoints.length === 0 || Math.hypot(h.x - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].x, h.y - h.rainbowTrailPoints[h.rainbowTrailPoints.length - 1].y) > 15) {
@@ -9644,6 +9671,26 @@ function spawnRandomLuckItem(){
                 }
                 // Limit trail length
                 while (h.rainbowTrailPoints.length > 50) h.rainbowTrailPoints.shift();
+                
+                // Boost horses that pass through the trail
+                const allHorses = window.horses || horses || [];
+                for (const other of allHorses) {
+                  if (other.i === h.i || other.eliminated) continue;
+                  // Check if horse is near any trail point
+                  for (const pt of h.rainbowTrailPoints) {
+                    if (now - pt.time > 2000) continue; // Trail expires after 2s
+                    const dist = Math.hypot(other.x - pt.x, other.y - pt.y);
+                    if (dist < 25) {
+                      // Apply boost
+                      if (!other.rainbowBoostUntil || now > other.rainbowBoostUntil) {
+                        other.speedMod = (other.speedMod || 1.0) * (pt.boost || 1.15);
+                        other.rainbowBoostUntil = now + 1000;
+                        floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 800, text: '🌈 +15%', color: '#FF69B4' });
+                      }
+                      break;
+                    }
+                  }
+                }
               }
               if (now >= h.skillState.endTime) {
                 h.rainbowTrailActive = false;
@@ -9660,14 +9707,17 @@ function spawnRandomLuckItem(){
                 const redirectInterval = h.skillState.redirectInterval || 500;
                 if (now - h.lastRedirectTime >= redirectInterval) {
                   h.lastRedirectTime = now;
-                  for (const other of horses) {
+                  const allHorses = window.horses || horses || [];
+                  for (const other of allHorses) {
                     if (other.i === h.i || other.eliminated) continue;
                     const dist = Math.hypot(other.x - h.x, other.y - h.y);
                     if (dist < h.discoChaosRadius) {
                       const randomAngle = Math.random() * Math.PI * 2;
-                      const speed = Math.hypot(other.vx, other.vy) || 1;
-                      other.vx = Math.cos(randomAngle) * speed;
-                      other.vy = Math.sin(randomAngle) * speed;
+                      const speed = Math.hypot(other.vx, other.vy) || 2;
+                      other.vx = Math.cos(randomAngle) * speed * 1.5;
+                      other.vy = Math.sin(randomAngle) * speed * 1.5;
+                      // Visual feedback
+                      floatingTexts.push({ x: other.x, y: other.y - other.r - 6, t: now, life: 400, text: '🩩 DISCO!', color: ['#FF00FF', '#FFFF00', '#00FFFF'][Math.floor(Math.random()*3)] });
                     }
                   }
                 }
@@ -14259,33 +14309,60 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
             ctx.restore();
           }
           
-          // Render dimension rifts
+          // Render dimension rifts - LARGE VISIBLE PORTALS
           if (window.dimensionRifts && window.dimensionRifts.length > 0) {
             const now = performance.now();
             ctx.save();
             for (const rift of window.dimensionRifts) {
-              const riftPhase = now / 100;
-              const riftRadius = rift.radius || 50;
+              const riftPhase = now / 80;
+              const riftRadius = rift.radius || 80;
+              const pulse = 1 + Math.sin(now / 200) * 0.15;
               
-              // Swirling portal effect
-              for (let ring = 0; ring < 4; ring++) {
-                const ringR = riftRadius * (0.3 + ring * 0.2);
-                ctx.strokeStyle = `hsla(${(riftPhase * 3 + ring * 30) % 360}, 100%, 60%, ${0.6 - ring * 0.1})`;
-                ctx.lineWidth = 3 - ring * 0.5;
+              // Outer glow
+              const glowGrad = ctx.createRadialGradient(rift.x, rift.y, riftRadius * 0.5, rift.x, rift.y, riftRadius * 1.5);
+              glowGrad.addColorStop(0, 'rgba(255, 0, 255, 0.4)');
+              glowGrad.addColorStop(0.5, 'rgba(139, 0, 255, 0.2)');
+              glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+              ctx.fillStyle = glowGrad;
+              ctx.beginPath();
+              ctx.arc(rift.x, rift.y, riftRadius * 1.5 * pulse, 0, Math.PI * 2);
+              ctx.fill();
+              
+              // Swirling rings - more rings, brighter
+              for (let ring = 0; ring < 6; ring++) {
+                const ringR = riftRadius * (0.2 + ring * 0.15) * pulse;
+                const hue = (riftPhase * 5 + ring * 60) % 360;
+                ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${0.9 - ring * 0.1})`;
+                ctx.lineWidth = 5 - ring * 0.6;
                 ctx.beginPath();
-                ctx.arc(rift.x, rift.y, ringR, 0, Math.PI * 2);
+                // Spiral effect
+                for (let a = 0; a < Math.PI * 2; a += 0.1) {
+                  const spiralR = ringR + Math.sin(a * 3 + riftPhase + ring) * 5;
+                  const sx = rift.x + Math.cos(a + riftPhase * 0.05 * (ring % 2 ? 1 : -1)) * spiralR;
+                  const sy = rift.y + Math.sin(a + riftPhase * 0.05 * (ring % 2 ? 1 : -1)) * spiralR;
+                  if (a === 0) ctx.moveTo(sx, sy);
+                  else ctx.lineTo(sx, sy);
+                }
+                ctx.closePath();
                 ctx.stroke();
               }
               
-              // Portal center
-              const portalGrad = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, riftRadius * 0.5);
-              portalGrad.addColorStop(0, 'rgba(139, 0, 255, 0.8)');
-              portalGrad.addColorStop(0.5, 'rgba(75, 0, 130, 0.5)');
-              portalGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+              // Portal center - black hole effect
+              const portalGrad = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, riftRadius * 0.6);
+              portalGrad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+              portalGrad.addColorStop(0.3, 'rgba(75, 0, 130, 0.8)');
+              portalGrad.addColorStop(0.6, 'rgba(139, 0, 255, 0.5)');
+              portalGrad.addColorStop(1, 'rgba(255, 0, 255, 0)');
               ctx.fillStyle = portalGrad;
               ctx.beginPath();
-              ctx.arc(rift.x, rift.y, riftRadius * 0.5, 0, Math.PI * 2);
+              ctx.arc(rift.x, rift.y, riftRadius * 0.6, 0, Math.PI * 2);
               ctx.fill();
+              
+              // Portal text
+              ctx.font = 'bold 14px Arial';
+              ctx.fillStyle = '#FF00FF';
+              ctx.textAlign = 'center';
+              ctx.fillText('🌌 RIFT', rift.x, rift.y - riftRadius - 10);
             }
             ctx.restore();
           }
@@ -14920,22 +14997,6 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
         }
       }
       
-      // Stealth Mode Visual
-      if (h.stealthActive) {
-        ctx.save();
-        ctx.globalAlpha = h.stealthAlpha || 0.2;
-        // Ripple effect
-        const ripplePhase = now / 200;
-        ctx.strokeStyle = 'rgba(128, 128, 128, 0.3)';
-        ctx.lineWidth = 1;
-        for (let r = 0; r < 3; r++) {
-          const rippleR = h.r + 5 + r * 8 + Math.sin(ripplePhase + r) * 3;
-          ctx.beginPath();
-          ctx.arc(h.x, h.y, rippleR, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-        ctx.restore();
-      }
       
       // Rocket Boost Visual
       if (h.rocketBoostActive) {

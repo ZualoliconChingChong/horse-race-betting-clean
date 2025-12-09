@@ -364,9 +364,7 @@ function startRace(){
       } else if (custom.skill === 'mirror_image') {
         h.skillState = { name: 'mirror_image', status: 'ready', activationTime: 8000, duration: 8000, cooldown: 40000, cloneCount: 2 };
       } else if (custom.skill === 'time_warp') {
-        h.skillState = { name: 'time_warp', status: 'ready', activationTime: 20000, cooldown: 90000, rewindDuration: 2000 };
-      } else if (custom.skill === 'stealth_mode') {
-        h.skillState = { name: 'stealth_mode', status: 'ready', activationTime: 10000, duration: 5000, cooldown: 50000 };
+        h.skillState = { name: 'time_warp', status: 'ready', activationTime: 8000, cooldown: 60000, rewindDuration: 2000 };
       } else if (custom.skill === 'blink') {
         h.skillState = { name: 'blink', status: 'ready', activationTime: 5000, cooldown: 15000, distance: 150 };
       } else if (custom.skill === 'rocket_boost') {
@@ -376,9 +374,9 @@ function startRace(){
       } else if (custom.skill === 'phoenix_rebirth') {
         h.skillState = { name: 'phoenix_rebirth', status: 'passive', used: false, revivePercent: 0.5, invincibleDuration: 3000 };
       } else if (custom.skill === 'avatar_state') {
-        h.skillState = { name: 'avatar_state', status: 'ready', activationTime: 25000, duration: 6000, cooldown: 120000, speedMultiplier: 3.0, damageMultiplier: 2.0 };
+        h.skillState = { name: 'avatar_state', status: 'ready', activationTime: 10000, duration: 6000, cooldown: 90000, speedMultiplier: 3.0, damageMultiplier: 2.0 };
       } else if (custom.skill === 'dimension_rift') {
-        h.skillState = { name: 'dimension_rift', status: 'ready', activationTime: 15000, duration: 10000, cooldown: 60000, portalRadius: 50 };
+        h.skillState = { name: 'dimension_rift', status: 'ready', activationTime: 10000, duration: 10000, cooldown: 50000, portalRadius: 80 };
       } else if (custom.skill === 'rainbow_trail') {
         h.skillState = { name: 'rainbow_trail', status: 'ready', activationTime: 8000, duration: 5000, cooldown: 45000, speedBoost: 1.3, trailBoost: 1.15 };
       } else if (custom.skill === 'disco_chaos') {
