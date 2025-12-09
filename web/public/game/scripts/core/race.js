@@ -344,6 +344,17 @@ function startRace(){
           ballSpeed: 1,          // direction unit vector
           ballRadius: 30         // large ball (bigger for visibility)
         };
+      } else if (custom.skill === 'supersonic_speed') {
+        h.skillState = {
+          name: 'supersonic_speed',
+          status: 'ready',
+          activationTime: 10000,   // 10s delay before activation
+          duration: 4000,          // 4s of x5 speed
+          cooldown: 60000,         // 60s cooldown
+          boostMultiplier: 5.0,    // x5 speed during boost
+          slowMultiplier: 0.5,     // 0.5x speed after boost
+          recoveryDuration: 15000  // 15s to recover back to 1.0x
+        };
       }
     }
   

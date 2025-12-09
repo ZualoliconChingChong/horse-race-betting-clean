@@ -158,6 +158,9 @@
     } else if (skill === 'energy_ball') {
       // Energy Ball: After 1s cast, creates large slow-moving energy ball that deals 30% HP damage
       h.skillState = { name: 'energy_ball', status: 'ready', activationTime: 10000, castTime: 1000, duration: 20000, cooldown: 35000, damagePercent: 30, ballSpeed: 1, ballRadius: 30 };
+    } else if (skill === 'supersonic_speed') {
+      // Supersonic Speed: x5 speed for 4s, then 0.5x recovering over 15s
+      h.skillState = { name: 'supersonic_speed', status: 'ready', activationTime: 10000, duration: 4000, cooldown: 60000, boostMultiplier: 5.0, slowMultiplier: 0.5, recoveryDuration: 15000 };
     } else {
       h.skillState = null;
     }

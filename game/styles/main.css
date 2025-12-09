@@ -1560,32 +1560,3 @@ input[type="number"] {
     z-index: 100;
   }
 
-/* ===== Fullscreen Mode Styles ===== */
-.wrap:fullscreen,
-.wrap:-webkit-full-screen {
-  width: 100vw !important;
-  height: 100vh !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: #0a0a0a;
-  overflow: hidden;
-}
-
-.wrap:fullscreen #hud,
-.wrap:-webkit-full-screen #hud {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 9999;
-}
-
-.wrap:fullscreen .notification-bar,
-.wrap:-webkit-full-screen .notification-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 9999;
-}
-

@@ -5454,7 +5454,8 @@ const skillDescriptions = {
   oguri_fat: { vi: "x2 tốc độ, x1.5 sát thương va chạm, aura lửa 5s. CD: 60s", en: "x2 speed, x1.5 collision damage, fire aura 5s. CD: 60s" },
   silence_shizuka: { vi: "Aura xanh hồi 5 HP/giây trong 10s (tổng 50 HP). CD: 45s", en: "Blue aura heals 5 HP/sec for 10s (50 HP total). CD: 45s" },
   fireball: { vi: "3 quả cầu lửa xoay quanh 8s, va chạm gây -10 HP. CD: 40s", en: "3 fireballs orbit for 8s, collision deals -10 HP. CD: 40s" },
-  energy_ball: { vi: "Bắn quả cầu năng lượng nảy trong map, đẩy lùi và gây -1 HP liên tục. CD: 35s", en: "Fires bouncing energy ball, pushes and deals -1 HP continuously. CD: 35s" }
+  energy_ball: { vi: "Bắn quả cầu năng lượng nảy trong map, đẩy lùi và gây -1 HP liên tục. CD: 35s", en: "Fires bouncing energy ball, pushes and deals -1 HP continuously. CD: 35s" },
+  supersonic_speed: { vi: "Siêu tốc x5 trong 4s, sau đó giảm còn 0.5x và phục hồi dần trong 15s. CD: 60s", en: "x5 speed for 4s, then 0.5x speed recovering over 15s. CD: 60s" }
 };
 
 // Skill description auto-update (always visible)
@@ -8667,7 +8668,8 @@ function spawnRandomLuckItem(){
                 oguri_fat: "Oguri Fat",
                 silence_shizuka: "Silence Shizuka",
                 fireball: "Fireball",
-                energy_ball: "Energy Ball"
+                energy_ball: "Energy Ball",
+                supersonic_speed: "Supersonic Speed"
               };
               const _sname = _skillNames[h.skillState.name] || h.skillState.name;
               const _hname = (h && (h.name || ('#' + ((h.i!=null? h.i+1 : (h.idx||'')))))) || 'Ngựa';
@@ -8869,6 +8871,17 @@ function spawnRandomLuckItem(){
                 h.skillState.castStartTime = now;
                 // Show casting effect
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1000, text: '⚡ Charging...', color: '#00BFFF' });
+                try { playSfx('powerup'); } catch {}
+                break;
+              case 'supersonic_speed':
+                // Supersonic Speed: x5 speed for 4s
+                h.skillState.endTime = now + (h.skillState.duration || 4000);
+                h.speedMod = h.skillState.boostMultiplier || 5.0;
+                h.supersonicAuraUntil = h.skillState.endTime; // Aura effect
+                h.supersonicBaseSpeed = h.baseSpeedMod || 1.0; // Store original speed
+                createExplosion(h.x, h.y, '#00FFFF', 35);
+                createExplosion(h.x, h.y, '#FFFF00', 25);
+                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: performance.now(), life: 1500, text: '🚀 SUPERSONIC! 🚀', color: '#00FFFF' });
                 try { playSfx('powerup'); } catch {}
                 break;
             }
@@ -9214,6 +9227,41 @@ function spawnRandomLuckItem(){
                 if (now >= h.skillState.endTime && !h.energyBall) {
                   h.skillState.status = 'cooldown';
                   h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
+                  h._lastLuckCheck = now;
+                }
+              }
+              break;
+            case 'supersonic_speed':
+              // Supersonic Speed: x5 for 4s, then recovery phase
+              if (now >= h.skillState.endTime) {
+                // Boost phase ended, enter recovery phase
+                if (!h.supersonicRecoveryStartTime) {
+                  // Start recovery phase
+                  h.supersonicRecoveryStartTime = now;
+                  h.speedMod = h.skillState.slowMultiplier || 0.5;
+                  h.supersonicAuraUntil = 0; // Remove boost aura
+                  createExplosion(h.x, h.y, '#FF6600', 20);
+                  floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1200, text: '💨 Recovering...', color: '#FF6600' });
+                }
+                
+                // Gradual recovery from 0.5x to 1.0x over 15s
+                const recoveryDuration = h.skillState.recoveryDuration || 15000;
+                const recoveryElapsed = now - h.supersonicRecoveryStartTime;
+                const recoveryProgress = Math.min(1, recoveryElapsed / recoveryDuration);
+                
+                // Linear interpolation from slowMultiplier to baseSpeed
+                const slowMult = h.skillState.slowMultiplier || 0.5;
+                const baseMult = h.supersonicBaseSpeed || 1.0;
+                h.speedMod = slowMult + (baseMult - slowMult) * recoveryProgress;
+                
+                // Recovery complete
+                if (recoveryProgress >= 1) {
+                  h.speedMod = baseMult;
+                  h.supersonicRecoveryStartTime = null;
+                  h.supersonicBaseSpeed = null;
+                  floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: performance.now(), life: 1000, text: '✓ Recovered', color: '#00FF00' });
+                  h.skillState.status = 'cooldown';
+                  h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 60000);
                   h._lastLuckCheck = now;
                 }
               }
@@ -14092,6 +14140,76 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
               color: Math.random() > 0.3 ? '#FFDD00' : (Math.random() > 0.5 ? '#FF8800' : '#FFFFFF'),
               alpha: 0.9,
               size: 1.5 + Math.random() * 2.5
+            });
+          } catch {}
+        }
+        
+        ctx.restore();
+      }
+
+      // Render Supersonic Speed Aura (Cyan/Yellow speed aura with motion trails)
+      if (h.supersonicAuraUntil && now < h.supersonicAuraUntil) {
+        ctx.save();
+        
+        // Speed lines and motion blur effect
+        const speedPhase = now / 30;
+        const numLines = 12;
+        
+        // Outer speed ring - pulsating cyan
+        const pulseSize = h.r + 15 + Math.sin(speedPhase * 0.5) * 5;
+        const outerGradient = ctx.createRadialGradient(h.x, h.y, h.r, h.x, h.y, pulseSize);
+        outerGradient.addColorStop(0, 'rgba(0, 255, 255, 0.0)');
+        outerGradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.3)');
+        outerGradient.addColorStop(0.8, 'rgba(255, 255, 0, 0.2)');
+        outerGradient.addColorStop(1, 'rgba(255, 255, 0, 0)');
+        ctx.fillStyle = outerGradient;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, pulseSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Speed lines radiating outward
+        for (let i = 0; i < numLines; i++) {
+          const angle = (i / numLines) * Math.PI * 2 + speedPhase * 0.1;
+          const lineLength = 20 + Math.sin(speedPhase + i * 0.8) * 10;
+          const lineAlpha = 0.4 + Math.sin(speedPhase * 2 + i) * 0.2;
+          
+          const startX = h.x + Math.cos(angle) * (h.r + 5);
+          const startY = h.y + Math.sin(angle) * (h.r + 5);
+          const endX = h.x + Math.cos(angle) * (h.r + 5 + lineLength);
+          const endY = h.y + Math.sin(angle) * (h.r + 5 + lineLength);
+          
+          ctx.strokeStyle = `rgba(0, 255, 255, ${lineAlpha})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+        }
+        
+        // Inner bright core
+        const coreGradient = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, h.r + 4);
+        coreGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        coreGradient.addColorStop(0.5, 'rgba(0, 255, 255, 0.5)');
+        coreGradient.addColorStop(1, 'rgba(0, 200, 255, 0)');
+        ctx.fillStyle = coreGradient;
+        ctx.beginPath();
+        ctx.arc(h.x, h.y, h.r + 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Spawn speed particles behind horse (motion trail)
+        if (Math.random() < 0.6) {
+          try {
+            const trailX = h.x - (h.vx || 0) * 3;
+            const trailY = h.y - (h.vy || 0) * 3;
+            particles.push({
+              x: trailX + (Math.random() - 0.5) * h.r,
+              y: trailY + (Math.random() - 0.5) * h.r,
+              vx: -(h.vx || 0) * 0.3 + (Math.random() - 0.5) * 0.5,
+              vy: -(h.vy || 0) * 0.3 + (Math.random() - 0.5) * 0.5,
+              life: 12 + Math.random() * 10,
+              color: Math.random() > 0.5 ? '#00FFFF' : '#FFFF00',
+              alpha: 0.8,
+              size: 2 + Math.random() * 2
             });
           } catch {}
         }
