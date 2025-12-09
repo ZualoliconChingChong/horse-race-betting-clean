@@ -192,6 +192,72 @@
         setupPlayerHorse(true); // Reset retry count
       }
     });
+
+    // Fullscreen toggle button
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    if (fullscreenToggle) {
+      fullscreenToggle.addEventListener('click', toggleFullscreen);
+    }
+    
+    // F11 key for fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+    
+    // Update fullscreen button icon when fullscreen changes
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+  }
+  
+  /**
+   * Toggle fullscreen mode for the stage
+   */
+  function toggleFullscreen() {
+    const stage = document.getElementById('stage');
+    if (!stage) return;
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      // Enter fullscreen
+      if (stage.requestFullscreen) {
+        stage.requestFullscreen();
+      } else if (stage.webkitRequestFullscreen) {
+        stage.webkitRequestFullscreen();
+      }
+    } else {
+      // Exit fullscreen
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
+  }
+  
+  /**
+   * Update fullscreen button appearance
+   */
+  function updateFullscreenButton() {
+    const btn = document.getElementById('fullscreenToggle');
+    if (!btn) return;
+    
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    const icon = btn.querySelector('.btn-icon');
+    const text = btn.querySelector('.btn-text');
+    
+    if (isFullscreen) {
+      if (icon) icon.textContent = '⛶';
+      if (text) text.textContent = 'Exit';
+      btn.style.background = 'linear-gradient(135deg, #e65100, #bf360c)';
+      btn.title = 'Thoát toàn màn hình (F11)';
+    } else {
+      if (icon) icon.textContent = '⛶';
+      if (text) text.textContent = 'Full';
+      btn.style.background = 'linear-gradient(135deg, #00897b, #00695c)';
+      btn.title = 'Toàn màn hình (F11)';
+    }
   }
 
   /**

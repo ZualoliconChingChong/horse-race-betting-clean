@@ -773,6 +773,45 @@ input[type="number"] {
   .wrap{display:flex;justify-content:flex-start;align-items:center;height:100%;padding-left:16px;position:relative}
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
+  
+  /* Fullscreen mode */
+  .stage:fullscreen,
+  .stage:-webkit-full-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+  .stage:fullscreen canvas,
+  .stage:-webkit-full-screen canvas {
+    max-width: 100vw;
+    max-height: 100vh;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain;
+    border-radius: 0;
+  }
+  .stage:fullscreen .game-hub,
+  .stage:-webkit-full-screen .game-hub {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    z-index: 9999;
+  }
+  .stage:fullscreen .notification-bar,
+  .stage:-webkit-full-screen .notification-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    z-index: 9999;
+  }
+  
   /* Stage drag handle */
   .stage-handle{position:absolute;top:-40px;left:50%;transform:translateX(-50%);min-width:64px;height:22px;padding:0 10px;display:none;align-items:center;justify-content:center;border-radius:999px;background:#0f1417;color:#e5e7eb;border:1px solid #2a343c;cursor:grab;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,.25);font-weight:700;font-size:12px}
   .stage-handle.active{display:flex}
