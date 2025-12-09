@@ -9925,6 +9925,70 @@ function spawnRandomLuckItem(){
       }
     }
 
+    // --- BLACK HOLE PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'black_hole' && h.blackHoleActive && now < h.skillState.endTime) {
+      for (const other of horses) {
+        if (other === h || other.eliminated) continue;
+        const dx = h.blackHoleX - other.x;
+        const dy = h.blackHoleY - other.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < h.blackHoleRadius && dist > 5) {
+          const pullForce = (h.blackHolePullStrength || 5.0) * (1 - dist / h.blackHoleRadius) * 3.0;
+          const pullX = (dx / dist) * pullForce;
+          const pullY = (dy / dist) * pullForce;
+          // Pull position directly
+          other.x += pullX * 0.8;
+          other.y += pullY * 0.8;
+          other.vx += pullX * 0.4;
+          other.vy += pullY * 0.4;
+          if (Math.random() < 0.2) {
+            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 400, text: '🕳️ PULL!', color: '#8B00FF' });
+          }
+        }
+      }
+    }
+
+    // --- ICE AGE PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'ice_age' && h.iceAgeActive && now < h.skillState.endTime) {
+      for (const other of horses) {
+        if (other === h || other.eliminated) continue;
+        const dx = other.x - h.iceAgeX;
+        const dy = other.y - h.iceAgeY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < h.iceAgeRadius) {
+          // FREEZE - reduce speed drastically
+          other.speedMod = 0.2;
+          other.frozenUntil = now + 100;
+          other.vx *= 0.4;
+          other.vy *= 0.4;
+          other.vx += (Math.random() - 0.5) * 2;
+          other.vy += (Math.random() - 0.5) * 2;
+          if (Math.random() < 0.15) {
+            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 500, text: '❄️ FROZEN!', color: '#00FFFF' });
+          }
+        }
+      }
+    }
+
+    // --- DISCO CHAOS PER-FRAME EFFECT ---
+    if (h.skillState && h.skillState.name === 'disco_chaos' && h.discoChaosActive && now < h.skillState.endTime) {
+      const redirectInterval = 400;
+      if (!h._lastDiscoRedirect || now - h._lastDiscoRedirect >= redirectInterval) {
+        h._lastDiscoRedirect = now;
+        for (const other of horses) {
+          if (other === h || other.eliminated) continue;
+          const dist = Math.hypot(other.x - h.x, other.y - h.y);
+          if (dist < (h.discoChaosRadius || 250)) {
+            const randomAngle = Math.random() * Math.PI * 2;
+            const speed = Math.max(Math.hypot(other.vx, other.vy), 4);
+            other.vx = Math.cos(randomAngle) * speed * 1.8;
+            other.vy = Math.sin(randomAngle) * speed * 1.8;
+            floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 400, text: '🪩 DISCO!', color: ['#FF00FF', '#FFFF00', '#00FFFF', '#FF0000', '#00FF00'][Math.floor(Math.random()*5)] });
+          }
+        }
+      }
+    }
+
     // Check for Ram expiration
     if (h.hasRam && performance.now() > h.ramUntil) {
       h.hasRam = false;
