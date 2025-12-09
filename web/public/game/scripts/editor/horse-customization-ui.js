@@ -170,7 +170,7 @@
     } else if (skill === 'mirror_image') {
       h.skillState = { name: 'mirror_image', status: 'ready', activationTime: 8000, duration: 8000, cooldown: 40000, cloneCount: 2 };
     } else if (skill === 'time_warp') {
-      h.skillState = { name: 'time_warp', status: 'ready', activationTime: 8000, cooldown: 60000, rewindDuration: 2000 };
+      h.skillState = { name: 'time_warp', status: 'ready', activationTime: 8000, cooldown: 60000, rewindDuration: 8000 };
     } else if (skill === 'blink') {
       h.skillState = { name: 'blink', status: 'ready', activationTime: 5000, cooldown: 15000, distance: 150 };
     } else if (skill === 'rocket_boost') {

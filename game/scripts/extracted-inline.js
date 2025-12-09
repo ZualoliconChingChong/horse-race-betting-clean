@@ -5461,7 +5461,7 @@ const skillDescriptions = {
   black_hole: { vi: "🕳️ Tạo hố đen hút ngựa trong bán kính 200 về tâm trong 3s. CD: 50s", en: "🕳️ Create black hole pulling horses (200 radius) for 3s. CD: 50s" },
   ice_age: { vi: "❄️ Đóng băng vùng xung quanh, slow 70% + trượt không kiểm soát 4s. CD: 55s", en: "❄️ Freeze area, 70% slow + uncontrollable sliding 4s. CD: 55s" },
   mirror_image: { vi: "🪞 Tạo 2 bản sao ảo chạy cùng, hấp thụ 1 đòn skill mỗi bản. CD: 40s", en: "🪞 Create 2 mirror clones, each absorbs 1 skill hit. CD: 40s" },
-  time_warp: { vi: "⏰ Quay ngược 2s - trở về vị trí và HP cũ. CD: 60s", en: "⏰ Rewind 2s - return to previous position and HP. CD: 60s" },
+  time_warp: { vi: "⏰ Quay ngược 8s - trở về vị trí và HP cũ. CD: 60s", en: "⏰ Rewind 8s - return to previous position and HP. CD: 60s" },
   blink: { vi: "✨ Dịch chuyển tức thì 150px về phía trước, xuyên tường. CD: 15s", en: "✨ Instant teleport 150px forward, through walls. CD: 15s" },
   rocket_boost: { vi: "🚀 Phóng về phía trước tốc độ cực đại, bật ngựa khác ra 2 bên 1.5s. CD: 35s", en: "🚀 Launch forward at max speed, knock horses aside 1.5s. CD: 35s" },
   gravity_flip: { vi: "🔄 Đảo ngược trọng lực 3s - bay lên trần rồi rơi xuống, né skill. CD: 40s", en: "🔄 Flip gravity 3s - fly up then fall, dodge skills. CD: 40s" },
