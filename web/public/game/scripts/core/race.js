@@ -375,8 +375,6 @@ function startRace(){
         h.skillState = { name: 'phoenix_rebirth', status: 'passive', used: false, revivePercent: 0.5, invincibleDuration: 3000 };
       } else if (custom.skill === 'avatar_state') {
         h.skillState = { name: 'avatar_state', status: 'ready', activationTime: 10000, duration: 6000, cooldown: 90000, speedMultiplier: 3.0, damageMultiplier: 2.0 };
-      } else if (custom.skill === 'dimension_rift') {
-        h.skillState = { name: 'dimension_rift', status: 'ready', activationTime: 10000, duration: 10000, cooldown: 50000, portalRadius: 80 };
       } else if (custom.skill === 'rainbow_trail') {
         h.skillState = { name: 'rainbow_trail', status: 'ready', activationTime: 8000, duration: 5000, cooldown: 45000, speedBoost: 1.3, trailBoost: 1.15 };
       } else if (custom.skill === 'disco_chaos') {

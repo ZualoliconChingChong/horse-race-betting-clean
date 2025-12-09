@@ -5467,7 +5467,6 @@ const skillDescriptions = {
   gravity_flip: { vi: "🔄 Đảo ngược trọng lực 3s - bay lên trần rồi rơi xuống, né skill. CD: 40s", en: "🔄 Flip gravity 3s - fly up then fall, dodge skills. CD: 40s" },
   phoenix_rebirth: { vi: "🔥 THỤ ĐỘNG: Khi HP=0, hồi sinh 50% HP + bất tử 3s (1 lần/race)", en: "🔥 PASSIVE: On death, revive 50% HP + invincible 3s (once/race)" },
   avatar_state: { vi: "🌀 x3 tốc độ + x2 damage + miễn slow 6s. CD: 120s", en: "🌀 x3 speed + x2 damage + slow immune 6s. CD: 120s" },
-  dimension_rift: { vi: "🌌 Tạo portal 10s, ngựa đi vào bị teleport random trên map. CD: 60s", en: "🌌 Create portal 10s, horses entering teleport randomly. CD: 60s" },
   rainbow_trail: { vi: "🌈 +30% speed, để lại vệt cầu vồng boost 15% cho ngựa đi sau 5s. CD: 45s", en: "🌈 +30% speed, leave rainbow trail +15% boost for followers 5s. CD: 45s" },
   disco_chaos: { vi: "🪩 Ngựa trong bán kính bị random direction mỗi 0.5s trong 4s. CD: 50s", en: "🪩 Horses in radius get random direction every 0.5s for 4s. CD: 50s" },
   aurora_shield: { vi: "🌌 Shield hấp thụ 30 HP + reflect 50% damage về attacker 6s. CD: 55s", en: "🌌 Shield absorbs 30 HP + reflects 50% damage back 6s. CD: 55s" }
@@ -8695,7 +8694,6 @@ function spawnRandomLuckItem(){
                 gravity_flip: "Gravity Flip",
                 phoenix_rebirth: "Phoenix Rebirth",
                 avatar_state: "Avatar State",
-                dimension_rift: "Dimension Rift",
                 rainbow_trail: "Rainbow Trail",
                 disco_chaos: "Disco Chaos",
                 aurora_shield: "Aurora Shield"
@@ -9043,17 +9041,6 @@ function spawnRandomLuckItem(){
                 createExplosion(h.x, h.y, '#00BFFF', 20);
                 floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 2000, text: '🌀 AVATAR STATE!', color: '#FFD700' });
                 try { playSfx('ultimate'); } catch {}
-                break;
-              case 'dimension_rift':
-                // Dimension Rift: Create portal AHEAD of horse after 2s delay
-                h.skillState.endTime = now + (h.skillState.duration || 12000);
-                h.dimensionRiftPending = true;
-                h.dimensionRiftSpawnAt = now + 2000; // Spawn after 2 seconds
-                const riftVel = Math.hypot(h.vx || 1, h.vy || 0) || 1;
-                h.dimensionRiftX = h.x + (h.vx || 1) / riftVel * 120;
-                h.dimensionRiftY = h.y + (h.vy || 0) / riftVel * 120;
-                floatingTexts.push({ x: h.x, y: h.y - h.r - 10, t: now, life: 2000, text: '🌌 Rift charging...', color: '#8B00FF' });
-                try { playSfx('powerup'); } catch {}
                 break;
               case 'rainbow_trail':
                 // Rainbow Trail: Speed boost with trail
@@ -9620,42 +9607,6 @@ function spawnRandomLuckItem(){
                 h._lastLuckCheck = now;
               }
               break;
-            case 'dimension_rift':
-              // Dimension Rift: Check for horses entering portal and teleport them
-              if (window.dimensionRifts && window.dimensionRifts.length > 0) {
-                const allHorses = window.horses || horses || [];
-                for (const rift of window.dimensionRifts) {
-                  if (rift.owner !== h.i || now > rift.endTime) continue;
-                  for (const other of allHorses) {
-                    if (other.i === h.i || other.eliminated) continue;
-                    if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
-                    const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
-                    if (dist < rift.radius) {
-                      // Teleport to random location on map
-                      const mapWidth = window.mapDef?.canvasWidth || 1200;
-                      const mapHeight = window.mapDef?.canvasHeight || 800;
-                      const newX = 100 + Math.random() * (mapWidth - 200);
-                      const newY = 100 + Math.random() * (mapHeight - 200);
-                      createExplosion(other.x, other.y, '#FF00FF', 30);
-                      other.x = newX;
-                      other.y = newY;
-                      other.riftTeleportCooldown = now + 3000; // 3s cooldown per horse
-                      createExplosion(other.x, other.y, '#8B00FF', 35);
-                      floatingTexts.push({ x: other.x, y: other.y - other.r - 10, t: now, life: 1200, text: '🌀 TELEPORTED!', color: '#FF00FF' });
-                    }
-                  }
-                }
-              }
-              if (now >= h.skillState.endTime) {
-                // Clean up rifts owned by this horse
-                if (window.dimensionRifts) {
-                  window.dimensionRifts = window.dimensionRifts.filter(r => r.owner !== h.i);
-                }
-                h.skillState.status = 'cooldown';
-                h.skillState.cooldownUntil = now + (h.skillState?.cooldown || 50000);
-                h._lastLuckCheck = now;
-              }
-              break;
             case 'rainbow_trail':
               // Rainbow Trail: Leave trail points AND boost horses behind
               if (h.rainbowTrailActive && now < h.skillState.endTime) {
@@ -9994,50 +9945,6 @@ function spawnRandomLuckItem(){
           other.y += (dy / dist) * knockback * 0.5;
           if (Math.random() < 0.2) {
             floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 6, t: now, life: 400, text: '🚀 PUSHED!', color: '#FF4500' });
-          }
-        }
-      }
-    }
-
-    // --- DIMENSION RIFT PER-FRAME EFFECT ---
-    if (h.skillState && h.skillState.name === 'dimension_rift') {
-      // Spawn portal after 2s delay
-      if (h.dimensionRiftPending && now >= h.dimensionRiftSpawnAt) {
-        h.dimensionRiftPending = false;
-        window.dimensionRifts = window.dimensionRifts || [];
-        window.dimensionRifts.push({
-          x: h.dimensionRiftX, y: h.dimensionRiftY,
-          radius: 100,
-          owner: h.i,
-          endTime: h.skillState.endTime,
-          spawnTime: now
-        });
-        createExplosion(h.dimensionRiftX, h.dimensionRiftY, '#8B00FF', 80);
-        createExplosion(h.dimensionRiftX, h.dimensionRiftY, '#FF00FF', 60);
-        floatingTexts.push({ x: h.dimensionRiftX, y: h.dimensionRiftY - 50, t: now, life: 2000, text: '🌌 PORTAL OPEN!', color: '#FF00FF' });
-        try { playSfx('portal'); } catch {}
-      }
-      
-      // Teleport horses entering portal
-      if (window.dimensionRifts && window.dimensionRifts.length > 0) {
-        for (const rift of window.dimensionRifts) {
-          if (rift.owner !== h.i || now > rift.endTime) continue;
-          for (const other of horses) {
-            if (other === h || other.eliminated) continue;
-            if (other.riftTeleportCooldown && now < other.riftTeleportCooldown) continue;
-            const dist = Math.hypot(other.x - rift.x, other.y - rift.y);
-            if (dist < rift.radius) {
-              const mapWidth = window.mapDef?.canvasWidth || 1200;
-              const mapHeight = window.mapDef?.canvasHeight || 800;
-              const newX = 100 + Math.random() * (mapWidth - 200);
-              const newY = 100 + Math.random() * (mapHeight - 200);
-              createExplosion(other.x, other.y, '#FF00FF', 40);
-              other.x = newX;
-              other.y = newY;
-              other.riftTeleportCooldown = now + 5000;
-              createExplosion(other.x, other.y, '#8B00FF', 45);
-              floatingTexts.push({ x: other.x, y: other.y - (other.r||8) - 10, t: now, life: 1500, text: '🌀 TELEPORTED!', color: '#FF00FF' });
-            }
           }
         }
       }
@@ -12335,41 +12242,6 @@ function spawnRandomLuckItem(){
     }
   }
   
-  // Process Dimension Rifts
-  if (window.dimensionRifts && window.dimensionRifts.length > 0) {
-    const now = performance.now();
-    for (let i = window.dimensionRifts.length - 1; i >= 0; i--) {
-      const rift = window.dimensionRifts[i];
-      
-      // Remove expired rifts
-      if (now >= rift.endTime) {
-        window.dimensionRifts.splice(i, 1);
-        continue;
-      }
-      
-      // Check for horses entering the rift
-      for (const h of horses) {
-        if (h.eliminated || h.i === rift.owner) continue;
-        if (h.riftCooldownUntil && now < h.riftCooldownUntil) continue;
-        
-        const dist = Math.hypot(h.x - rift.x, h.y - rift.y);
-        if (dist < rift.radius) {
-          // Teleport to random location
-          const mapW = mapDef.w || 800;
-          const mapH = mapDef.h || 600;
-          const padding = 50;
-          h.x = padding + Math.random() * (mapW - padding * 2);
-          h.y = padding + Math.random() * (mapH - padding * 2);
-          h.riftCooldownUntil = now + 3000; // 3s cooldown
-          
-          try { createExplosion(rift.x, rift.y, '#8B00FF', 25); } catch {}
-          try { createExplosion(h.x, h.y, '#8B00FF', 20); } catch {}
-          floatingTexts.push({ x: h.x, y: h.y - h.r - 6, t: now, life: 1200, text: '🌌 RIFTED!', color: '#8B00FF' });
-        }
-      }
-    }
-  }
-  
   // Process Phoenix Rebirth (passive)
   for (const h of horses) {
     if (h.skillState?.name === 'phoenix_rebirth' && h.skillState.status === 'passive' && !h.skillState.used) {
@@ -14457,77 +14329,6 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
               ctx.setLineDash([]);
             }
             ctx.restore();
-          }
-          
-          // Render dimension rifts - LARGE VISIBLE PORTALS
-          if (window.dimensionRifts && window.dimensionRifts.length > 0) {
-            const now = performance.now();
-            for (const rift of window.dimensionRifts) {
-              if (!rift || rift.x === undefined || rift.y === undefined || now >= rift.endTime) continue;
-              
-              ctx.save();
-              const riftPhase = now / 80;
-              const riftRadius = rift.radius || 100;
-              const pulse = 1 + Math.sin(now / 200) * 0.15;
-              
-              // Solid outer ring - VERY VISIBLE
-              ctx.strokeStyle = '#FF00FF';
-              ctx.lineWidth = 8;
-              ctx.beginPath();
-              ctx.arc(rift.x, rift.y, riftRadius * pulse, 0, Math.PI * 2);
-              ctx.stroke();
-              
-              // Outer glow
-              ctx.shadowColor = '#FF00FF';
-              ctx.shadowBlur = 30;
-              const glowGrad = ctx.createRadialGradient(rift.x, rift.y, riftRadius * 0.3, rift.x, rift.y, riftRadius * 1.5);
-              glowGrad.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
-              glowGrad.addColorStop(0.5, 'rgba(139, 0, 255, 0.3)');
-              glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-              ctx.fillStyle = glowGrad;
-              ctx.beginPath();
-              ctx.arc(rift.x, rift.y, riftRadius * 1.5 * pulse, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.shadowBlur = 0;
-              
-              // Swirling rings - more rings, brighter
-              for (let ring = 0; ring < 6; ring++) {
-                const ringR = riftRadius * (0.2 + ring * 0.15) * pulse;
-                const hue = (riftPhase * 5 + ring * 60) % 360;
-                ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${0.9 - ring * 0.1})`;
-                ctx.lineWidth = 5 - ring * 0.6;
-                ctx.beginPath();
-                // Spiral effect
-                for (let a = 0; a < Math.PI * 2; a += 0.1) {
-                  const spiralR = ringR + Math.sin(a * 3 + riftPhase + ring) * 5;
-                  const sx = rift.x + Math.cos(a + riftPhase * 0.05 * (ring % 2 ? 1 : -1)) * spiralR;
-                  const sy = rift.y + Math.sin(a + riftPhase * 0.05 * (ring % 2 ? 1 : -1)) * spiralR;
-                  if (a === 0) ctx.moveTo(sx, sy);
-                  else ctx.lineTo(sx, sy);
-                }
-                ctx.closePath();
-                ctx.stroke();
-              }
-              
-              // Portal center - black hole effect
-              const portalGrad = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, riftRadius * 0.6);
-              portalGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
-              portalGrad.addColorStop(0.3, 'rgba(75, 0, 130, 0.8)');
-              portalGrad.addColorStop(0.6, 'rgba(139, 0, 255, 0.5)');
-              portalGrad.addColorStop(1, 'rgba(255, 0, 255, 0)');
-              ctx.fillStyle = portalGrad;
-              ctx.beginPath();
-              ctx.arc(rift.x, rift.y, riftRadius * 0.6, 0, Math.PI * 2);
-              ctx.fill();
-              
-              // Portal text - BIGGER
-              ctx.font = 'bold 18px Arial';
-              ctx.fillStyle = '#FFFFFF';
-              ctx.textAlign = 'center';
-              ctx.fillText('🌌 DIMENSION RIFT', rift.x, rift.y - riftRadius - 15);
-              
-              ctx.restore();
-            }
           }
         } catch {}
       }
