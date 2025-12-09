@@ -236,10 +236,11 @@
   }
 
   /**
-   * Resize canvas to fit fullscreen
+   * Resize canvas to fit fullscreen using CSS transform
    */
   function resizeCanvasForFullscreen() {
     const canvas = document.getElementById('cv');
+    const stage = document.querySelector('.stage');
     if (!canvas) return;
 
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
@@ -249,40 +250,51 @@
       if (!originalCanvasSize) {
         originalCanvasSize = {
           width: canvas.width,
-          height: canvas.height
+          height: canvas.height,
+          cssWidth: canvas.style.width,
+          cssHeight: canvas.style.height
         };
       }
       
-      // Calculate new size to fit screen (with padding for HUD)
+      // Calculate scale to fit screen (with padding for HUD)
       const screenW = window.innerWidth;
-      const screenH = window.innerHeight - 60; // Reserve space for HUD
+      const screenH = window.innerHeight - 70; // Reserve space for HUD
       
-      // Keep aspect ratio
-      const aspectRatio = originalCanvasSize.width / originalCanvasSize.height;
-      let newW = screenW;
-      let newH = screenW / aspectRatio;
+      const canvasW = canvas.width;
+      const canvasH = canvas.height;
       
-      if (newH > screenH) {
-        newH = screenH;
-        newW = screenH * aspectRatio;
-      }
+      // Calculate scale factor
+      const scaleX = screenW / canvasW;
+      const scaleY = screenH / canvasH;
+      const scale = Math.min(scaleX, scaleY);
       
-      // Update canvas size
-      canvas.style.width = newW + 'px';
-      canvas.style.height = newH + 'px';
+      // Apply transform scale to canvas
+      canvas.style.transformOrigin = 'top left';
+      canvas.style.transform = `scale(${scale})`;
       
-      // Also update mapDef if exists to scale game content
-      if (window.mapDef) {
-        window.mapDef._fullscreenScale = newW / originalCanvasSize.width;
+      // Center the canvas
+      const scaledW = canvasW * scale;
+      const scaledH = canvasH * scale;
+      const offsetX = (screenW - scaledW) / 2;
+      const offsetY = (screenH - scaledH) / 2;
+      
+      if (stage) {
+        stage.style.position = 'absolute';
+        stage.style.left = offsetX + 'px';
+        stage.style.top = offsetY + 'px';
       }
       
     } else if (originalCanvasSize) {
-      // Restore original size
-      canvas.style.width = '';
-      canvas.style.height = '';
+      // Restore original state
+      canvas.style.transform = '';
+      canvas.style.transformOrigin = '';
+      canvas.style.width = originalCanvasSize.cssWidth || '';
+      canvas.style.height = originalCanvasSize.cssHeight || '';
       
-      if (window.mapDef) {
-        window.mapDef._fullscreenScale = 1;
+      if (stage) {
+        stage.style.position = '';
+        stage.style.left = '';
+        stage.style.top = '';
       }
     }
   }
