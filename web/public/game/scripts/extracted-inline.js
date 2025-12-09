@@ -14462,21 +14462,33 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
           // Render dimension rifts - LARGE VISIBLE PORTALS
           if (window.dimensionRifts && window.dimensionRifts.length > 0) {
             const now = performance.now();
-            ctx.save();
             for (const rift of window.dimensionRifts) {
+              if (!rift || rift.x === undefined || rift.y === undefined || now >= rift.endTime) continue;
+              
+              ctx.save();
               const riftPhase = now / 80;
-              const riftRadius = rift.radius || 80;
+              const riftRadius = rift.radius || 100;
               const pulse = 1 + Math.sin(now / 200) * 0.15;
               
+              // Solid outer ring - VERY VISIBLE
+              ctx.strokeStyle = '#FF00FF';
+              ctx.lineWidth = 8;
+              ctx.beginPath();
+              ctx.arc(rift.x, rift.y, riftRadius * pulse, 0, Math.PI * 2);
+              ctx.stroke();
+              
               // Outer glow
-              const glowGrad = ctx.createRadialGradient(rift.x, rift.y, riftRadius * 0.5, rift.x, rift.y, riftRadius * 1.5);
-              glowGrad.addColorStop(0, 'rgba(255, 0, 255, 0.4)');
-              glowGrad.addColorStop(0.5, 'rgba(139, 0, 255, 0.2)');
+              ctx.shadowColor = '#FF00FF';
+              ctx.shadowBlur = 30;
+              const glowGrad = ctx.createRadialGradient(rift.x, rift.y, riftRadius * 0.3, rift.x, rift.y, riftRadius * 1.5);
+              glowGrad.addColorStop(0, 'rgba(255, 0, 255, 0.6)');
+              glowGrad.addColorStop(0.5, 'rgba(139, 0, 255, 0.3)');
               glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
               ctx.fillStyle = glowGrad;
               ctx.beginPath();
               ctx.arc(rift.x, rift.y, riftRadius * 1.5 * pulse, 0, Math.PI * 2);
               ctx.fill();
+              ctx.shadowBlur = 0;
               
               // Swirling rings - more rings, brighter
               for (let ring = 0; ring < 6; ring++) {
@@ -14499,7 +14511,7 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
               
               // Portal center - black hole effect
               const portalGrad = ctx.createRadialGradient(rift.x, rift.y, 0, rift.x, rift.y, riftRadius * 0.6);
-              portalGrad.addColorStop(0, 'rgba(0, 0, 0, 0.9)');
+              portalGrad.addColorStop(0, 'rgba(0, 0, 0, 0.95)');
               portalGrad.addColorStop(0.3, 'rgba(75, 0, 130, 0.8)');
               portalGrad.addColorStop(0.6, 'rgba(139, 0, 255, 0.5)');
               portalGrad.addColorStop(1, 'rgba(255, 0, 255, 0)');
@@ -14508,13 +14520,14 @@ function createLightning(x1, y1, x2, y2, color = '#00BFFF', width = 3) {
               ctx.arc(rift.x, rift.y, riftRadius * 0.6, 0, Math.PI * 2);
               ctx.fill();
               
-              // Portal text
-              ctx.font = 'bold 14px Arial';
-              ctx.fillStyle = '#FF00FF';
+              // Portal text - BIGGER
+              ctx.font = 'bold 18px Arial';
+              ctx.fillStyle = '#FFFFFF';
               ctx.textAlign = 'center';
-              ctx.fillText('🌌 RIFT', rift.x, rift.y - riftRadius - 10);
+              ctx.fillText('🌌 DIMENSION RIFT', rift.x, rift.y - riftRadius - 15);
+              
+              ctx.restore();
             }
-            ctx.restore();
           }
         } catch {}
       }
