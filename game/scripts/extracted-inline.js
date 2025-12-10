@@ -6829,6 +6829,10 @@ function ensureSpawnPointsForEditor(){
 // MOVED TO: scripts/data/horse-defaults.js
 // Access via: window.HorseDefaults or window.NAMES, window.COLORS, window.BODY, window.SPR_SCALE, window.PNG_BASE for compatibility
 function resizeCanvas(){
+  // Don't resize canvas when in fullscreen mode
+  const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+  if (isFullscreen) return;
+  
   canvas.width = mapDef.w;
   canvas.height = mapDef.h;
   gridCacheKey = '';

@@ -816,6 +816,10 @@ input[type="number"] {
     border-radius: 0;
     z-index: 99999;
   }
+  .stage:fullscreen .resize-handle,
+  .stage:-webkit-full-screen .resize-handle {
+    display: none !important;
+  }
   
   /* Top editor bar above stage */
   .top-editor-bar {
