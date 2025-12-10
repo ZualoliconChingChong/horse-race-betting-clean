@@ -825,22 +825,13 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 8px;
-    z-index: 2000;
-    border-radius: 0 0 16px 16px;
+    z-index: 1001;
+    border-radius: 16px 16px 0 0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
   }
   .top-editor-bar.hidden {
-    transform: translateY(-100%);
-    opacity: 0;
-    pointer-events: none;
-  }
-  /* Keep editor bar visible in fullscreen mode */
-  .stage:fullscreen .top-editor-bar,
-  .stage:-webkit-full-screen .top-editor-bar {
-    position: absolute;
-    top: 0;
-    border-radius: 0;
+    display: none !important;
   }
   .teb-section {
     display: flex;
@@ -1077,58 +1068,10 @@ input[type="number"] {
     transform: translateY(-1px);
   }
   
-  /* Canvas and notification bar positioning */
-  canvas {
-    position: relative;
-    z-index: 1;
-  }
-  
   /* Adjust notification bar when top editor is visible */
-  .notification-bar {
-    z-index: 1500;
-  }
-  
-  /* Fullscreen adjustments */
-  .stage:fullscreen,
-  .stage:-webkit-full-screen {
-    width: 100vw;
-    height: 100vh;
-  }
-  
-  .stage:fullscreen canvas,
-  .stage:-webkit-full-screen canvas {
+  .top-editor-bar + canvas + .notification-bar {
+    top: 52px;
     border-radius: 0;
-  }
-  
-  .stage:fullscreen .notification-bar,
-  .stage:-webkit-full-screen .notification-bar {
-    top: 0;
-    border-radius: 0;
-  }
-  
-  /* Fix HUD position in fullscreen */
-  .stage:fullscreen #hud,
-  .stage:-webkit-full-screen #hud {
-    position: absolute;
-  }
-  
-  .stage:fullscreen #hud.hud-docked,
-  .stage:-webkit-full-screen #hud.hud-docked {
-    position: absolute;
-    bottom: 14px;
-    right: 14px;
-  }
-  
-  /* Fix sidebar position in fullscreen */
-  .stage:fullscreen .rightbar,
-  .stage:-webkit-full-screen .rightbar {
-    position: absolute;
-    max-height: calc(100vh - 80px);
-  }
-  
-  .stage:fullscreen .rightbar .editor-content,
-  .stage:-webkit-full-screen .rightbar .editor-content {
-    max-height: calc(100vh - 160px);
   }
   
   /* Stage drag handle */
@@ -1140,31 +1083,7 @@ input[type="number"] {
   .resize-handle.corner{width:18px;height:18px;bottom:-2px;right:-2px;cursor:nwse-resize;border-right:3px solid rgba(0,0,0,0.3);border-bottom:3px solid rgba(0,0,0,0.3);background:transparent;}
   .resize-handle.right{width:10px;height:100%;top:0;right:-5px;cursor:ew-resize}
   .resize-handle.bottom{width:100%;height:10px;bottom:-5px;left:0;cursor:ns-resize}
-  /* Top notification bar - Thanh thông báo overlay trên map */
-  .notification-bar{
-    position:absolute;top:0px;left:0px;right:0px;
-    background:rgba(255, 255, 255, 0.95);
-    backdrop-filter:blur(15px) saturate(1.3);
-    -webkit-backdrop-filter:blur(15px) saturate(1.3);
-    padding:10px 16px;border-radius:16px 16px 0px 0px;display:flex;gap:16px;align-items:center;
-    font-size:13px;color:#333;z-index:1000;justify-content:center;
-    border:none;
-    border-bottom:1px solid rgba(0,0,0,0.1);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    font-weight:600;text-shadow: none;
-    transition: all 0.3s ease;
-    pointer-events: auto;
-  }
-  .notification-bar.show { opacity: 1; transform: translateY(0); }
-  .notification-bar .notification-icon { font-size: 18px; }
-  .notification-bar .notification-text { flex: 1; text-align: center; }
-  .notification-bar .notification-close { 
-    background: rgba(0,0,0,0.1); border: none; color: #666; 
-    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; transition: all 0.2s ease;
-  }
-  .notification-bar .notification-close:hover { background: rgba(0,0,0,0.2); }
+  /* Top notification bar styles moved to line 1165+ */
   
   .panel > div{ display:flex; align-items:center; gap:6px; }
   .panel .metric{ font-weight:700; color:#0f1417; }
@@ -1223,18 +1142,43 @@ input[type="number"] {
     position:absolute;top:0px;left:0px;right:0px;
     background:rgba(255, 255, 255, 0.95);
     backdrop-filter:blur(15px) saturate(1.3);
+    -webkit-backdrop-filter:blur(15px) saturate(1.3);
+    box-shadow:0 2px 8px rgba(0,0,0,0.1), 0 4px 16px rgba(0,0,0,0.08);
+    padding:10px 16px;
+    border-radius:16px 16px 0px 0px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+    z-index:99999;
+    font-size:13px;
+    color:#333;
+    font-weight:600;
+    border:none;
     border-bottom:1px solid rgba(0,0,0,0.1);
-    padding:8px 12px;
-    display:flex !important;align-items:center;gap:8px;
-    font-size:14px;font-weight:500;color:#333;
-    z-index:1000;
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-    transition: none;
-    pointer-events: auto;
+    transition: all 0.3s ease;
+    pointer-events: none;
   }
   .notification-bar.show { opacity: 1 !important; transform: translateY(0) !important; }
   .notification-bar.hidden { opacity: 1 !important; transform: translateY(0) !important; }
+  .notification-bar .notification-icon { font-size: 18px; pointer-events: none; }
+  .notification-bar .notification-text { flex: 1; text-align: center; pointer-events: none; }
+  .notification-bar .notification-close { 
+    background: rgba(0,0,0,0.1); 
+    border: none; 
+    color: #666; 
+    width: 24px; 
+    height: 24px; 
+    border-radius: 50%; 
+    cursor: pointer;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 12px; 
+    transition: all 0.2s ease;
+    pointer-events: auto;
+  }
+  .notification-bar .notification-close:hover { background: rgba(0,0,0,0.2); }
   .game-hub {
     position: absolute;
     bottom: 0px;

@@ -1941,30 +1941,19 @@
   
   // Hide top editor bar when game is running
   function updateTopEditorBarVisibility() {
-    const pauseBtn = document.getElementById('pauseBtnHUD');
-    const isRunning = pauseBtn && pauseBtn.style.display !== 'none';
+    const isRunning = window.horses && window.horses.length > 0 && 
+                      document.getElementById('pauseBtnHUD')?.style.display !== 'none';
     if (topEditorBar) {
-      if (isRunning) {
-        topEditorBar.classList.add('hidden');
-      } else {
-        topEditorBar.classList.remove('hidden');
-      }
+      topEditorBar.classList.toggle('hidden', isRunning);
     }
   }
   
-  // Check visibility immediately and on interval
-  updateTopEditorBarVisibility();
-  setInterval(updateTopEditorBarVisibility, 200);
+  setInterval(updateTopEditorBarVisibility, 500);
   
-  // Also listen to play/stop button clicks
   const playBtn = document.getElementById('hudPlayTest');
   const stopBtn = document.getElementById('toEditor');
-  if (playBtn) playBtn.addEventListener('click', () => {
-    setTimeout(updateTopEditorBarVisibility, 50);
-  });
-  if (stopBtn) stopBtn.addEventListener('click', () => {
-    setTimeout(updateTopEditorBarVisibility, 50);
-  });
+  if (playBtn) playBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
+  if (stopBtn) stopBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
 })();
 </script>
 
