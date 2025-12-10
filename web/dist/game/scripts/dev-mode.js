@@ -236,36 +236,24 @@
     }
   }
   
-  // Store original canvas size for fullscreen toggle
-  let originalCanvasWidth = null;
-  let originalCanvasHeight = null;
-  
   /**
-   * Update fullscreen button appearance and resize canvas
+   * Update fullscreen button appearance and sync canvas CSS size
    */
   function updateFullscreenButton() {
     const btn = document.getElementById('fullscreenToggle');
     const canvas = document.getElementById('cv');
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     
+    // CRITICAL: Sync canvas CSS size to prevent scaling
     if (canvas) {
       if (isFullscreen) {
-        // Save original size if not saved
-        if (originalCanvasWidth === null) {
-          originalCanvasWidth = canvas.width;
-          originalCanvasHeight = canvas.height;
-        }
-        // Resize canvas to match viewport
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        console.log('[DevMode] Fullscreen: canvas resized to', canvas.width, 'x', canvas.height);
+        // In fullscreen: set CSS width/height to match canvas internal size exactly
+        canvas.style.width = canvas.width + 'px';
+        canvas.style.height = canvas.height + 'px';
       } else {
-        // Restore original size
-        if (originalCanvasWidth !== null) {
-          canvas.width = originalCanvasWidth;
-          canvas.height = originalCanvasHeight;
-          console.log('[DevMode] Exit fullscreen: canvas restored to', canvas.width, 'x', canvas.height);
-        }
+        // Exit fullscreen: clear inline styles to use CSS defaults
+        canvas.style.width = '';
+        canvas.style.height = '';
       }
     }
     

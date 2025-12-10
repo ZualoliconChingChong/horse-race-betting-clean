@@ -789,14 +789,14 @@ input[type="number"] {
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    /* CRITICAL: No CSS sizing - let canvas use its intrinsic size */
+    /* Canvas size is set via JavaScript in dev-mode.js updateFullscreenButton() */
     display: block;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) !important;
-    /* Do NOT set width/height - browser will use canvas.width/height */
     border-radius: 0;
+    /* width/height set by JS to match canvas internal size */
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {

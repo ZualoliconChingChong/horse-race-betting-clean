@@ -237,13 +237,28 @@
   }
   
   /**
-   * Update fullscreen button appearance
+   * Update fullscreen button appearance and sync canvas CSS size
    */
   function updateFullscreenButton() {
     const btn = document.getElementById('fullscreenToggle');
+    const canvas = document.getElementById('cv');
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    
+    // CRITICAL: Sync canvas CSS size to prevent scaling
+    if (canvas) {
+      if (isFullscreen) {
+        // In fullscreen: set CSS width/height to match canvas internal size exactly
+        canvas.style.width = canvas.width + 'px';
+        canvas.style.height = canvas.height + 'px';
+      } else {
+        // Exit fullscreen: clear inline styles to use CSS defaults
+        canvas.style.width = '';
+        canvas.style.height = '';
+      }
+    }
+    
     if (!btn) return;
     
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     const icon = btn.querySelector('.btn-icon');
     const text = btn.querySelector('.btn-text');
     
