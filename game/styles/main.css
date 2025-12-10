@@ -777,27 +777,24 @@ input[type="number"] {
   /* Fullscreen mode - scale canvas to fit screen without changing actual size */
   .stage:fullscreen,
   .stage:-webkit-full-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
+    position: relative;
     background: var(--bg);
     width: 100vw !important;
     height: 100vh !important;
-    padding: 50px 0 70px 0; /* Space for notification bar and HUB */
+    padding: 0;
     box-sizing: border-box;
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto !important;
-    height: auto !important;
+    width: 100% !important;
+    height: 100% !important;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 0;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
@@ -806,7 +803,7 @@ input[type="number"] {
   }
   .stage:fullscreen .notification-bar,
   .stage:-webkit-full-screen .notification-bar {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
