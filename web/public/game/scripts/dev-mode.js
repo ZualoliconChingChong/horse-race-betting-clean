@@ -228,38 +228,20 @@
       stage.classList.add('fake-fullscreen');
       document.body.classList.add('has-fake-fullscreen');
       
-      // COMPREHENSIVE DEBUG
+      // FORCE stage transform to none IMMEDIATELY via inline style
+      stage.style.setProperty('transform', 'none', 'important');
+      stage.style.setProperty('transition', 'none', 'important');
+      
+      // FORCE canvas size to match internal buffer
       if (canvas) {
         const internalW = canvas.width;
         const internalH = canvas.height;
+        canvas.style.setProperty('width', internalW + 'px', 'important');
+        canvas.style.setProperty('height', internalH + 'px', 'important');
         
-        console.log('=== FULLSCREEN DEBUG ===');
-        console.log('1. Canvas internal size:', internalW, 'x', internalH);
-        console.log('2. Canvas style BEFORE:', canvas.style.cssText);
-        console.log('3. Canvas computed BEFORE:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
-        console.log('4. Canvas rect BEFORE:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
-        
-        // Clear ALL inline styles first
-        canvas.removeAttribute('style');
-        
-        // Use requestAnimationFrame to apply after DOM update
-        requestAnimationFrame(() => {
-          // Set inline style with highest specificity
-          canvas.style.setProperty('width', internalW + 'px', 'important');
-          canvas.style.setProperty('height', internalH + 'px', 'important');
-          
-          console.log('5. Canvas style AFTER:', canvas.style.cssText);
-          console.log('6. Canvas computed AFTER:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
-          console.log('7. Canvas rect AFTER:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
-          console.log('8. Stage transform:', stage.style.transform);
-          console.log('9. Stage computed transform:', getComputedStyle(stage).transform);
-          console.log('========================');
-        });
-      }
-      
-      // Reset stage transform (remove zoom/pan)
-      if (typeof window.applyStageTransform === 'function') {
-        window.applyStageTransform();
+        console.log('[Fullscreen] Canvas:', internalW, 'x', internalH);
+        console.log('[Fullscreen] Stage transform:', getComputedStyle(stage).transform);
+        console.log('[Fullscreen] Canvas rect:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
       }
       
       console.log('[Fullscreen] Entered FAKE fullscreen');
@@ -268,7 +250,9 @@
       stage.classList.remove('fake-fullscreen');
       document.body.classList.remove('has-fake-fullscreen');
       
-      // Clear canvas inline styles
+      // Clear stage and canvas inline styles
+      stage.style.removeProperty('transform');
+      stage.style.removeProperty('transition');
       if (canvas) {
         canvas.style.cssText = '';
       }
