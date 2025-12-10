@@ -236,8 +236,21 @@
       if (canvas) {
         const internalW = canvas.width;
         const internalH = canvas.height;
+        
+        console.log('[DEBUG] Canvas internal buffer:', internalW, 'x', internalH);
+        console.log('[DEBUG] Canvas HTML attributes:', canvas.getAttribute('width'), 'x', canvas.getAttribute('height'));
+        console.log('[DEBUG] mapDef:', window.mapDef?.w, 'x', window.mapDef?.h);
+        
+        // Also set min/max to prevent any CSS from shrinking it
         canvas.style.setProperty('width', internalW + 'px', 'important');
         canvas.style.setProperty('height', internalH + 'px', 'important');
+        canvas.style.setProperty('min-width', internalW + 'px', 'important');
+        canvas.style.setProperty('min-height', internalH + 'px', 'important');
+        canvas.style.setProperty('max-width', internalW + 'px', 'important');
+        canvas.style.setProperty('max-height', internalH + 'px', 'important');
+        canvas.style.setProperty('padding', '0', 'important');
+        canvas.style.setProperty('border', 'none', 'important');
+        canvas.style.setProperty('box-sizing', 'content-box', 'important');
       }
       
       // FORCE REFLOW - this makes browser apply all style changes immediately
