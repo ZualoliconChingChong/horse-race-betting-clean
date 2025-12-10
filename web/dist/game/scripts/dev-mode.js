@@ -228,13 +228,10 @@
       stage.classList.add('fake-fullscreen');
       document.body.classList.add('has-fake-fullscreen');
       
-      // FORCE canvas CSS size - use mapDef or hardcoded defaults
+      // Clear canvas inline styles to let CSS take over (width/height: auto)
       if (canvas) {
-        // Try to get size from mapDef, fall back to canvas attributes, then hardcoded
-        const w = window.mapDef?.w || canvas.getAttribute('width') || canvas.width || 1920;
-        const h = window.mapDef?.h || canvas.getAttribute('height') || canvas.height || 1000;
-        canvas.style.cssText = `width: ${w}px !important; height: ${h}px !important; max-width: none !important; max-height: none !important; min-width: ${w}px !important; min-height: ${h}px !important;`;
-        console.log('[Fullscreen] FORCED canvas CSS to:', w, 'x', h, '(mapDef:', window.mapDef?.w, 'x', window.mapDef?.h, ')');
+        canvas.style.cssText = '';
+        console.log('[Fullscreen] Canvas styles cleared - using intrinsic size:', canvas.width, 'x', canvas.height);
       }
       
       // Reset stage transform (remove zoom/pan)

@@ -797,15 +797,21 @@ input[type="number"] {
   }
   
   .stage.fake-fullscreen canvas {
-    /* Prevent any sizing/stretching */
+    /* Prevent any sizing/stretching - canvas should display at intrinsic size */
     flex-shrink: 0 !important;
     flex-grow: 0 !important;
+    flex-basis: auto !important;
     display: block !important;
     position: static !important;
     transform: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    /* width/height set by JavaScript */
+    object-fit: none !important;
+    /* DO NOT set width/height - let canvas use intrinsic size */
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
   }
   
   .stage.fake-fullscreen .game-hub {
