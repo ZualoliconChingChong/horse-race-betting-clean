@@ -847,9 +847,8 @@ input[type="number"] {
     display: none !important;
   }
   
-  /* Top editor bar above stage */
+  /* Top editor bar - now inside stage, above canvas */
   .top-editor-bar {
-    position: relative;
     background: rgba(30, 30, 30, 0.95);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -861,25 +860,18 @@ input[type="number"] {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
-    /* Match canvas width */
-    width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
-    margin-bottom: 0;
   }
   .top-editor-bar.hidden {
     display: none !important;
   }
-  /* When top-editor-bar is visible, stage should have no top border-radius */
-  .wrap > .top-editor-bar + .stage {
-    margin-top: 0 !important;
-  }
-  .wrap > .top-editor-bar + .stage canvas {
-    border-radius: 0 0 16px 16px;
+  /* When top-editor-bar is visible, canvas has bottom border-radius only */
+  .stage .top-editor-bar + canvas {
+    border-radius: 0 0 16px 16px !important;
   }
   /* When top-editor-bar is hidden, canvas has full border-radius */
-  .wrap > .top-editor-bar.hidden + .stage canvas {
-    border-radius: 16px;
+  .stage .top-editor-bar.hidden + canvas {
+    border-radius: 16px !important;
   }
   .teb-section {
     display: flex;
