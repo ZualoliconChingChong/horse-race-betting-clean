@@ -236,41 +236,14 @@
     }
   }
   
-  // Store original canvas size for fullscreen toggle
-  let originalCanvasWidth = null;
-  let originalCanvasHeight = null;
-  
   /**
-   * Update fullscreen button appearance and resize canvas
+   * Update fullscreen button appearance
    */
   function updateFullscreenButton() {
     const btn = document.getElementById('fullscreenToggle');
-    const canvas = document.getElementById('cv');
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-    
-    if (canvas) {
-      if (isFullscreen) {
-        // Save original size if not saved
-        if (originalCanvasWidth === null) {
-          originalCanvasWidth = canvas.width;
-          originalCanvasHeight = canvas.height;
-        }
-        // Resize canvas to match viewport
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        console.log('[DevMode] Fullscreen: canvas resized to', canvas.width, 'x', canvas.height);
-      } else {
-        // Restore original size
-        if (originalCanvasWidth !== null) {
-          canvas.width = originalCanvasWidth;
-          canvas.height = originalCanvasHeight;
-          console.log('[DevMode] Exit fullscreen: canvas restored to', canvas.width, 'x', canvas.height);
-        }
-      }
-    }
-    
     if (!btn) return;
     
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     const icon = btn.querySelector('.btn-icon');
     const text = btn.querySelector('.btn-text');
     

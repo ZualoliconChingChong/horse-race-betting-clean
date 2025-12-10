@@ -774,10 +774,12 @@ input[type="number"] {
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
   
-  /* Fullscreen mode - scale canvas to fit screen without changing actual size */
+  /* Fullscreen mode - keep canvas at original size */
   .stage:fullscreen,
   .stage:-webkit-full-screen {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
     background: var(--bg);
     width: 100vw !important;
@@ -787,28 +789,30 @@ input[type="number"] {
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: contain;
+    /* Keep original canvas dimensions - no scaling */
+    width: auto !important;
+    height: auto !important;
+    max-width: 100vw;
+    max-height: 100vh;
     border-radius: 0;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
-    position: absolute;
+    position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     border-radius: 0;
-    z-index: 9999;
+    z-index: 99999;
   }
   .stage:fullscreen .notification-bar,
   .stage:-webkit-full-screen .notification-bar {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
     border-radius: 0;
-    z-index: 9999;
+    z-index: 99999;
   }
   
   /* Top editor bar above stage */
