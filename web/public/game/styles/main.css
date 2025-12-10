@@ -789,12 +789,14 @@ input[type="number"] {
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    /* Keep original canvas dimensions - no scaling */
-    width: auto !important;
-    height: auto !important;
-    max-width: 100vw;
-    max-height: 100vh;
+    /* Force exact original dimensions - NO SCALING */
+    width: 1920px !important;
+    height: 1000px !important;
+    max-width: none !important;
+    max-height: none !important;
     border-radius: 0;
+    object-fit: none;
+    image-rendering: pixelated;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
