@@ -1035,6 +1035,34 @@ input[type="number"] {
     min-width: 40px;
     text-align: right;
   }
+  .teb-menu-setting input[type="text"] {
+    flex: 1;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 11px;
+  }
+  .teb-menu-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .teb-action-btn {
+    padding: 6px 8px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(79, 195, 247, 0.2);
+    color: #fff;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .teb-action-btn:hover {
+    background: rgba(79, 195, 247, 0.4);
+  }
   
   /* Adjust notification bar when top editor is visible */
   .top-editor-bar + canvas + .notification-bar {

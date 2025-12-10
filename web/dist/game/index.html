@@ -463,6 +463,141 @@
         </div>
       </div>
 
+      <!-- 🐴 HORSE Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Horse Customization">🐴</button>
+        <div class="teb-dropdown-menu teb-menu-wide teb-menu-scroll">
+          <div class="teb-menu-section">🐴 Select Horse</div>
+          <div class="teb-menu-setting">
+            <label>Horse #</label>
+            <input type="number" data-sync="horseIdx" min="1" max="50" value="1">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Name</label>
+            <input type="text" data-sync="horseName" placeholder="Name">
+          </div>
+          
+          <div class="teb-menu-section">⚡ Stats</div>
+          <div class="teb-menu-setting">
+            <label>Speed</label>
+            <input type="number" data-sync="horseSpeed" min="0.1" max="5" step="0.1" placeholder="Default">
+          </div>
+          <div class="teb-menu-setting">
+            <label>HP</label>
+            <input type="number" data-sync="horseHP" min="1" max="500" step="1" placeholder="Default">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Luck %</label>
+            <input type="number" data-sync="horseLuck" min="0" max="100" step="0.1" placeholder="0">
+          </div>
+          
+          <div class="teb-menu-section">🎨 Colors</div>
+          <div class="teb-menu-setting">
+            <label>Body</label>
+            <input type="color" data-sync="colorBody" value="#42a5f5">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Label</label>
+            <input type="color" data-sync="colorLabel" value="#1e88e5">
+          </div>
+          
+          <div class="teb-menu-section">🖼️ Sprite</div>
+          <div class="teb-menu-setting">
+            <label>Scale</label>
+            <input type="range" data-sync="spriteScale" min="0.5" max="2.0" step="0.05" value="1.0">
+            <span class="teb-val">1.0×</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Outline</label>
+            <select data-sync="spriteOutline">
+              <option value="off">Off</option>
+              <option value="on">On</option>
+            </select>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Color</label>
+            <input type="color" data-sync="spriteOutlineColor" value="#000000">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Width</label>
+            <input type="range" data-sync="spriteOutlineWidth" min="1" max="6" step="1" value="2">
+            <span class="teb-val">2px</span>
+          </div>
+          
+          <div class="teb-menu-section">🎯 Actions</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="applyHorse">✅ Apply</button>
+            <button class="teb-action-btn" data-click="resetHorse">🔄 Reset</button>
+            <button class="teb-action-btn" data-click="randomHorse">🎲 Random</button>
+            <button class="teb-action-btn" data-click="randomAllHorses">🎲 All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🎵 AUDIO Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Audio Settings">🎵</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🎵 Background Music</div>
+          <div class="teb-menu-setting">
+            <label>Volume</label>
+            <input type="range" data-sync="bgmVolume" min="0" max="1" step="0.05" value="0.5">
+            <span class="teb-val">50%</span>
+          </div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="bgmPause">⏸️ Pause</button>
+          </div>
+          
+          <div class="teb-menu-section">🗣️ TTS</div>
+          <div class="teb-menu-setting">
+            <label>Enable TTS</label>
+            <input type="checkbox" data-sync="ttsEnabled">
+          </div>
+        </div>
+      </div>
+
+      <!-- 🗺️ MAP Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Map Management">🗺️</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🗺️ Map Actions</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="clearMap">🗑️ Clear</button>
+            <button class="teb-action-btn" data-click="randomMap">🎲 Generate</button>
+            <button class="teb-action-btn" data-click="randomItems">✨ Items</button>
+            <button class="teb-action-btn" data-click="loadSample">📋 Sample</button>
+          </div>
+          
+          <div class="teb-menu-section">🗺️ Presets</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="preset1">🏁 Oval</button>
+            <button class="teb-action-btn" data-click="preset2">🌪️ Spin</button>
+            <button class="teb-action-btn" data-click="preset3">🧱 Maze</button>
+          </div>
+          
+          <div class="teb-menu-section">💾 Save/Load</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="exportMap">📤 Export</button>
+            <button class="teb-action-btn" data-click="saveLS">💾 Save</button>
+            <button class="teb-action-btn" data-click="loadLS">📥 Load</button>
+          </div>
+          
+          <div class="teb-menu-section">🚪 Waiting Room</div>
+          <div class="teb-menu-setting">
+            <label>Width</label>
+            <input type="number" data-sync="waitingRoomW" min="160" max="1200" step="10" value="260">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Height</label>
+            <input type="number" data-sync="waitingRoomH" min="160" max="1200" step="10" value="480">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Auto-fit</label>
+            <input type="checkbox" data-sync="autoFitWaitingRoom" checked>
+          </div>
+        </div>
+      </div>
+
       <div class="teb-divider"></div>
 
       <!-- Toggle Sidebar -->
@@ -1782,6 +1917,16 @@
                               targetId.includes('Span') || targetId.includes('Angle') ? '°' : 
                               targetId.includes('Duration') ? 'ms' : 'px');
       }
+    });
+  });
+  
+  // Action buttons - click sidebar buttons
+  document.querySelectorAll('[data-click]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.click;
+      const targetBtn = document.getElementById(targetId);
+      if (targetBtn) targetBtn.click();
+      closeAllDropdowns();
     });
   });
   
