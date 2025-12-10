@@ -783,28 +783,27 @@ input[type="number"] {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     z-index: 999999 !important;
     background: var(--bg) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    /* NO FLEX - use block to prevent stretching */
+    display: block !important;
     transform: none !important;
     border-radius: 0 !important;
-    overflow: visible !important;
+    overflow: auto !important;
   }
   
   .stage.fake-fullscreen canvas {
-    /* Canvas keeps its EXACT internal size - prevent flexbox from stretching */
+    /* Center canvas using absolute positioning */
     display: block !important;
-    flex: 0 0 auto !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    transform: none !important;
-    /* width/height will be set by JavaScript to match canvas.width/height */
+    /* width/height set by JavaScript */
   }
   
   .stage.fake-fullscreen .game-hub {
