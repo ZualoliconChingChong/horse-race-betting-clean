@@ -849,6 +849,7 @@ input[type="number"] {
   
   /* Top editor bar - now inside stage, above canvas */
   .top-editor-bar {
+    position: relative; /* Required for z-index to work */
     background: rgba(30, 30, 30, 0.95);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -856,7 +857,7 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 8px;
-    z-index: 1001;
+    z-index: 100000; /* Higher than notification-bar (99999) */
     border-radius: 16px 16px 0 0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
