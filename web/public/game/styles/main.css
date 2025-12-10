@@ -786,17 +786,21 @@ input[type="number"] {
     height: 100vh !important;
     padding: 0;
     box-sizing: border-box;
+    transform: none !important;
+    transform-origin: center center !important;
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    /* Force exact original dimensions - NO SCALING */
-    width: 1920px !important;
-    height: 1000px !important;
+    /* Force NO SCALING - keep exact internal canvas size */
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
     max-width: none !important;
     max-height: none !important;
+    transform: none !important;
     border-radius: 0;
     object-fit: none;
-    image-rendering: pixelated;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
