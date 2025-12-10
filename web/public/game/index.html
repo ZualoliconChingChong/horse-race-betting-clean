@@ -183,6 +183,11 @@
             <span class="teb-val">1.0×</span>
           </div>
           <div class="teb-menu-setting">
+            <label>Max Speed</label>
+            <input type="range" data-sync="maxHorseSpeed" min="0.5" max="30" step="0.1" value="30">
+            <span class="teb-val">30×</span>
+          </div>
+          <div class="teb-menu-setting">
             <label>Horse Radius</label>
             <input type="range" data-sync="horseRadius" min="8" max="60" step="1" value="36">
             <span class="teb-val">36</span>
@@ -191,6 +196,11 @@
             <label>Carrot Size</label>
             <input type="range" data-sync="carrotRadius" min="8" max="60" step="1" value="30">
             <span class="teb-val">30</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Corner Radius</label>
+            <input type="range" data-sync="radius" min="6" max="30" step="2" value="14">
+            <span class="teb-val">14</span>
           </div>
           
           <div class="teb-menu-section">🧱 Walls</div>
@@ -218,6 +228,37 @@
             <input type="color" data-sync="shapeColor" value="#607d8b">
           </div>
           
+          <div class="teb-menu-section">💥 Break Walls</div>
+          <div class="teb-menu-setting">
+            <label>Break HP</label>
+            <input type="range" data-sync="breakHp" min="1" max="50" step="1" value="8">
+            <span class="teb-val">8</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>On Break</label>
+            <select data-sync="breakOn">
+              <option value="remove">Remove</option>
+              <option value="shards">Shards</option>
+            </select>
+          </div>
+          
+          <div class="teb-menu-section">🧽 Soft Walls</div>
+          <div class="teb-menu-setting">
+            <label>Stiffness</label>
+            <input type="range" data-sync="softStiff" min="0.05" max="10" step="0.05" value="0.5">
+            <span class="teb-val">0.5</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Max Deform</label>
+            <input type="range" data-sync="softMaxDef" min="0" max="100" step="1" value="18">
+            <span class="teb-val">18px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Recovery</label>
+            <input type="range" data-sync="softRecover" min="0" max="120" step="2" value="24">
+            <span class="teb-val">24px/s</span>
+          </div>
+          
           <div class="teb-menu-section">🔧 Special</div>
           <div class="teb-menu-setting">
             <label>Spinner Speed</label>
@@ -225,9 +266,78 @@
             <span class="teb-val">1.0</span>
           </div>
           <div class="teb-menu-setting">
+            <label>Spinner Length</label>
+            <input type="range" data-sync="spinnerLength" min="20" max="240" step="5" value="80">
+            <span class="teb-val">80px</span>
+          </div>
+          <div class="teb-menu-setting">
             <label>Mud Slowdown</label>
             <input type="range" data-sync="mudSlowdown" min="0.1" max="0.9" step="0.05" value="0.4">
             <span class="teb-val">60%</span>
+          </div>
+          
+          <div class="teb-menu-section">🧲 Magnet</div>
+          <div class="teb-menu-setting">
+            <label>Range</label>
+            <input type="range" data-sync="magnetRange" min="50" max="400" step="10" value="100">
+            <span class="teb-val">100px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Duration</label>
+            <input type="range" data-sync="magnetDuration" min="1000" max="10000" step="500" value="3000">
+            <span class="teb-val">3000ms</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Power</label>
+            <input type="range" data-sync="magnetPower" min="100" max="1000" step="10" value="200">
+            <span class="teb-val">200</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Attract All</label>
+            <input type="checkbox" data-sync="magnetAttractAll">
+          </div>
+          
+          <div class="teb-menu-section">🟦 Bumper</div>
+          <div class="teb-menu-setting">
+            <label>Radius</label>
+            <input type="range" data-sync="bumperRadius" min="6" max="80" step="1" value="22">
+            <span class="teb-val">22</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Elasticity</label>
+            <input type="range" data-sync="bumperElasticity" min="0.5" max="2.5" step="0.01" value="1.15">
+            <span class="teb-val">1.15</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Noise</label>
+            <input type="range" data-sync="bumperNoise" min="0" max="0.7" step="0.01" value="0.15">
+            <span class="teb-val">0.15</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Color</label>
+            <input type="color" data-sync="bumperColor" value="#7cf1ff">
+          </div>
+          
+          <div class="teb-menu-section">🌀 Fan</div>
+          <div class="teb-menu-setting">
+            <label>Radius</label>
+            <input type="range" data-sync="fanRadius" min="20" max="300" step="1" value="120">
+            <span class="teb-val">120</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Angle</label>
+            <input type="range" data-sync="fanAngle" min="0" max="359" step="1" value="0">
+            <span class="teb-val">0°</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Spread</label>
+            <input type="range" data-sync="fanSpread" min="10" max="180" step="1" value="60">
+            <span class="teb-val">60°</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Strength</label>
+            <input type="range" data-sync="fanStrength" min="0" max="0.3" step="0.005" value="0.08">
+            <span class="teb-val">0.08</span>
           </div>
         </div>
       </div>
@@ -253,34 +363,102 @@
             <span class="teb-val">0s</span>
           </div>
           <div class="teb-menu-setting">
+            <label>🏎️ Min Cruise</label>
+            <input type="range" data-sync="minCruise" min="0" max="15" step="0.1" value="1.5">
+            <span class="teb-val">1.5</span>
+          </div>
+          <div class="teb-menu-setting">
             <label>🔊 Collision SFX</label>
             <input type="checkbox" data-sync="collisionSfx" checked>
           </div>
+          
+          <div class="teb-menu-section">💨 Trail</div>
           <div class="teb-menu-setting">
-            <label>💨 Trail Effect</label>
+            <label>Enable Trail</label>
             <input type="checkbox" data-sync="trailEnabled">
             <input type="color" data-sync="trailColor" value="#9e9e9e">
           </div>
           <div class="teb-menu-setting">
+            <label>Intensity</label>
+            <input type="range" data-sync="trailIntensity" min="0" max="1.6" step="0.05" value="1.0">
+            <span class="teb-val">1.0×</span>
+          </div>
+          
+          <div class="teb-menu-section">🔤 Display</div>
+          <div class="teb-menu-setting">
             <label>🙈 Hide Names</label>
             <input type="checkbox" data-sync="hideHorseNames">
           </div>
+          <div class="teb-menu-setting">
+            <label>Name Size</label>
+            <input type="range" data-sync="nameFontScale" min="0.5" max="2.0" step="0.05" value="0.55">
+            <span class="teb-val">0.55×</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>⚡ Show Speed</label>
+            <input type="checkbox" data-sync="showHorseSpeed">
+          </div>
+          <div class="teb-menu-setting">
+            <label>🔄 Auto Rotate</label>
+            <input type="checkbox" data-sync="autoRotateHorseSprite">
+          </div>
           
-          <div class="teb-menu-section">🧲 Magnet</div>
+          <div class="teb-menu-section">🥕 Carrots</div>
           <div class="teb-menu-setting">
-            <label>Range</label>
-            <input type="range" data-sync="magnetRange" min="50" max="400" step="10" value="100">
-            <span class="teb-val">100px</span>
+            <label>Carrot A</label>
+            <input type="checkbox" data-sync="carrotAOn">
           </div>
           <div class="teb-menu-setting">
-            <label>Duration</label>
-            <input type="range" data-sync="magnetDuration" min="1000" max="10000" step="500" value="3000">
-            <span class="teb-val">3000ms</span>
+            <label>Carrot B</label>
+            <input type="checkbox" data-sync="carrotBOn">
+          </div>
+          
+          <div class="teb-menu-section">❤️ HP System</div>
+          <div class="teb-menu-setting">
+            <label>Enable HP</label>
+            <input type="checkbox" data-sync="hpSystemEnabled">
           </div>
           <div class="teb-menu-setting">
-            <label>Power</label>
-            <input type="range" data-sync="magnetPower" min="100" max="1000" step="10" value="200">
-            <span class="teb-val">200</span>
+            <label>Max HP</label>
+            <input type="number" data-sync="horseMaxHP" min="1" max="9999" step="1" value="100">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Show HP #</label>
+            <input type="checkbox" data-sync="showHPNumbers">
+          </div>
+          <div class="teb-menu-setting">
+            <label>👑 Last Wins</label>
+            <input type="checkbox" data-sync="lastHorseWins">
+          </div>
+          
+          <div class="teb-menu-section">💥 Damage</div>
+          <div class="teb-menu-setting">
+            <label>🧱 Wall Dmg</label>
+            <input type="checkbox" data-sync="wallDamageEnabled">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Amount</label>
+            <input type="range" data-sync="wallDamageAmount" min="1" max="50" step="1" value="10">
+            <span class="teb-val">10</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>🔲 Border Dmg</label>
+            <input type="checkbox" data-sync="borderDamageEnabled">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Amount</label>
+            <input type="range" data-sync="borderDamageAmount" min="1" max="50" step="1" value="15">
+            <span class="teb-val">15</span>
+          </div>
+          
+          <div class="teb-menu-section">🍀 Luck</div>
+          <div class="teb-menu-setting">
+            <label>Luck or Suck</label>
+            <input type="checkbox" data-sync="luckEnabled">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Interval (s)</label>
+            <input type="number" data-sync="luckInterval" min="3" max="60" step="1" value="12">
           </div>
         </div>
       </div>
