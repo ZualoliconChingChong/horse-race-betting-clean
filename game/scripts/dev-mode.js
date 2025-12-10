@@ -232,25 +232,16 @@
       stage.style.setProperty('transform', 'none', 'important');
       stage.style.setProperty('transition', 'none', 'important');
       
-      // FORCE canvas size to match internal buffer
+      // Clear canvas inline styles - let CSS handle sizing with object-fit: contain
       if (canvas) {
         const internalW = canvas.width;
         const internalH = canvas.height;
         
         console.log('[DEBUG] Canvas internal buffer:', internalW, 'x', internalH);
-        console.log('[DEBUG] Canvas HTML attributes:', canvas.getAttribute('width'), 'x', canvas.getAttribute('height'));
-        console.log('[DEBUG] mapDef:', window.mapDef?.w, 'x', window.mapDef?.h);
+        console.log('[DEBUG] Viewport:', window.innerWidth, 'x', window.innerHeight);
         
-        // Also set min/max to prevent any CSS from shrinking it
-        canvas.style.setProperty('width', internalW + 'px', 'important');
-        canvas.style.setProperty('height', internalH + 'px', 'important');
-        canvas.style.setProperty('min-width', internalW + 'px', 'important');
-        canvas.style.setProperty('min-height', internalH + 'px', 'important');
-        canvas.style.setProperty('max-width', internalW + 'px', 'important');
-        canvas.style.setProperty('max-height', internalH + 'px', 'important');
-        canvas.style.setProperty('padding', '0', 'important');
-        canvas.style.setProperty('border', 'none', 'important');
-        canvas.style.setProperty('box-sizing', 'content-box', 'important');
+        // Clear all inline styles so CSS can take over
+        canvas.removeAttribute('style');
       }
       
       // FORCE REFLOW - this makes browser apply all style changes immediately
@@ -265,23 +256,7 @@
         window.drawMap();
       }
       
-      console.log('[Fullscreen] Stage transform:', getComputedStyle(stage).transform);
       console.log('[Fullscreen] Canvas rect:', canvas?.getBoundingClientRect().width, 'x', canvas?.getBoundingClientRect().height);
-      
-      // Check for devicePixelRatio and ctx transform
-      console.log('[DEBUG] devicePixelRatio:', window.devicePixelRatio);
-      console.log('[DEBUG] window.innerWidth x innerHeight:', window.innerWidth, 'x', window.innerHeight);
-      console.log('[DEBUG] stage clientWidth x clientHeight:', stage.clientWidth, 'x', stage.clientHeight);
-      
-      // Check parent transforms
-      const wrap = document.querySelector('.wrap');
-      if (wrap) {
-        console.log('[DEBUG] .wrap transform:', getComputedStyle(wrap).transform);
-      }
-      const body = document.body;
-      console.log('[DEBUG] body transform:', getComputedStyle(body).transform);
-      console.log('[DEBUG] html transform:', getComputedStyle(document.documentElement).transform);
-      
       console.log('[Fullscreen] Entered FAKE fullscreen');
     } else {
       // Exit fake fullscreen
