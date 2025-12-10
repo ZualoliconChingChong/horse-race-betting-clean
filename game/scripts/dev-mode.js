@@ -224,21 +224,37 @@
     const isFakeFullscreen = stage.classList.contains('fake-fullscreen');
     
     if (!isFakeFullscreen) {
-      // Enter FAKE fullscreen (CSS-based, no scaling)
+      // Enter FAKE fullscreen
       stage.classList.add('fake-fullscreen');
       document.body.classList.add('has-fake-fullscreen');
       
-      // FORCE canvas to display at EXACT internal pixel size
+      // COMPREHENSIVE DEBUG
       if (canvas) {
-        // Get the ACTUAL internal buffer size
         const internalW = canvas.width;
         const internalH = canvas.height;
         
-        // Force CSS to match internal size EXACTLY using setAttribute
-        canvas.setAttribute('style', `width: ${internalW}px !important; height: ${internalH}px !important;`);
+        console.log('=== FULLSCREEN DEBUG ===');
+        console.log('1. Canvas internal size:', internalW, 'x', internalH);
+        console.log('2. Canvas style BEFORE:', canvas.style.cssText);
+        console.log('3. Canvas computed BEFORE:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
+        console.log('4. Canvas rect BEFORE:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
         
-        console.log('[Fullscreen] Canvas FORCED to exact internal size:', internalW, 'x', internalH);
-        console.log('[Fullscreen] Canvas computed style:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
+        // Clear ALL inline styles first
+        canvas.removeAttribute('style');
+        
+        // Use requestAnimationFrame to apply after DOM update
+        requestAnimationFrame(() => {
+          // Set inline style with highest specificity
+          canvas.style.setProperty('width', internalW + 'px', 'important');
+          canvas.style.setProperty('height', internalH + 'px', 'important');
+          
+          console.log('5. Canvas style AFTER:', canvas.style.cssText);
+          console.log('6. Canvas computed AFTER:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
+          console.log('7. Canvas rect AFTER:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
+          console.log('8. Stage transform:', stage.style.transform);
+          console.log('9. Stage computed transform:', getComputedStyle(stage).transform);
+          console.log('========================');
+        });
       }
       
       // Reset stage transform (remove zoom/pan)
