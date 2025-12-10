@@ -787,20 +787,22 @@ input[type="number"] {
     height: 100vh !important;
     z-index: 999999 !important;
     background: var(--bg) !important;
-    /* NO FLEX - use block to prevent stretching */
-    display: block !important;
+    /* Use flex to center without stretching */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     transform: none !important;
     border-radius: 0 !important;
     overflow: auto !important;
   }
   
   .stage.fake-fullscreen canvas {
-    /* Center canvas using absolute positioning */
+    /* Prevent any sizing/stretching */
+    flex-shrink: 0 !important;
+    flex-grow: 0 !important;
     display: block !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    position: static !important;
+    transform: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     /* width/height set by JavaScript */
