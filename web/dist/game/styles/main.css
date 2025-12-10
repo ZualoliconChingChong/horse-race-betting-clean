@@ -774,33 +774,26 @@ input[type="number"] {
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
   
-  /* Fullscreen mode - keep canvas at original size, center on screen */
+  /* Fullscreen mode - scale canvas to fit screen without changing actual size */
   .stage:fullscreen,
   .stage:-webkit-full-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg);
     width: 100vw !important;
     height: 100vh !important;
-    padding: 0;
-    margin: 0;
+    padding: 50px 0 70px 0; /* Space for notification bar and HUB */
     box-sizing: border-box;
-    z-index: 999;
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    width: 1920px !important;
-    height: 1000px !important;
-    max-width: 100vw;
-    max-height: 100vh;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto !important;
+    height: auto !important;
     object-fit: contain;
-    border-radius: 0;
+    border-radius: 8px;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
@@ -823,7 +816,7 @@ input[type="number"] {
   
   /* Top Editor Bar */
   .top-editor-bar {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
@@ -841,6 +834,13 @@ input[type="number"] {
     transform: translateY(-100%);
     opacity: 0;
     pointer-events: none;
+  }
+  /* Keep editor bar visible in fullscreen mode */
+  .stage:fullscreen .top-editor-bar,
+  .stage:-webkit-full-screen .top-editor-bar {
+    position: absolute;
+    top: 0;
+    border-radius: 0;
   }
   .teb-section {
     display: flex;
@@ -1086,6 +1086,49 @@ input[type="number"] {
   /* Adjust notification bar when top editor is visible */
   .notification-bar {
     z-index: 1500;
+  }
+  
+  /* Fullscreen adjustments */
+  .stage:fullscreen,
+  .stage:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+  }
+  
+  .stage:fullscreen canvas,
+  .stage:-webkit-full-screen canvas {
+    border-radius: 0;
+  }
+  
+  .stage:fullscreen .notification-bar,
+  .stage:-webkit-full-screen .notification-bar {
+    top: 0;
+    border-radius: 0;
+  }
+  
+  /* Fix HUD position in fullscreen */
+  .stage:fullscreen #hud,
+  .stage:-webkit-full-screen #hud {
+    position: absolute;
+  }
+  
+  .stage:fullscreen #hud.hud-docked,
+  .stage:-webkit-full-screen #hud.hud-docked {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+  }
+  
+  /* Fix sidebar position in fullscreen */
+  .stage:fullscreen .rightbar,
+  .stage:-webkit-full-screen .rightbar {
+    position: absolute;
+    max-height: calc(100vh - 80px);
+  }
+  
+  .stage:fullscreen .rightbar .editor-content,
+  .stage:-webkit-full-screen .rightbar .editor-content {
+    max-height: calc(100vh - 160px);
   }
   
   /* Stage drag handle */
