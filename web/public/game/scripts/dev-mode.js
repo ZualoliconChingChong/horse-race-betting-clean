@@ -228,10 +228,17 @@
       stage.classList.add('fake-fullscreen');
       document.body.classList.add('has-fake-fullscreen');
       
-      // Clear canvas inline styles to let CSS take over (width/height: auto)
+      // FORCE canvas to display at EXACT internal pixel size
       if (canvas) {
-        canvas.style.cssText = '';
-        console.log('[Fullscreen] Canvas styles cleared - using intrinsic size:', canvas.width, 'x', canvas.height);
+        // Get the ACTUAL internal buffer size
+        const internalW = canvas.width;
+        const internalH = canvas.height;
+        
+        // Force CSS to match internal size EXACTLY using setAttribute
+        canvas.setAttribute('style', `width: ${internalW}px !important; height: ${internalH}px !important;`);
+        
+        console.log('[Fullscreen] Canvas FORCED to exact internal size:', internalW, 'x', internalH);
+        console.log('[Fullscreen] Canvas computed style:', getComputedStyle(canvas).width, 'x', getComputedStyle(canvas).height);
       }
       
       // Reset stage transform (remove zoom/pan)
