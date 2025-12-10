@@ -43,6 +43,49 @@
 
 <div class="wrap">
   <div class="stage" id="stage">
+    <!-- Top Editor Bar - Ẩn khi play game -->
+    <div class="top-editor-bar" id="topEditorBar">
+      <div class="teb-section teb-essential">
+        <button class="teb-btn active" id="tebDraw" title="Vẽ tường (B)">🖌️</button>
+        <button class="teb-btn" id="tebErase" title="Xóa (E)">🗑️</button>
+        <button class="teb-btn" id="tebPartialErase" title="Xóa từng phần">✂️</button>
+        <button class="teb-btn" id="tebSelect" title="Chọn/Di chuyển (V)">👆</button>
+      </div>
+      <div class="teb-divider"></div>
+      <div class="teb-section teb-geometry">
+        <button class="teb-btn" id="tebFreehand" title="Vẽ tự do">✏️</button>
+        <button class="teb-btn" id="tebLine" title="Đường thẳng">📏</button>
+        <button class="teb-btn" id="tebArc" title="Cung tròn">🌙</button>
+        <button class="teb-btn" id="tebRect" title="Hình chữ nhật">⬜</button>
+      </div>
+      <div class="teb-divider"></div>
+      <div class="teb-section teb-race">
+        <button class="teb-btn" id="tebStartGate" title="Cổng xuất phát">🚦</button>
+        <button class="teb-btn" id="tebCarrot" title="Cà rốt đích">🥕</button>
+        <button class="teb-btn" id="tebTrophy" title="Cúp">🏆</button>
+        <button class="teb-btn" id="tebCheckpoint" title="Checkpoint">🚩</button>
+      </div>
+      <div class="teb-divider"></div>
+      <div class="teb-section teb-powerups">
+        <button class="teb-btn" id="tebBoost" title="Boost">⚡</button>
+        <button class="teb-btn" id="tebTrap" title="Bẫy">💣</button>
+        <button class="teb-btn" id="tebShield" title="Khiên">🛡️</button>
+        <button class="teb-btn" id="tebGhost" title="Ma">👻</button>
+      </div>
+      <div class="teb-divider"></div>
+      <div class="teb-section teb-walls">
+        <select id="tebWallType" class="teb-select" title="Loại tường">
+          <option value="normal">🧱 Thường</option>
+          <option value="ice">❄️ Băng</option>
+          <option value="bouncy">🏀 Nảy</option>
+          <option value="solid">🚧 Rắn</option>
+        </select>
+      </div>
+      <div class="teb-section teb-actions">
+        <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar (Tab)">≡</button>
+      </div>
+    </div>
+    
     <canvas id="cv" width="1920" height="1000"></canvas>
     
     <!-- Thanh thông báo overlay trên map -->
@@ -1247,6 +1290,85 @@
 
 <!-- Race Save Injector for Editor Mode -->
 <script src="race-save-injector.js"></script>
+
+<!-- Top Editor Bar Controller -->
+<script>
+(function() {
+  const topEditorBar = document.getElementById('topEditorBar');
+  const sidebar = document.getElementById('editorBar');
+  
+  // Map top bar buttons to existing editor tools
+  const toolMappings = {
+    'tebDraw': 'toolBrush',
+    'tebErase': 'toolEraser', 
+    'tebPartialErase': 'toolPartialErase',
+    'tebSelect': 'toolSelect',
+    'tebFreehand': 'shapeFreehand',
+    'tebLine': 'shapeLine',
+    'tebArc': 'shapeArc',
+    'tebRect': 'shapeRect',
+    'tebStartGate': 'toolStartGate',
+    'tebCarrot': 'toolCarrot',
+    'tebTrophy': 'toolTrophy',
+    'tebCheckpoint': 'toolCheckpoint',
+    'tebBoost': 'toolBoost',
+    'tebTrap': 'toolTrap',
+    'tebShield': 'toolShield',
+    'tebGhost': 'toolGhost'
+  };
+  
+  // Wire up buttons
+  Object.entries(toolMappings).forEach(([tebId, toolId]) => {
+    const tebBtn = document.getElementById(tebId);
+    const toolBtn = document.getElementById(toolId);
+    if (tebBtn && toolBtn) {
+      tebBtn.addEventListener('click', () => {
+        toolBtn.click();
+        // Update active state
+        document.querySelectorAll('.teb-btn').forEach(b => b.classList.remove('active'));
+        tebBtn.classList.add('active');
+      });
+    }
+  });
+  
+  // Wall type select
+  const tebWallType = document.getElementById('tebWallType');
+  const wallTypeSelect = document.getElementById('wallType');
+  if (tebWallType && wallTypeSelect) {
+    tebWallType.addEventListener('change', () => {
+      wallTypeSelect.value = tebWallType.value;
+      wallTypeSelect.dispatchEvent(new Event('change'));
+    });
+  }
+  
+  // Toggle sidebar
+  const toggleBtn = document.getElementById('tebToggleSidebar');
+  if (toggleBtn && sidebar) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '≡';
+    });
+  }
+  
+  // Hide top editor bar when game is running
+  function updateTopEditorBarVisibility() {
+    const isRunning = window.horses && window.horses.length > 0 && 
+                      document.getElementById('pauseBtnHUD')?.style.display !== 'none';
+    if (topEditorBar) {
+      topEditorBar.classList.toggle('hidden', isRunning);
+    }
+  }
+  
+  // Check periodically
+  setInterval(updateTopEditorBarVisibility, 500);
+  
+  // Also listen for play/stop events
+  const playBtn = document.getElementById('hudPlayTest');
+  const stopBtn = document.getElementById('toEditor');
+  if (playBtn) playBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
+  if (stopBtn) stopBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
+})();
+</script>
 
 </body>
 </html>

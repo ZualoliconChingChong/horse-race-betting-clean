@@ -814,6 +814,83 @@ input[type="number"] {
     z-index: 9999;
   }
   
+  /* Top Editor Bar */
+  .top-editor-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, #1a2332 0%, #2d3a4d 100%);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1001;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+  .top-editor-bar.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .teb-section {
+    display: flex;
+    gap: 4px;
+  }
+  .teb-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .teb-btn:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
+  }
+  .teb-btn.active {
+    background: #4fc3f7;
+    box-shadow: 0 2px 8px rgba(79,195,247,0.4);
+  }
+  .teb-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 8px;
+  }
+  .teb-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .teb-select option {
+    background: #1a2332;
+    color: #fff;
+  }
+  .teb-toggle-sidebar {
+    background: linear-gradient(135deg, #ff9800, #f57c00) !important;
+    font-weight: bold;
+  }
+  
+  /* Adjust notification bar when top editor is visible */
+  .top-editor-bar + canvas + .notification-bar {
+    top: 52px;
+    border-radius: 0;
+  }
+  
   /* Stage drag handle */
   .stage-handle{position:absolute;top:-40px;left:50%;transform:translateX(-50%);min-width:64px;height:22px;padding:0 10px;display:none;align-items:center;justify-content:center;border-radius:999px;background:#0f1417;color:#e5e7eb;border:1px solid #2a343c;cursor:grab;user-select:none;box-shadow:0 4px 12px rgba(0,0,0,.25);font-weight:700;font-size:12px}
   .stage-handle.active{display:flex}
