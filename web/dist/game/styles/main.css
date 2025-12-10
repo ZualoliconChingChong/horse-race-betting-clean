@@ -794,15 +794,16 @@ input[type="number"] {
     justify-content: center !important;
     transform: none !important;
     border-radius: 0 !important;
-    overflow: auto !important;
+    overflow: visible !important;
   }
   
   .stage.fake-fullscreen canvas {
-    /* Canvas keeps its EXACT internal size - width/height set by JS */
-    display: block;
-    border-radius: 0;
-    box-shadow: none;
-    /* DO NOT set width/height here - JS sets them to canvas.width/height */
+    /* Canvas keeps its EXACT internal size - NO CSS sizing override */
+    display: block !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    /* Let canvas use its natural size (canvas.width x canvas.height) */
   }
   
   .stage.fake-fullscreen .game-hub {
