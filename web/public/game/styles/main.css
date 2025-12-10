@@ -770,7 +770,7 @@ input[type="number"] {
   }
   
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:'Segoe UI Emoji Flat','Segoe UI Emoji',system-ui,Arial,Helvetica,sans-serif}
-  .wrap{display:flex;justify-content:flex-start;align-items:center;height:100%;padding-left:16px;position:relative}
+  .wrap{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;position:relative}
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
   
@@ -828,11 +828,13 @@ input[type="number"] {
     border-radius: 16px 16px 0 0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
+    width: fit-content;
+    max-width: 95vw;
   }
   .top-editor-bar.hidden {
     display: none !important;
   }
-  .wrap > .stage {
+  .wrap > .top-editor-bar + .stage {
     border-radius: 0 0 16px 16px;
   }
   .teb-section {
