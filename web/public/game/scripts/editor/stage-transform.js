@@ -37,9 +37,11 @@
   function applyStageTransform() {
     if (!stage) return;
     
-    // Don't apply transform when in fullscreen mode
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-    if (isFullscreen) {
+    // Don't apply transform when in fullscreen mode (browser OR fake fullscreen)
+    const isBrowserFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    const isFakeFullscreen = stage.classList.contains('fake-fullscreen');
+    
+    if (isBrowserFullscreen || isFakeFullscreen) {
       stage.style.transform = 'none';
       return;
     }

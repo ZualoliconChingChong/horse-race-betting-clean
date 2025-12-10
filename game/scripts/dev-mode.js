@@ -234,6 +234,11 @@
         canvas.style.setProperty('height', canvas.height + 'px', 'important');
       }
       
+      // Reset stage transform (remove zoom/pan)
+      if (typeof window.applyStageTransform === 'function') {
+        window.applyStageTransform();
+      }
+      
       console.log('[Fullscreen] Entered FAKE fullscreen - no scaling');
     } else {
       // Exit fake fullscreen
@@ -244,6 +249,11 @@
       if (canvas) {
         canvas.style.removeProperty('width');
         canvas.style.removeProperty('height');
+      }
+      
+      // Restore stage transform
+      if (typeof window.applyStageTransform === 'function') {
+        window.applyStageTransform();
       }
       
       console.log('[Fullscreen] Exited FAKE fullscreen');
