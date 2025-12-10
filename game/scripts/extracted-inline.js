@@ -18384,7 +18384,7 @@ function setMode(next) {
         editorBar.classList.remove('collapsed');
         try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
         const cbtn = editorBar.querySelector('.collapse-btn');
-        if (cbtn) { cbtn.textContent = '≪'; cbtn.title = 'Collapse panel'; }
+        if (cbtn) { cbtn.textContent = '━'; cbtn.title = 'Thu nhỏ Map Editor'; }
       }
       ensureEditorContentVisible();
       try { ensureSpawnPointsForEditor(); } catch {}

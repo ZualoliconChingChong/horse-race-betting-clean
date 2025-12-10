@@ -44,8 +44,8 @@
     if (!cbtn) {
       cbtn = document.createElement('button');
       cbtn.className = 'collapse-btn';
-      cbtn.textContent = '≪';
-      cbtn.title = 'Collapse panel';
+      cbtn.textContent = '━';
+      cbtn.title = 'Thu nhỏ Map Editor';
       header.appendChild(cbtn);
     }
 
@@ -73,8 +73,8 @@
       if (size && typeof size.h === 'number' && size.h >= MIN_H) rightbar.style.height = size.h + 'px';
       
       const isCollapsed = rightbar.classList.contains('collapsed');
-      cbtn.textContent = isCollapsed ? '≫' : '≪';
-      cbtn.title = isCollapsed ? 'Expand panel' : 'Collapse panel';
+      cbtn.textContent = '━';
+      cbtn.title = 'Thu nhỏ Map Editor';
       rightbar.style.display = isCollapsed ? 'none' : 'block';
     } catch {}
 
@@ -91,8 +91,8 @@
     cbtn.addEventListener('click', () => {
       rightbar.classList.toggle('collapsed');
       const isCollapsed = rightbar.classList.contains('collapsed');
-      cbtn.textContent = isCollapsed ? '≫' : '≪';
-      cbtn.title = isCollapsed ? 'Expand panel' : 'Collapse panel';
+      cbtn.textContent = '━';
+      cbtn.title = 'Thu nhỏ Map Editor';
       
       try { localStorage.setItem(COLLAPSE_KEY, isCollapsed ? '1' : '0'); } catch {}
       
