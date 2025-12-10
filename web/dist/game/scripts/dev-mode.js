@@ -214,58 +214,54 @@
   
   /**
    * Toggle fullscreen mode for the stage
+   * Uses FAKE fullscreen (CSS-based) to prevent browser scaling
    */
   function toggleFullscreen() {
     const stage = document.getElementById('stage');
+    const canvas = document.getElementById('cv');
     if (!stage) return;
     
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      // Enter fullscreen
-      if (stage.requestFullscreen) {
-        stage.requestFullscreen();
-      } else if (stage.webkitRequestFullscreen) {
-        stage.webkitRequestFullscreen();
+    const isFakeFullscreen = stage.classList.contains('fake-fullscreen');
+    
+    if (!isFakeFullscreen) {
+      // Enter FAKE fullscreen (CSS-based, no scaling)
+      stage.classList.add('fake-fullscreen');
+      document.body.classList.add('has-fake-fullscreen');
+      
+      // Lock canvas to its internal size
+      if (canvas) {
+        canvas.style.setProperty('width', canvas.width + 'px', 'important');
+        canvas.style.setProperty('height', canvas.height + 'px', 'important');
       }
+      
+      console.log('[Fullscreen] Entered FAKE fullscreen - no scaling');
     } else {
-      // Exit fullscreen
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
+      // Exit fake fullscreen
+      stage.classList.remove('fake-fullscreen');
+      document.body.classList.remove('has-fake-fullscreen');
+      
+      // Clear canvas inline styles
+      if (canvas) {
+        canvas.style.removeProperty('width');
+        canvas.style.removeProperty('height');
       }
+      
+      console.log('[Fullscreen] Exited FAKE fullscreen');
     }
+    
+    // Update button appearance
+    updateFullscreenButton();
   }
   
   /**
-   * Update fullscreen button appearance and sync canvas CSS size
+   * Update fullscreen button appearance
    */
   function updateFullscreenButton() {
     const btn = document.getElementById('fullscreenToggle');
-    const canvas = document.getElementById('cv');
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    const stage = document.getElementById('stage');
     
-    // CRITICAL: Sync canvas CSS size to prevent scaling
-    if (canvas) {
-      if (isFullscreen) {
-        // In fullscreen: set CSS width/height to match canvas internal size exactly
-        // Use setProperty with 'important' to override any CSS rules
-        canvas.style.setProperty('width', canvas.width + 'px', 'important');
-        canvas.style.setProperty('height', canvas.height + 'px', 'important');
-        canvas.style.setProperty('max-width', 'none', 'important');
-        canvas.style.setProperty('max-height', 'none', 'important');
-        canvas.style.setProperty('min-width', '0', 'important');
-        canvas.style.setProperty('min-height', '0', 'important');
-        console.log('[Fullscreen] Canvas size locked to:', canvas.width, 'x', canvas.height);
-      } else {
-        // Exit fullscreen: clear inline styles to use CSS defaults
-        canvas.style.removeProperty('width');
-        canvas.style.removeProperty('height');
-        canvas.style.removeProperty('max-width');
-        canvas.style.removeProperty('max-height');
-        canvas.style.removeProperty('min-width');
-        canvas.style.removeProperty('min-height');
-      }
-    }
+    // Check for FAKE fullscreen (CSS-based) instead of browser fullscreen
+    const isFullscreen = stage && stage.classList.contains('fake-fullscreen');
     
     if (!btn) return;
     
