@@ -774,33 +774,29 @@ input[type="number"] {
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
   
-  /* Fullscreen mode - keep canvas at original size */
+  /* Fullscreen mode - keep canvas at EXACT original pixel size */
   .stage:fullscreen,
   .stage:-webkit-full-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     position: relative;
     background: var(--bg);
     width: 100vw !important;
     height: 100vh !important;
     padding: 0;
     box-sizing: border-box;
+    overflow: auto !important;
     transform: none !important;
-    transform-origin: center center !important;
   }
   .stage:fullscreen canvas,
   .stage:-webkit-full-screen canvas {
-    /* Force NO SCALING - keep exact internal canvas size */
-    width: auto !important;
-    height: auto !important;
-    min-width: 0 !important;
-    min-height: 0 !important;
-    max-width: none !important;
-    max-height: none !important;
-    transform: none !important;
+    /* CRITICAL: No CSS sizing - let canvas use its intrinsic size */
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) !important;
+    /* Do NOT set width/height - browser will use canvas.width/height */
     border-radius: 0;
-    object-fit: none;
   }
   .stage:fullscreen .game-hub,
   .stage:-webkit-full-screen .game-hub {
