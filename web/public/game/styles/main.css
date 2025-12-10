@@ -1555,6 +1555,31 @@ input[type="number"] {
   
   .drag-handle:active { cursor: grabbing; }
   
+  .collapse-btn {
+    background: rgba(255,255,255,0.1);
+    border: none;
+    color: rgba(255,255,255,0.8);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-family: 'Segoe UI Emoji Flat', 'Segoe UI Emoji', sans-serif;
+  }
+  .collapse-btn:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+  }
+  
+  /* Hide sidebar in fullscreen */
+  body.has-fake-fullscreen .rightbar {
+    display: none !important;
+  }
+  
   .editor-controls {
     display: flex;
     align-items: center;
