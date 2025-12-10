@@ -751,7 +751,7 @@
     <div class="editor-title-section">
       <h2>🎨 Map Editor</h2>
       <div class="drag-handle" id="dragHandle" title="Kéo để di chuyển panel">⋮⋮</div>
-      <button class="collapse-btn" id="collapseEditorBtn" title="Thu nhỏ Map Editor">➖</button>
+      <button class="collapse-btn" id="collapseEditorBtn" title="Thu nhỏ Map Editor">━</button>
     </div>
     <div class="editor-controls">
       <div class="top-actions" style="display:flex; gap:8px; align-items:center; margin-right:8px;">
@@ -1944,10 +1944,7 @@
   const toggleBtn = document.getElementById('tebToggleSidebar');
   if (toggleBtn && sidebar) {
     toggleBtn.addEventListener('click', () => {
-      // Don't allow toggle in fullscreen mode
-      if (document.body.classList.contains('has-fake-fullscreen')) {
-        return;
-      }
+      // Allow toggle in fullscreen mode too
       sidebar.style.display = sidebar.style.display === 'none' ? '' : 'none';
       sidebar.classList.remove('collapsed');
       toggleBtn.textContent = sidebar.style.display === 'none' ? '☰' : '≡';

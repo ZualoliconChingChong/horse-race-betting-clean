@@ -1575,9 +1575,9 @@ input[type="number"] {
     color: #fff;
   }
   
-  /* Hide sidebar in fullscreen */
+  /* Sidebar in fullscreen - allow it to show */
   body.has-fake-fullscreen .rightbar {
-    display: none !important;
+    z-index: 1000000; /* Above fullscreen stage */
   }
   
   .editor-controls {
