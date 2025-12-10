@@ -248,12 +248,22 @@
     if (canvas) {
       if (isFullscreen) {
         // In fullscreen: set CSS width/height to match canvas internal size exactly
-        canvas.style.width = canvas.width + 'px';
-        canvas.style.height = canvas.height + 'px';
+        // Use setProperty with 'important' to override any CSS rules
+        canvas.style.setProperty('width', canvas.width + 'px', 'important');
+        canvas.style.setProperty('height', canvas.height + 'px', 'important');
+        canvas.style.setProperty('max-width', 'none', 'important');
+        canvas.style.setProperty('max-height', 'none', 'important');
+        canvas.style.setProperty('min-width', '0', 'important');
+        canvas.style.setProperty('min-height', '0', 'important');
+        console.log('[Fullscreen] Canvas size locked to:', canvas.width, 'x', canvas.height);
       } else {
         // Exit fullscreen: clear inline styles to use CSS defaults
-        canvas.style.width = '';
-        canvas.style.height = '';
+        canvas.style.removeProperty('width');
+        canvas.style.removeProperty('height');
+        canvas.style.removeProperty('max-width');
+        canvas.style.removeProperty('max-height');
+        canvas.style.removeProperty('min-width');
+        canvas.style.removeProperty('min-height');
       }
     }
     
