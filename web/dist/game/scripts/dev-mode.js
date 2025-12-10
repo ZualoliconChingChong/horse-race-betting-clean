@@ -267,6 +267,21 @@
       
       console.log('[Fullscreen] Stage transform:', getComputedStyle(stage).transform);
       console.log('[Fullscreen] Canvas rect:', canvas?.getBoundingClientRect().width, 'x', canvas?.getBoundingClientRect().height);
+      
+      // Check for devicePixelRatio and ctx transform
+      console.log('[DEBUG] devicePixelRatio:', window.devicePixelRatio);
+      console.log('[DEBUG] window.innerWidth x innerHeight:', window.innerWidth, 'x', window.innerHeight);
+      console.log('[DEBUG] stage clientWidth x clientHeight:', stage.clientWidth, 'x', stage.clientHeight);
+      
+      // Check parent transforms
+      const wrap = document.querySelector('.wrap');
+      if (wrap) {
+        console.log('[DEBUG] .wrap transform:', getComputedStyle(wrap).transform);
+      }
+      const body = document.body;
+      console.log('[DEBUG] body transform:', getComputedStyle(body).transform);
+      console.log('[DEBUG] html transform:', getComputedStyle(document.documentElement).transform);
+      
       console.log('[Fullscreen] Entered FAKE fullscreen');
     } else {
       // Exit fake fullscreen
