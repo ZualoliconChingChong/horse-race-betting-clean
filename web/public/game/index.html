@@ -42,9 +42,8 @@
 </div>
 
 <div class="wrap">
-  <div class="stage" id="stage">
-    <!-- Top Editor Bar - Ẩn khi play game -->
-    <div class="top-editor-bar" id="topEditorBar">
+  <!-- Top Editor Bar - Nằm ngoài canvas -->
+  <div class="top-editor-bar" id="topEditorBar">
       <!-- 🛠️ TOOLS Dropdown -->
       <div class="teb-dropdown">
         <button class="teb-btn teb-dropdown-toggle" title="Tools">🛠️</button>
@@ -603,7 +602,8 @@
       <!-- Toggle Sidebar -->
       <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar">≡</button>
     </div>
-    
+
+  <div class="stage" id="stage">
     <canvas id="cv" width="1920" height="1000"></canvas>
     
     <!-- Thanh thông báo overlay trên map -->
