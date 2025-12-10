@@ -228,9 +228,12 @@
       stage.classList.add('fake-fullscreen');
       document.body.classList.add('has-fake-fullscreen');
       
-      // Clear any inline styles on canvas to let it use natural size
+      // FORCE canvas CSS size to match internal size EXACTLY
       if (canvas) {
-        canvas.style.cssText = '';
+        const w = canvas.width;
+        const h = canvas.height;
+        canvas.style.cssText = `width: ${w}px !important; height: ${h}px !important; max-width: none !important; max-height: none !important;`;
+        console.log('[Fullscreen] FORCED canvas CSS to:', w, 'x', h);
       }
       
       // Reset stage transform (remove zoom/pan)
@@ -238,13 +241,13 @@
         window.applyStageTransform();
       }
       
-      console.log('[Fullscreen] Entered FAKE fullscreen - canvas size:', canvas?.width, 'x', canvas?.height);
+      console.log('[Fullscreen] Entered FAKE fullscreen');
     } else {
       // Exit fake fullscreen
       stage.classList.remove('fake-fullscreen');
       document.body.classList.remove('has-fake-fullscreen');
       
-      // Clear any inline styles on canvas
+      // Clear canvas inline styles
       if (canvas) {
         canvas.style.cssText = '';
       }

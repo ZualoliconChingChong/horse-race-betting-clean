@@ -798,12 +798,13 @@ input[type="number"] {
   }
   
   .stage.fake-fullscreen canvas {
-    /* Canvas keeps its EXACT internal size - NO CSS sizing override */
+    /* Canvas keeps its EXACT internal size - prevent flexbox from stretching */
     display: block !important;
+    flex: 0 0 auto !important;
     border-radius: 0 !important;
     box-shadow: none !important;
     transform: none !important;
-    /* Let canvas use its natural size (canvas.width x canvas.height) */
+    /* width/height will be set by JavaScript to match canvas.width/height */
   }
   
   .stage.fake-fullscreen .game-hub {
