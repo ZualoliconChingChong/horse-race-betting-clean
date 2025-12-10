@@ -45,45 +45,63 @@
   <div class="stage" id="stage">
     <!-- Top Editor Bar - Ẩn khi play game -->
     <div class="top-editor-bar" id="topEditorBar">
-      <div class="teb-section teb-essential">
-        <button class="teb-btn active" id="tebDraw" title="Vẽ tường (B)">🖌️</button>
-        <button class="teb-btn" id="tebErase" title="Xóa (E)">🗑️</button>
-        <button class="teb-btn" id="tebPartialErase" title="Xóa từng phần">✂️</button>
-        <button class="teb-btn" id="tebSelect" title="Chọn/Di chuyển (V)">👆</button>
-      </div>
+      <!-- Essential Tools -->
+      <button class="teb-btn active" id="tebDraw" title="Vẽ tường (B)">🖌️</button>
+      <button class="teb-btn" id="tebErase" title="Xóa (E)">🗑️</button>
+      <button class="teb-btn" id="tebSelect" title="Chọn (V)">👆</button>
+      
       <div class="teb-divider"></div>
-      <div class="teb-section teb-geometry">
-        <button class="teb-btn" id="tebFreehand" title="Vẽ tự do">✏️</button>
-        <button class="teb-btn" id="tebLine" title="Đường thẳng">📏</button>
-        <button class="teb-btn" id="tebArc" title="Cung tròn">🌙</button>
-        <button class="teb-btn" id="tebRect" title="Hình chữ nhật">⬜</button>
+      
+      <!-- Geometry Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" id="tebGeometryBtn" title="Hình học">📐</button>
+        <div class="teb-dropdown-menu" id="tebGeometryMenu">
+          <button class="teb-menu-item" data-tool="shapeFreehand">✏️ Tự do</button>
+          <button class="teb-menu-item" data-tool="shapeLine">📏 Đường thẳng</button>
+          <button class="teb-menu-item" data-tool="shapeArc">🌙 Cung tròn</button>
+          <button class="teb-menu-item" data-tool="shapeRect">⬜ Hình chữ nhật</button>
+        </div>
       </div>
+      
+      <!-- Race Setup Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" id="tebRaceBtn" title="Race Setup">🏁</button>
+        <div class="teb-dropdown-menu" id="tebRaceMenu">
+          <button class="teb-menu-item" data-tool="toolStartGate">🚦 Cổng xuất phát</button>
+          <button class="teb-menu-item" data-tool="toolCarrot">🥕 Cà rốt đích</button>
+          <button class="teb-menu-item" data-tool="toolTrophy">🏆 Cúp</button>
+          <button class="teb-menu-item" data-tool="toolCheckpoint">🚩 Checkpoint</button>
+        </div>
+      </div>
+      
+      <!-- Power-ups Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" id="tebPowerupsBtn" title="Power-ups">⚡</button>
+        <div class="teb-dropdown-menu" id="tebPowerupsMenu">
+          <button class="teb-menu-item" data-tool="toolBoost">⚡ Boost</button>
+          <button class="teb-menu-item" data-tool="toolTrap">💣 Bẫy</button>
+          <button class="teb-menu-item" data-tool="toolShield">🛡️ Khiên</button>
+          <button class="teb-menu-item" data-tool="toolGhost">👻 Ma</button>
+          <button class="teb-menu-item" data-tool="toolRam">🐏 RAM</button>
+          <button class="teb-menu-item" data-tool="toolFreeze">❄️ Đóng băng</button>
+        </div>
+      </div>
+      
+      <!-- Wall Type Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" id="tebWallBtn" title="Loại tường">🧱</button>
+        <div class="teb-dropdown-menu" id="tebWallMenu">
+          <button class="teb-menu-item" data-wall="normal">🧱 Thường</button>
+          <button class="teb-menu-item" data-wall="ice">❄️ Băng</button>
+          <button class="teb-menu-item" data-wall="bouncy">🏀 Nảy</button>
+          <button class="teb-menu-item" data-wall="solid">🚧 Rắn</button>
+        </div>
+      </div>
+      
       <div class="teb-divider"></div>
-      <div class="teb-section teb-race">
-        <button class="teb-btn" id="tebStartGate" title="Cổng xuất phát">🚦</button>
-        <button class="teb-btn" id="tebCarrot" title="Cà rốt đích">🥕</button>
-        <button class="teb-btn" id="tebTrophy" title="Cúp">🏆</button>
-        <button class="teb-btn" id="tebCheckpoint" title="Checkpoint">🚩</button>
-      </div>
-      <div class="teb-divider"></div>
-      <div class="teb-section teb-powerups">
-        <button class="teb-btn" id="tebBoost" title="Boost">⚡</button>
-        <button class="teb-btn" id="tebTrap" title="Bẫy">💣</button>
-        <button class="teb-btn" id="tebShield" title="Khiên">🛡️</button>
-        <button class="teb-btn" id="tebGhost" title="Ma">👻</button>
-      </div>
-      <div class="teb-divider"></div>
-      <div class="teb-section teb-walls">
-        <select id="tebWallType" class="teb-select" title="Loại tường">
-          <option value="normal">🧱 Thường</option>
-          <option value="ice">❄️ Băng</option>
-          <option value="bouncy">🏀 Nảy</option>
-          <option value="solid">🚧 Rắn</option>
-        </select>
-      </div>
-      <div class="teb-section teb-actions">
-        <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar (Tab)">≡</button>
-      </div>
+      
+      <!-- Toggle Sidebar -->
+      <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar">≡</button>
     </div>
     
     <canvas id="cv" width="1920" height="1000"></canvas>
@@ -1297,49 +1315,89 @@
   const topEditorBar = document.getElementById('topEditorBar');
   const sidebar = document.getElementById('editorBar');
   
-  // Map top bar buttons to existing editor tools
-  const toolMappings = {
+  // Essential tools mapping
+  const essentialTools = {
     'tebDraw': 'toolBrush',
-    'tebErase': 'toolEraser', 
-    'tebPartialErase': 'toolPartialErase',
-    'tebSelect': 'toolSelect',
-    'tebFreehand': 'shapeFreehand',
-    'tebLine': 'shapeLine',
-    'tebArc': 'shapeArc',
-    'tebRect': 'shapeRect',
-    'tebStartGate': 'toolStartGate',
-    'tebCarrot': 'toolCarrot',
-    'tebTrophy': 'toolTrophy',
-    'tebCheckpoint': 'toolCheckpoint',
-    'tebBoost': 'toolBoost',
-    'tebTrap': 'toolTrap',
-    'tebShield': 'toolShield',
-    'tebGhost': 'toolGhost'
+    'tebErase': 'toolEraser',
+    'tebSelect': 'toolSelect'
   };
   
-  // Wire up buttons
-  Object.entries(toolMappings).forEach(([tebId, toolId]) => {
+  // Wire up essential buttons
+  Object.entries(essentialTools).forEach(([tebId, toolId]) => {
     const tebBtn = document.getElementById(tebId);
     const toolBtn = document.getElementById(toolId);
     if (tebBtn && toolBtn) {
       tebBtn.addEventListener('click', () => {
         toolBtn.click();
-        // Update active state
-        document.querySelectorAll('.teb-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.teb-btn:not(.teb-dropdown-toggle)').forEach(b => b.classList.remove('active'));
         tebBtn.classList.add('active');
+        closeAllDropdowns();
       });
     }
   });
   
-  // Wall type select
-  const tebWallType = document.getElementById('tebWallType');
-  const wallTypeSelect = document.getElementById('wallType');
-  if (tebWallType && wallTypeSelect) {
-    tebWallType.addEventListener('change', () => {
-      wallTypeSelect.value = tebWallType.value;
-      wallTypeSelect.dispatchEvent(new Event('change'));
+  // Dropdown toggle
+  document.querySelectorAll('.teb-dropdown-toggle').forEach(toggle => {
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = toggle.parentElement;
+      const wasOpen = dropdown.classList.contains('open');
+      closeAllDropdowns();
+      if (!wasOpen) {
+        dropdown.classList.add('open');
+      }
     });
+  });
+  
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', closeAllDropdowns);
+  
+  function closeAllDropdowns() {
+    document.querySelectorAll('.teb-dropdown').forEach(d => d.classList.remove('open'));
   }
+  
+  // Menu items - tools
+  document.querySelectorAll('.teb-menu-item[data-tool]').forEach(item => {
+    item.addEventListener('click', () => {
+      const toolId = item.dataset.tool;
+      const toolBtn = document.getElementById(toolId);
+      if (toolBtn) {
+        toolBtn.click();
+        // Update dropdown button icon to show selected tool
+        const dropdown = item.closest('.teb-dropdown');
+        const toggle = dropdown.querySelector('.teb-dropdown-toggle');
+        const emoji = item.textContent.trim().split(' ')[0];
+        toggle.innerHTML = emoji + '<span style="font-size:10px;margin-left:2px;opacity:0.7">▾</span>';
+        
+        // Mark active
+        dropdown.querySelectorAll('.teb-menu-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      }
+      closeAllDropdowns();
+    });
+  });
+  
+  // Menu items - wall types
+  document.querySelectorAll('.teb-menu-item[data-wall]').forEach(item => {
+    item.addEventListener('click', () => {
+      const wallType = item.dataset.wall;
+      const wallSelect = document.getElementById('wallType');
+      if (wallSelect) {
+        wallSelect.value = wallType;
+        wallSelect.dispatchEvent(new Event('change'));
+        
+        // Update button icon
+        const dropdown = item.closest('.teb-dropdown');
+        const toggle = dropdown.querySelector('.teb-dropdown-toggle');
+        const emoji = item.textContent.trim().split(' ')[0];
+        toggle.innerHTML = emoji + '<span style="font-size:10px;margin-left:2px;opacity:0.7">▾</span>';
+        
+        dropdown.querySelectorAll('.teb-menu-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      }
+      closeAllDropdowns();
+    });
+  });
   
   // Toggle sidebar
   const toggleBtn = document.getElementById('tebToggleSidebar');
@@ -1359,10 +1417,8 @@
     }
   }
   
-  // Check periodically
   setInterval(updateTopEditorBarVisibility, 500);
   
-  // Also listen for play/stop events
   const playBtn = document.getElementById('hudPlayTest');
   const stopBtn = document.getElementById('toEditor');
   if (playBtn) playBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));

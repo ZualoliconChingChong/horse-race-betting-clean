@@ -885,6 +885,59 @@ input[type="number"] {
     font-weight: bold;
   }
   
+  /* Dropdown styles */
+  .teb-dropdown {
+    position: relative;
+  }
+  .teb-dropdown-toggle::after {
+    content: '▾';
+    font-size: 10px;
+    margin-left: 2px;
+    opacity: 0.7;
+  }
+  .teb-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: linear-gradient(135deg, #1a2332 0%, #2d3a4d 100%);
+    border-radius: 8px;
+    padding: 6px;
+    min-width: 150px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    display: none;
+    z-index: 1002;
+  }
+  .teb-dropdown.open .teb-dropdown-menu {
+    display: block;
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .teb-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+  }
+  .teb-menu-item:hover {
+    background: rgba(79, 195, 247, 0.3);
+  }
+  .teb-menu-item.active {
+    background: #4fc3f7;
+  }
+  
   /* Adjust notification bar when top editor is visible */
   .top-editor-bar + canvas + .notification-bar {
     top: 52px;
