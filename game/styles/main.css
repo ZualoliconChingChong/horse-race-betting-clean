@@ -770,7 +770,7 @@ input[type="number"] {
   }
   
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font-family:'Segoe UI Emoji Flat','Segoe UI Emoji',system-ui,Arial,Helvetica,sans-serif}
-  .wrap{display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;position:relative}
+  .wrap{display:flex;flex-direction:column;justify-content:flex-start;align-items:center;min-height:100%;padding-top:16px;position:relative;overflow:visible}
   .stage{position:relative;transition:transform .08s ease-out}
   canvas{background:var(--bg);display:block;border-radius:16px;box-shadow:0 16px 48px rgba(0,0,0,.18);pointer-events:auto}
   
