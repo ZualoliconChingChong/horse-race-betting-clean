@@ -44,9 +44,10 @@
       stage.appendChild(handle);
 
       handle.addEventListener('mousedown', e => {
-        // Don't allow resize in fullscreen mode
-        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-        if (isFullscreen) return;
+        // Don't allow resize in fullscreen mode (browser OR fake fullscreen)
+        const isBrowserFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+        const isFakeFullscreen = stage && stage.classList.contains('fake-fullscreen');
+        if (isBrowserFullscreen || isFakeFullscreen) return;
         
         e.preventDefault();
         e.stopPropagation();
@@ -58,9 +59,10 @@
         document.body.style.cursor = h.cursor;
 
         const doResize = (moveEvent) => {
-          // Double check fullscreen during resize
-          const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-          if (isFullscreen) {
+          // Double check fullscreen during resize (browser OR fake fullscreen)
+          const isBrowserFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+          const isFakeFullscreen = stage && stage.classList.contains('fake-fullscreen');
+          if (isBrowserFullscreen || isFakeFullscreen) {
             stopResize();
             return;
           }

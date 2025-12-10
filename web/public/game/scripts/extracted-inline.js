@@ -6829,9 +6829,15 @@ function ensureSpawnPointsForEditor(){
 // MOVED TO: scripts/data/horse-defaults.js
 // Access via: window.HorseDefaults or window.NAMES, window.COLORS, window.BODY, window.SPR_SCALE, window.PNG_BASE for compatibility
 function resizeCanvas(){
-  // Don't resize canvas when in fullscreen mode
-  const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-  if (isFullscreen) return;
+  // Don't resize canvas when in fullscreen mode (browser OR fake fullscreen)
+  const isBrowserFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+  const stage = document.getElementById('stage');
+  const isFakeFullscreen = stage && stage.classList.contains('fake-fullscreen');
+  
+  if (isBrowserFullscreen || isFakeFullscreen) {
+    console.log('[resizeCanvas] Blocked - in fullscreen mode');
+    return;
+  }
   
   canvas.width = mapDef.w;
   canvas.height = mapDef.h;
