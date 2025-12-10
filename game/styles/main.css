@@ -791,7 +791,9 @@ input[type="number"] {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    /* CRITICAL: Force transform none IMMEDIATELY with no transition */
     transform: none !important;
+    transition: none !important;
     border-radius: 0 !important;
     overflow: auto !important;
   }
