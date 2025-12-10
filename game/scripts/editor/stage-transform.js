@@ -36,6 +36,14 @@
    */
   function applyStageTransform() {
     if (!stage) return;
+    
+    // Don't apply transform when in fullscreen mode
+    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+    if (isFullscreen) {
+      stage.style.transform = 'none';
+      return;
+    }
+    
     stage.style.transformOrigin = '0 0';
     stage.style.transform = `translate(${stageOffsetX + panX}px, ${panY}px) scale(${zoomScale})`;
     
@@ -160,6 +168,15 @@
   // ===== Initialization =====
   applyStageTransform();
   setStageDrag(stageDragEnabled);
+  
+  // ===== Fullscreen Change Listener =====
+  // Reset transform when entering/exiting fullscreen
+  document.addEventListener('fullscreenchange', () => {
+    applyStageTransform();
+  });
+  document.addEventListener('webkitfullscreenchange', () => {
+    applyStageTransform();
+  });
 
   // ===== Public API =====
   const StageTransform = {
