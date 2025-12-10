@@ -238,12 +238,22 @@
         const internalH = canvas.height;
         canvas.style.setProperty('width', internalW + 'px', 'important');
         canvas.style.setProperty('height', internalH + 'px', 'important');
-        
-        console.log('[Fullscreen] Canvas:', internalW, 'x', internalH);
-        console.log('[Fullscreen] Stage transform:', getComputedStyle(stage).transform);
-        console.log('[Fullscreen] Canvas rect:', canvas.getBoundingClientRect().width, 'x', canvas.getBoundingClientRect().height);
       }
       
+      // FORCE REFLOW - this makes browser apply all style changes immediately
+      void stage.offsetHeight;
+      void canvas?.offsetHeight;
+      
+      // Force redraw
+      if (typeof window.render === 'function') {
+        window.render();
+      }
+      if (typeof window.drawMap === 'function') {
+        window.drawMap();
+      }
+      
+      console.log('[Fullscreen] Stage transform:', getComputedStyle(stage).transform);
+      console.log('[Fullscreen] Canvas rect:', canvas?.getBoundingClientRect().width, 'x', canvas?.getBoundingClientRect().height);
       console.log('[Fullscreen] Entered FAKE fullscreen');
     } else {
       // Exit fake fullscreen
