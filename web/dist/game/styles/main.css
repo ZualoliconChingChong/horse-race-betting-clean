@@ -825,11 +825,10 @@ input[type="number"] {
     display: flex;
     align-items: center;
     gap: 8px;
-    z-index: 10000;
-    border-radius: 16px 16px 0 0;
+    z-index: 2000;
+    border-radius: 0 0 16px 16px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
-    pointer-events: auto;
   }
   .top-editor-bar.hidden {
     transform: translateY(-100%);
@@ -907,7 +906,7 @@ input[type="number"] {
     min-width: 150px;
     box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     display: none;
-    z-index: 10001;
+    z-index: 1002;
   }
   .teb-dropdown.open .teb-dropdown-menu {
     display: block;
@@ -1071,10 +1070,15 @@ input[type="number"] {
     transform: translateY(-1px);
   }
   
+  /* Canvas and notification bar positioning */
+  canvas {
+    position: relative;
+    z-index: 1;
+  }
+  
   /* Adjust notification bar when top editor is visible */
-  .top-editor-bar + canvas + .notification-bar {
-    top: 52px;
-    border-radius: 0;
+  .notification-bar {
+    z-index: 1500;
   }
   
   /* Stage drag handle */
