@@ -45,61 +45,248 @@
   <div class="stage" id="stage">
     <!-- Top Editor Bar - Ẩn khi play game -->
     <div class="top-editor-bar" id="topEditorBar">
-      <!-- Essential Tools -->
-      <button class="teb-btn active" id="tebDraw" title="Vẽ tường (B)">🖌️</button>
-      <button class="teb-btn" id="tebErase" title="Xóa (E)">🗑️</button>
-      <button class="teb-btn" id="tebSelect" title="Chọn (V)">👆</button>
-      
+      <!-- 🛠️ TOOLS Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Tools">🛠️</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🎯 Essential</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="select" title="Select">🎯</button>
+            <button class="teb-menu-item" data-tool="erase" title="Erase">🗑️</button>
+            <button class="teb-menu-item" data-tool="wall" title="Wall">🧱</button>
+            <button class="teb-menu-item" data-tool="brush" title="Brush">🖌️</button>
+          </div>
+          <div class="teb-menu-section">📐 Geometry</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="diag" title="Diagonal">📐</button>
+            <button class="teb-menu-item" data-tool="semi" title="Half-Circle">🌙</button>
+            <button class="teb-menu-item" data-tool="arc" title="Arc">🌈</button>
+            <button class="teb-menu-item" data-tool="text" title="Text">🔤</button>
+            <button class="teb-menu-item" data-tool="ebrush" title="Eraser Brush">🧹</button>
+            <button class="teb-menu-item" data-tool="breakwall" title="Break Wall">💥</button>
+            <button class="teb-menu-item" data-tool="softwall" title="Soft Wall">🧽</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🏁 RACE Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Race Setup">🏁</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🏁 Race Elements</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="spawn" title="Spawns">🏁</button>
+            <button class="teb-menu-item" data-tool="carrotA" title="Finish A">🥕</button>
+            <button class="teb-menu-item" data-tool="carrotB" title="Finish B">🏆</button>
+            <button class="teb-menu-item" data-tool="room" title="Room">🏠</button>
+            <button class="teb-menu-item" data-tool="start" title="Start Gate">🚦</button>
+          </div>
+          <div class="teb-menu-section">🏁 Spawn Settings</div>
+          <div class="teb-menu-setting">
+            <label>Preset</label>
+            <select data-sync="spawnPreset">
+              <option value="auto">Auto Grid</option>
+              <option value="line">Line</option>
+              <option value="grid2">Grid 2×</option>
+              <option value="fan">Fan/Arc</option>
+              <option value="scatter">Scatter</option>
+            </select>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Jitter</label>
+            <input type="range" data-sync="spawnJitter" min="0" max="16" step="1" value="6">
+            <span class="teb-val">6px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Start Bias</label>
+            <input type="range" data-sync="startBias" min="0" max="1500" step="50" value="100">
+            <span class="teb-val">100ms</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⚡ POWERUPS Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Power-ups">⚡</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">⚡ Power-ups</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="boost" title="Boost">⚡</button>
+            <button class="teb-menu-item" data-tool="turbo" title="Turbo">🚀</button>
+            <button class="teb-menu-item" data-tool="ghost" title="Ghost">👻</button>
+            <button class="teb-menu-item" data-tool="shield" title="Shield">🛡️</button>
+            <button class="teb-menu-item" data-tool="teleport" title="Teleport">🌀</button>
+            <button class="teb-menu-item" data-tool="magnet" title="Magnet">🧲</button>
+            <button class="teb-menu-item" data-tool="timefreeze" title="Freeze">❄️</button>
+            <button class="teb-menu-item" data-tool="icefreezer" title="Ice">🧊</button>
+            <button class="teb-menu-item" data-tool="poison" title="Poison">☠️</button>
+            <button class="teb-menu-item" data-tool="fireaura" title="Fire">🔥</button>
+            <button class="teb-menu-item" data-tool="healingzone" title="Heal">💚</button>
+            <button class="teb-menu-item" data-tool="tornado" title="Tornado">🌪️</button>
+            <button class="teb-menu-item" data-tool="volcano" title="Volcano">🌋</button>
+            <button class="teb-menu-item" data-tool="warpzone" title="Warp">🌌</button>
+            <button class="teb-menu-item" data-tool="quantumdash" title="Quantum">🔮</button>
+            <button class="teb-menu-item" data-tool="yellowheart" title="Yellow">💛</button>
+            <button class="teb-menu-item" data-tool="nebula" title="Nebula">🔹</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🚧 OBSTACLES Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Obstacles">🚧</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🚧 Obstacles</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="ram" title="Ram">💥</button>
+            <button class="teb-menu-item" data-tool="mud" title="Mud">🟤</button>
+            <button class="teb-menu-item" data-tool="healingpatch" title="Heal">💖</button>
+            <button class="teb-menu-item" data-tool="rotbarrier" title="Barrier">⚖️</button>
+            <button class="teb-menu-item" data-tool="firetrap" title="Fire">☄️</button>
+            <button class="teb-menu-item" data-tool="magnetpull" title="Pull">🧿</button>
+            <button class="teb-menu-item" data-tool="magnetpush" title="Push">✨</button>
+            <button class="teb-menu-item" data-tool="bumper" title="Bumper">🟦</button>
+            <button class="teb-menu-item" data-tool="spinner" title="Spinner">🔄</button>
+          </div>
+          <div class="teb-menu-section">🔧 Advanced</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="belt" title="Belt">📦</button>
+            <button class="teb-menu-item" data-tool="fan" title="Fan">💫</button>
+            <button class="teb-menu-item" data-tool="weather" title="Weather">🌦️</button>
+            <button class="teb-menu-item" data-tool="oneway" title="One-way">⛩️</button>
+            <button class="teb-menu-item" data-tool="pad" title="Pad">🟩</button>
+          </div>
+        </div>
+      </div>
+
       <div class="teb-divider"></div>
-      
-      <!-- Geometry Dropdown -->
+
+      <!-- ⚙️ SETTINGS Dropdown -->
       <div class="teb-dropdown">
-        <button class="teb-btn teb-dropdown-toggle" id="tebGeometryBtn" title="Hình học">📐</button>
-        <div class="teb-dropdown-menu" id="tebGeometryMenu">
-          <button class="teb-menu-item" data-tool="shapeFreehand">✏️ Tự do</button>
-          <button class="teb-menu-item" data-tool="shapeLine">📏 Đường thẳng</button>
-          <button class="teb-menu-item" data-tool="shapeArc">🌙 Cung tròn</button>
-          <button class="teb-menu-item" data-tool="shapeRect">⬜ Hình chữ nhật</button>
+        <button class="teb-btn teb-dropdown-toggle" title="Settings">⚙️</button>
+        <div class="teb-dropdown-menu teb-menu-wide teb-menu-scroll">
+          <div class="teb-menu-section">📏 Grid</div>
+          <div class="teb-menu-setting">
+            <label>Grid Size</label>
+            <input type="range" data-sync="grid" min="8" max="60" step="2" value="20">
+            <span class="teb-val">20px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Hide in Play</label>
+            <input type="checkbox" data-sync="hideGridOnPlay">
+          </div>
+          
+          <div class="teb-menu-section">🐎 Objects</div>
+          <div class="teb-menu-setting">
+            <label>Horse Speed</label>
+            <input type="range" data-sync="speed" min="0.5" max="30" step="0.1" value="1.0">
+            <span class="teb-val">1.0×</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Horse Radius</label>
+            <input type="range" data-sync="horseRadius" min="8" max="60" step="1" value="36">
+            <span class="teb-val">36</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Carrot Size</label>
+            <input type="range" data-sync="carrotRadius" min="8" max="60" step="1" value="30">
+            <span class="teb-val">30</span>
+          </div>
+          
+          <div class="teb-menu-section">🧱 Walls</div>
+          <div class="teb-menu-setting">
+            <label>Wall Width</label>
+            <input type="range" data-sync="thick" min="6" max="80" step="2" value="24">
+            <span class="teb-val">24px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Round Cap</label>
+            <input type="checkbox" data-sync="roundCap" checked>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Arc Span</label>
+            <input type="range" data-sync="arcSpan" min="30" max="330" step="5" value="180">
+            <span class="teb-val">180°</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Brush Step</label>
+            <input type="range" data-sync="brushStep" min="2" max="16" step="1" value="6">
+            <span class="teb-val">6px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>🎨 Color</label>
+            <input type="color" data-sync="shapeColor" value="#607d8b">
+          </div>
+          
+          <div class="teb-menu-section">🔧 Special</div>
+          <div class="teb-menu-setting">
+            <label>Spinner Speed</label>
+            <input type="range" data-sync="spinnerSpeed" min="0.1" max="5" step="0.1" value="1.0">
+            <span class="teb-val">1.0</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Mud Slowdown</label>
+            <input type="range" data-sync="mudSlowdown" min="0.1" max="0.9" step="0.05" value="0.4">
+            <span class="teb-val">60%</span>
+          </div>
         </div>
       </div>
-      
-      <!-- Race Setup Dropdown -->
+
+      <!-- 🎮 GAME Dropdown -->
       <div class="teb-dropdown">
-        <button class="teb-btn teb-dropdown-toggle" id="tebRaceBtn" title="Race Setup">🏁</button>
-        <div class="teb-dropdown-menu" id="tebRaceMenu">
-          <button class="teb-menu-item" data-tool="toolStartGate">🚦 Cổng xuất phát</button>
-          <button class="teb-menu-item" data-tool="toolCarrot">🥕 Cà rốt đích</button>
-          <button class="teb-menu-item" data-tool="toolTrophy">🏆 Cúp</button>
-          <button class="teb-menu-item" data-tool="toolCheckpoint">🚩 Checkpoint</button>
+        <button class="teb-btn teb-dropdown-toggle" title="Game Settings">🎮</button>
+        <div class="teb-dropdown-menu teb-menu-wide teb-menu-scroll">
+          <div class="teb-menu-section">🎮 Game Settings</div>
+          <div class="teb-menu-setting">
+            <label>🐎 Horses</label>
+            <input type="range" data-sync="n" min="1" max="50" step="1" value="8">
+            <span class="teb-val">8</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>⚡ Speed</label>
+            <input type="range" data-sync="runtimeSpeedSlider" min="0.1" max="5" step="0.1" value="1.0">
+            <span class="teb-val">1.0×</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>⏱️ Countdown</label>
+            <input type="range" data-sync="countdownSlider" min="0" max="10" step="1" value="0">
+            <span class="teb-val">0s</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>🔊 Collision SFX</label>
+            <input type="checkbox" data-sync="collisionSfx" checked>
+          </div>
+          <div class="teb-menu-setting">
+            <label>💨 Trail Effect</label>
+            <input type="checkbox" data-sync="trailEnabled">
+            <input type="color" data-sync="trailColor" value="#9e9e9e">
+          </div>
+          <div class="teb-menu-setting">
+            <label>🙈 Hide Names</label>
+            <input type="checkbox" data-sync="hideHorseNames">
+          </div>
+          
+          <div class="teb-menu-section">🧲 Magnet</div>
+          <div class="teb-menu-setting">
+            <label>Range</label>
+            <input type="range" data-sync="magnetRange" min="50" max="400" step="10" value="100">
+            <span class="teb-val">100px</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Duration</label>
+            <input type="range" data-sync="magnetDuration" min="1000" max="10000" step="500" value="3000">
+            <span class="teb-val">3000ms</span>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Power</label>
+            <input type="range" data-sync="magnetPower" min="100" max="1000" step="10" value="200">
+            <span class="teb-val">200</span>
+          </div>
         </div>
       </div>
-      
-      <!-- Power-ups Dropdown -->
-      <div class="teb-dropdown">
-        <button class="teb-btn teb-dropdown-toggle" id="tebPowerupsBtn" title="Power-ups">⚡</button>
-        <div class="teb-dropdown-menu" id="tebPowerupsMenu">
-          <button class="teb-menu-item" data-tool="toolBoost">⚡ Boost</button>
-          <button class="teb-menu-item" data-tool="toolTrap">💣 Bẫy</button>
-          <button class="teb-menu-item" data-tool="toolShield">🛡️ Khiên</button>
-          <button class="teb-menu-item" data-tool="toolGhost">👻 Ma</button>
-          <button class="teb-menu-item" data-tool="toolRam">🐏 RAM</button>
-          <button class="teb-menu-item" data-tool="toolFreeze">❄️ Đóng băng</button>
-        </div>
-      </div>
-      
-      <!-- Wall Type Dropdown -->
-      <div class="teb-dropdown">
-        <button class="teb-btn teb-dropdown-toggle" id="tebWallBtn" title="Loại tường">🧱</button>
-        <div class="teb-dropdown-menu" id="tebWallMenu">
-          <button class="teb-menu-item" data-wall="normal">🧱 Thường</button>
-          <button class="teb-menu-item" data-wall="ice">❄️ Băng</button>
-          <button class="teb-menu-item" data-wall="bouncy">🏀 Nảy</button>
-          <button class="teb-menu-item" data-wall="solid">🚧 Rắn</button>
-        </div>
-      </div>
-      
+
       <div class="teb-divider"></div>
-      
+
       <!-- Toggle Sidebar -->
       <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar">≡</button>
     </div>
@@ -1315,27 +1502,6 @@
   const topEditorBar = document.getElementById('topEditorBar');
   const sidebar = document.getElementById('editorBar');
   
-  // Essential tools mapping
-  const essentialTools = {
-    'tebDraw': 'toolBrush',
-    'tebErase': 'toolEraser',
-    'tebSelect': 'toolSelect'
-  };
-  
-  // Wire up essential buttons
-  Object.entries(essentialTools).forEach(([tebId, toolId]) => {
-    const tebBtn = document.getElementById(tebId);
-    const toolBtn = document.getElementById(toolId);
-    if (tebBtn && toolBtn) {
-      tebBtn.addEventListener('click', () => {
-        toolBtn.click();
-        document.querySelectorAll('.teb-btn:not(.teb-dropdown-toggle)').forEach(b => b.classList.remove('active'));
-        tebBtn.classList.add('active');
-        closeAllDropdowns();
-      });
-    }
-  });
-  
   // Dropdown toggle
   document.querySelectorAll('.teb-dropdown-toggle').forEach(toggle => {
     toggle.addEventListener('click', (e) => {
@@ -1350,52 +1516,94 @@
   });
   
   // Close dropdowns when clicking outside
-  document.addEventListener('click', closeAllDropdowns);
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.teb-dropdown')) {
+      closeAllDropdowns();
+    }
+  });
   
   function closeAllDropdowns() {
     document.querySelectorAll('.teb-dropdown').forEach(d => d.classList.remove('open'));
   }
   
-  // Menu items - tools
+  // Tool selection - click sidebar tool buttons
   document.querySelectorAll('.teb-menu-item[data-tool]').forEach(item => {
     item.addEventListener('click', () => {
-      const toolId = item.dataset.tool;
-      const toolBtn = document.getElementById(toolId);
-      if (toolBtn) {
-        toolBtn.click();
-        // Update dropdown button icon to show selected tool
+      const toolName = item.dataset.tool;
+      // Find matching tool in sidebar by data-tool attribute
+      const sidebarTool = document.querySelector(`.rightbar .tool[data-tool="${toolName}"]`);
+      if (sidebarTool) {
+        sidebarTool.click();
+        // Update dropdown icon
         const dropdown = item.closest('.teb-dropdown');
         const toggle = dropdown.querySelector('.teb-dropdown-toggle');
-        const emoji = item.textContent.trim().split(' ')[0];
-        toggle.innerHTML = emoji + '<span style="font-size:10px;margin-left:2px;opacity:0.7">▾</span>';
-        
-        // Mark active
-        dropdown.querySelectorAll('.teb-menu-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
+        toggle.textContent = item.textContent.trim();
       }
       closeAllDropdowns();
     });
   });
   
-  // Menu items - wall types
-  document.querySelectorAll('.teb-menu-item[data-wall]').forEach(item => {
-    item.addEventListener('click', () => {
-      const wallType = item.dataset.wall;
-      const wallSelect = document.getElementById('wallType');
-      if (wallSelect) {
-        wallSelect.value = wallType;
-        wallSelect.dispatchEvent(new Event('change'));
-        
-        // Update button icon
-        const dropdown = item.closest('.teb-dropdown');
-        const toggle = dropdown.querySelector('.teb-dropdown-toggle');
-        const emoji = item.textContent.trim().split(' ')[0];
-        toggle.innerHTML = emoji + '<span style="font-size:10px;margin-left:2px;opacity:0.7">▾</span>';
-        
-        dropdown.querySelectorAll('.teb-menu-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
+  // Sync settings with sidebar inputs using data-sync attribute
+  document.querySelectorAll('[data-sync]').forEach(el => {
+    const targetId = el.dataset.sync;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    
+    // Initial sync from sidebar to top bar
+    if (el.type === 'checkbox') {
+      el.checked = target.checked;
+    } else if (el.type === 'color') {
+      el.value = target.value;
+    } else if (el.tagName === 'SELECT') {
+      el.value = target.value;
+    } else {
+      el.value = target.value;
+    }
+    
+    // Update value display
+    const valSpan = el.parentElement.querySelector('.teb-val');
+    if (valSpan && el.type === 'range') {
+      valSpan.textContent = target.value + (targetId.includes('Slider') || targetId.includes('Speed') ? '×' : 
+                            targetId.includes('Span') || targetId.includes('Angle') ? '°' : 
+                            targetId.includes('Duration') ? 'ms' : 'px');
+    }
+    
+    // Two-way sync: top bar -> sidebar
+    el.addEventListener('input', () => {
+      if (el.type === 'checkbox') {
+        target.checked = el.checked;
+      } else {
+        target.value = el.value;
       }
-      closeAllDropdowns();
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+      
+      // Update value display
+      if (valSpan && el.type === 'range') {
+        valSpan.textContent = el.value + (targetId.includes('Slider') || targetId.includes('Speed') ? '×' : 
+                              targetId.includes('Span') || targetId.includes('Angle') ? '°' : 
+                              targetId.includes('Duration') ? 'ms' : 'px');
+      }
+    });
+    
+    el.addEventListener('change', () => {
+      if (el.tagName === 'SELECT') {
+        target.value = el.value;
+        target.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    
+    // Two-way sync: sidebar -> top bar
+    target.addEventListener('input', () => {
+      if (el.type === 'checkbox') {
+        el.checked = target.checked;
+      } else {
+        el.value = target.value;
+      }
+      if (valSpan && el.type === 'range') {
+        valSpan.textContent = target.value + (targetId.includes('Slider') || targetId.includes('Speed') ? '×' : 
+                              targetId.includes('Span') || targetId.includes('Angle') ? '°' : 
+                              targetId.includes('Duration') ? 'ms' : 'px');
+      }
     });
   });
   
@@ -1403,8 +1611,8 @@
   const toggleBtn = document.getElementById('tebToggleSidebar');
   if (toggleBtn && sidebar) {
     toggleBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-      toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '≡';
+      sidebar.style.display = sidebar.style.display === 'none' ? '' : 'none';
+      toggleBtn.textContent = sidebar.style.display === 'none' ? '☰' : '≡';
     });
   }
   
