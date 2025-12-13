@@ -1036,8 +1036,12 @@ input[type="number"] {
     max-width: 400px;
   }
   .teb-menu-scroll {
-    max-height: 500px;
+    max-height: calc(100vh - 100px);
     overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+  .teb-dropdown.open .teb-menu-scroll {
+    scroll-margin-top: 0;
   }
   .teb-dropdown-menu {
     font-family: 'Segoe UI Emoji Flat', 'Segoe UI', Arial, sans-serif;

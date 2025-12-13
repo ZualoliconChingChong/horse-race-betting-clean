@@ -1840,6 +1840,9 @@
       closeAllDropdowns();
       if (!wasOpen) {
         dropdown.classList.add('open');
+        // Reset scroll position to top when opening
+        const menu = dropdown.querySelector('.teb-dropdown-menu');
+        if (menu) menu.scrollTop = 0;
       }
     });
   });
