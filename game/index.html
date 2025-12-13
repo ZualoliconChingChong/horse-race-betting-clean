@@ -471,10 +471,22 @@
           <div class="teb-menu-setting">
             <label>Horse #</label>
             <input type="number" data-sync="horseIdx" min="1" max="50" value="1">
+            <button class="teb-mini-btn" data-click="maxHorseCount" title="Max Count">Max</button>
           </div>
           <div class="teb-menu-setting">
             <label>Name</label>
             <input type="text" data-sync="horseName" placeholder="Name">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Skill</label>
+            <select data-sync="horseSkill">
+              <option value="none">None</option>
+              <option value="speed">⚡ Speed Boost</option>
+              <option value="shield">🛡️ Shield</option>
+              <option value="ghost">👻 Ghost</option>
+              <option value="magnet">🧲 Magnet</option>
+              <option value="teleport">🌀 Teleport</option>
+            </select>
           </div>
           
           <div class="teb-menu-section">⚡ Stats</div>
@@ -490,6 +502,10 @@
             <label>Luck %</label>
             <input type="number" data-sync="horseLuck" min="0" max="100" step="0.1" placeholder="0">
           </div>
+          <div class="teb-menu-setting">
+            <label>Luck Interval</label>
+            <input type="number" data-sync="horseLuckInterval" min="1" max="60" step="1" placeholder="1">
+          </div>
           
           <div class="teb-menu-section">🎨 Colors</div>
           <div class="teb-menu-setting">
@@ -502,6 +518,18 @@
           </div>
           
           <div class="teb-menu-section">🖼️ Sprite</div>
+          <div class="teb-menu-setting">
+            <label>PNG Sprite</label>
+            <input type="file" data-sync="pngSprite" accept="image/*" class="teb-file-input">
+          </div>
+          <div class="teb-menu-setting">
+            <label>Presets</label>
+            <button class="teb-action-btn teb-small" data-click="openSpritePresets">📁 Presets</button>
+          </div>
+          <div class="teb-menu-setting">
+            <label>Carrot PNG</label>
+            <input type="file" data-sync="carrotPng" accept="image/*" class="teb-file-input">
+          </div>
           <div class="teb-menu-setting">
             <label>Scale</label>
             <input type="range" data-sync="spriteScale" min="0.5" max="2.0" step="0.05" value="1.0">
@@ -524,12 +552,34 @@
             <span class="teb-val">2px</span>
           </div>
           
-          <div class="teb-menu-section">🎯 Actions</div>
+          <div class="teb-menu-section">🎯 Current Horse</div>
           <div class="teb-menu-actions">
-            <button class="teb-action-btn" data-click="applyHorse">✅ Apply</button>
+            <button class="teb-action-btn teb-green" data-click="applyHorse">✅ Apply</button>
             <button class="teb-action-btn" data-click="resetHorse">🔄 Reset</button>
             <button class="teb-action-btn" data-click="randomHorse">🎲 Random</button>
-            <button class="teb-action-btn" data-click="randomAllHorses">🎲 All</button>
+            <button class="teb-action-btn" data-click="skillHorse">⚡ Skill</button>
+          </div>
+          
+          <div class="teb-menu-section">👥 All Horses</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="copyAllHorses">📋 Copy All</button>
+            <button class="teb-action-btn" data-click="randomAllHorses">🎲 Random All</button>
+            <button class="teb-action-btn" data-click="skillAllHorses">⚡ Skill All</button>
+            <button class="teb-action-btn" data-click="clearAllHorses">🗑️ Clear</button>
+          </div>
+          
+          <div class="teb-menu-section">🖼️ Sprites Batch</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="randomSpriteN">🎲 Random #N</button>
+            <button class="teb-action-btn" data-click="randomSpriteAll">🎲 Random All</button>
+            <button class="teb-action-btn" data-click="copySpriteAll">📋 Copy All</button>
+            <button class="teb-action-btn" data-click="outlineAll">✏️ Outline All</button>
+          </div>
+          
+          <div class="teb-menu-section">🎨 Colors & Skills</div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn" data-click="bodyColorAll">🎨 Body All</button>
+            <button class="teb-action-btn" data-click="skillAll">⚡ Skill All</button>
           </div>
         </div>
       </div>
