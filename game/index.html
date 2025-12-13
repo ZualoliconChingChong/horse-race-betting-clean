@@ -1961,8 +1961,11 @@
   
   // Collapse top editor bar button
   const collapseBarBtn = document.getElementById('tebCollapseBar');
+  let userCollapsedTopBar = false; // Track if user manually collapsed
+  
   function toggleTopEditorBar() {
     if (topEditorBar) {
+      userCollapsedTopBar = !topEditorBar.classList.contains('hidden');
       topEditorBar.classList.toggle('hidden');
     }
   }
@@ -1985,12 +1988,17 @@
     }
   });
   
-  // Hide top editor bar when game is running
+  // Hide top editor bar when game is running (but respect user choice)
   function updateTopEditorBarVisibility() {
     const isRunning = window.horses && window.horses.length > 0 && 
                       document.getElementById('pauseBtnHUD')?.style.display !== 'none';
     if (topEditorBar) {
-      topEditorBar.classList.toggle('hidden', isRunning);
+      // Only auto-hide when running, don't auto-show if user collapsed
+      if (isRunning) {
+        topEditorBar.classList.add('hidden');
+      } else if (!userCollapsedTopBar) {
+        topEditorBar.classList.remove('hidden');
+      }
     }
   }
   
