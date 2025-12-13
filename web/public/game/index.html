@@ -602,6 +602,9 @@
 
       <!-- Toggle Sidebar -->
       <button class="teb-btn teb-toggle-sidebar" id="tebToggleSidebar" title="Ẩn/Hiện sidebar">≡</button>
+      
+      <!-- Collapse Top Bar -->
+      <button class="teb-btn teb-collapse-bar" id="tebCollapseBar" title="Thu thanh editor (M)">━</button>
     </div>
 
     <canvas id="cv" width="1920" height="1000"></canvas>
@@ -1956,12 +1959,29 @@
     toggleBtn.addEventListener('click', toggleSidebar);
   }
   
-  // Press M to toggle Map Editor
+  // Collapse top editor bar button
+  const collapseBarBtn = document.getElementById('tebCollapseBar');
+  function toggleTopEditorBar() {
+    if (topEditorBar) {
+      topEditorBar.classList.toggle('hidden');
+    }
+  }
+  if (collapseBarBtn) {
+    collapseBarBtn.addEventListener('click', toggleTopEditorBar);
+  }
+  
+  // Press M to toggle top editor bar (and sidebar if not in fullscreen)
   document.addEventListener('keydown', (e) => {
     // Ignore if typing in input/textarea
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'm' || e.key === 'M') {
-      toggleSidebar();
+      // In fullscreen: toggle top editor bar
+      if (document.body.classList.contains('has-fake-fullscreen')) {
+        toggleTopEditorBar();
+      } else {
+        // Normal mode: toggle sidebar
+        toggleSidebar();
+      }
     }
   });
   
