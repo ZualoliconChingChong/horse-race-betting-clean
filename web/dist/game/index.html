@@ -606,6 +606,9 @@
       <!-- Collapse Top Bar -->
       <button class="teb-btn teb-collapse-bar" id="tebCollapseBar" title="Thu thanh editor (M)">━</button>
     </div>
+    
+    <!-- Floating button to restore top bar when hidden -->
+    <button class="teb-restore-btn" id="tebRestoreBar" title="Mở thanh editor (M)">🛠️</button>
 
     <canvas id="cv" width="1920" height="1000"></canvas>
     
@@ -1961,6 +1964,7 @@
   
   // Collapse top editor bar button
   const collapseBarBtn = document.getElementById('tebCollapseBar');
+  const restoreBarBtn = document.getElementById('tebRestoreBar');
   let userCollapsedTopBar = false; // Track if user manually collapsed
   
   function toggleTopEditorBar() {
@@ -1969,8 +1973,17 @@
       topEditorBar.classList.toggle('hidden');
     }
   }
+  function showTopEditorBar() {
+    if (topEditorBar) {
+      userCollapsedTopBar = false;
+      topEditorBar.classList.remove('hidden');
+    }
+  }
   if (collapseBarBtn) {
     collapseBarBtn.addEventListener('click', toggleTopEditorBar);
+  }
+  if (restoreBarBtn) {
+    restoreBarBtn.addEventListener('click', showTopEditorBar);
   }
   
   // Press M to toggle top editor bar (and sidebar if not in fullscreen)

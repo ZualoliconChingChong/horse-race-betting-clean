@@ -837,6 +837,38 @@ input[type="number"] {
     transform: translateY(-50%);
   }
   
+  /* Floating restore button - shown when top bar is hidden */
+  .teb-restore-btn {
+    display: none;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100001;
+    background: rgba(30, 30, 30, 0.9);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+  }
+  .teb-restore-btn:hover {
+    background: rgba(50, 50, 50, 0.95);
+    transform: translateX(-50%) scale(1.05);
+  }
+  .top-editor-bar.hidden ~ .teb-restore-btn {
+    display: block;
+  }
+  /* In fullscreen, restore button at top center */
+  .stage.fake-fullscreen .teb-restore-btn {
+    position: fixed;
+    top: 8px;
+    z-index: 99999999;
+  }
+  
   .stage.fake-fullscreen .game-hub {
     position: fixed;
     bottom: 0;
