@@ -10250,9 +10250,13 @@ function spawnRandomLuckItem(){
           }
           
           const state = h.poisonState;
+          const r = Number.isFinite(h.r) ? h.r : 8;
+          const dtSafe = Number.isFinite(dt) ? Math.min(Math.max(dt, 0), 0.1) : 0;
+          if (!Number.isFinite(h.vx)) h.vx = 0;
+          if (!Number.isFinite(h.vy)) h.vy = 0;
           
           // Smooth drift direction changes
-          state.changeTimer += dt * 1000;
+          state.changeTimer += dtSafe * 1000;
           if (state.changeTimer > state.nextChange) {
             // Gradually change drift direction
             state.driftAngle += (Math.random() - 0.5) * 0.8;
@@ -10270,8 +10274,8 @@ function spawnRandomLuckItem(){
           h.vy = h.vy * (1 - lerpFactor) + state.targetVy * lerpFactor;
           
           // Apply very gentle continuous drift
-          state.driftAngle += state.driftSpeed * dt;
-          const gentleDrift = 1 * dt; // Much smaller drift
+          state.driftAngle += state.driftSpeed * dtSafe;
+          const gentleDrift = 1 * dtSafe; // Much smaller drift
           h.vx += Math.cos(state.driftAngle) * gentleDrift;
           h.vy += Math.sin(state.driftAngle) * gentleDrift;
           
@@ -10289,7 +10293,7 @@ function spawnRandomLuckItem(){
           
           // HP damage from poison (if HP system is enabled)
           if (mapDef && mapDef.hpSystemEnabled && h.hp > 0 && !h.hasShield) { // Divine Guardian shield blocks poison damage
-            state.damageTimer += dt * 1000;
+            state.damageTimer += dtSafe * 1000;
             if (state.damageTimer >= state.nextDamage) {
               // Deal 20% of current HP as damage (fixed DOT)
               const damage = Math.max(1, Math.ceil(h.hp * 0.2));
@@ -10303,7 +10307,7 @@ function spawnRandomLuckItem(){
               try {
                 particles.push({
                   x: h.x,
-                  y: h.y - h.r - 10,
+                  y: h.y - r - 10,
                   vx: (Math.random() - 0.5) * 20,
                   vy: -20 - Math.random() * 10,
                   life: 30,
@@ -10322,13 +10326,13 @@ function spawnRandomLuckItem(){
           // Multiple pulsing effects for dramatic impact
           if (!h.poisonPulse) h.poisonPulse = 0;
           if (!h.poisonPulse2) h.poisonPulse2 = 0;
-          h.poisonPulse += dt * 4; // Faster pulse
-          h.poisonPulse2 += dt * 2.5; // Secondary pulse
+          h.poisonPulse += dtSafe * 4; // Faster pulse
+          h.poisonPulse2 += dtSafe * 2.5; // Secondary pulse
           
           const pulseAlpha1 = 0.15 + Math.sin(h.poisonPulse) * 0.1;
           const pulseAlpha2 = 0.08 + Math.sin(h.poisonPulse2) * 0.05;
-          const pulseSize1 = h.r + 6 + Math.sin(h.poisonPulse) * 3;
-          const pulseSize2 = h.r + 10 + Math.sin(h.poisonPulse2) * 4;
+          const pulseSize1 = r + 6 + Math.sin(h.poisonPulse) * 3;
+          const pulseSize2 = r + 10 + Math.sin(h.poisonPulse2) * 4;
           
           // Store aura data for rendering in draw phase
           h.poisonAura = {
@@ -10343,8 +10347,8 @@ function spawnRandomLuckItem(){
             try {
               // Bright poison bubbles
               particles.push({ 
-                x: h.x + (Math.random()-0.5)*h.r*3, 
-                y: h.y + (Math.random()-0.5)*h.r*3, 
+                x: h.x + (Math.random()-0.5)*r*3, 
+                y: h.y + (Math.random()-0.5)*r*3, 
                 vx: (Math.random()-0.5)*15, 
                 vy: -Math.random()*8 - 3, // Float upward faster
                 life: 25 + Math.random()*20, 
@@ -10359,8 +10363,8 @@ function spawnRandomLuckItem(){
           if (Math.random() < 0.5) {
             try {
               particles.push({ 
-                x: h.x + (Math.random()-0.5)*h.r*2, 
-                y: h.y - h.r, 
+                x: h.x + (Math.random()-0.5)*r*2, 
+                y: h.y - r, 
                 vx: (Math.random()-0.5)*10, 
                 vy: -Math.random()*12 - 5, // Rise like smoke
                 life: 35, 
@@ -10375,8 +10379,8 @@ function spawnRandomLuckItem(){
           if (Math.random() < 0.3) {
             try {
               particles.push({ 
-                x: h.x + (Math.random()-0.5)*h.r*1.5, 
-                y: h.y + h.r, 
+                x: h.x + (Math.random()-0.5)*r*1.5, 
+                y: h.y + r, 
                 vx: (Math.random()-0.5)*5, 
                 vy: Math.random()*12 + 8, // Drip faster
                 life: 30, 
@@ -10391,8 +10395,8 @@ function spawnRandomLuckItem(){
           if (Math.random() < 0.4) {
             try {
               particles.push({ 
-                x: h.x + (Math.random()-0.5)*h.r*2.5, 
-                y: h.y + (Math.random()-0.5)*h.r*2.5, 
+                x: h.x + (Math.random()-0.5)*r*2.5, 
+                y: h.y + (Math.random()-0.5)*r*2.5, 
                 vx: (Math.random()-0.5)*20, 
                 vy: (Math.random()-0.5)*20, 
                 life: 15, 
