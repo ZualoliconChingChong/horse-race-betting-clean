@@ -10299,8 +10299,8 @@ function spawnRandomLuckItem(){
           if (mapDef && mapDef.hpSystemEnabled && h.hp > 0 && !h.hasShield) { // Divine Guardian shield blocks poison damage
             state.damageTimer += dtMs;
             if (state.damageTimer >= state.nextDamage) {
-              // Deal 20% of current HP as damage (fixed DOT)
-              const damage = Math.max(1, Math.ceil(h.hp * 0.2));
+              // Deal 4% of current HP as damage (approx 20% total over 5s)
+              const damage = Math.max(1, Math.ceil(h.hp * 0.04));
               h.hp -= damage;
               if (h.hp < 0) h.hp = 0;
               
