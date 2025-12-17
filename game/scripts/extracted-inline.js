@@ -10251,12 +10251,16 @@ function spawnRandomLuckItem(){
           
           const state = h.poisonState;
           const r = Number.isFinite(h.r) ? h.r : 8;
-          const dtSafe = Number.isFinite(dt) ? Math.min(Math.max(dt, 0), 0.1) : 0;
+          // dt is normalized to 60fps (1.0 = 16.67ms). Convert to ms for timers.
+          const dtMs = (Number.isFinite(dt) ? Math.max(dt, 0) : 0) * 16.6667;
+          // Safe clamp for physics/movement only (max 3 frames skipped)
+          const dtPhysics = Math.min(dtMs / 16.6667, 3);
+          
           if (!Number.isFinite(h.vx)) h.vx = 0;
           if (!Number.isFinite(h.vy)) h.vy = 0;
           
           // Smooth drift direction changes
-          state.changeTimer += dtSafe * 1000;
+          state.changeTimer += dtMs;
           if (state.changeTimer > state.nextChange) {
             // Gradually change drift direction
             state.driftAngle += (Math.random() - 0.5) * 0.8;
@@ -10274,8 +10278,8 @@ function spawnRandomLuckItem(){
           h.vy = h.vy * (1 - lerpFactor) + state.targetVy * lerpFactor;
           
           // Apply very gentle continuous drift
-          state.driftAngle += state.driftSpeed * dtSafe;
-          const gentleDrift = 1 * dtSafe; // Much smaller drift
+          state.driftAngle += state.driftSpeed * dtPhysics;
+          const gentleDrift = 1 * dtPhysics; // Much smaller drift
           h.vx += Math.cos(state.driftAngle) * gentleDrift;
           h.vy += Math.sin(state.driftAngle) * gentleDrift;
           
@@ -10293,7 +10297,7 @@ function spawnRandomLuckItem(){
           
           // HP damage from poison (if HP system is enabled)
           if (mapDef && mapDef.hpSystemEnabled && h.hp > 0 && !h.hasShield) { // Divine Guardian shield blocks poison damage
-            state.damageTimer += dtSafe * 1000;
+            state.damageTimer += dtMs;
             if (state.damageTimer >= state.nextDamage) {
               // Deal 20% of current HP as damage (fixed DOT)
               const damage = Math.max(1, Math.ceil(h.hp * 0.2));
@@ -10326,8 +10330,8 @@ function spawnRandomLuckItem(){
           // Multiple pulsing effects for dramatic impact
           if (!h.poisonPulse) h.poisonPulse = 0;
           if (!h.poisonPulse2) h.poisonPulse2 = 0;
-          h.poisonPulse += dtSafe * 4; // Faster pulse
-          h.poisonPulse2 += dtSafe * 2.5; // Secondary pulse
+          h.poisonPulse += dtPhysics * 0.1; // Slower pulse
+          h.poisonPulse2 += dtPhysics * 0.05; 
           
           const pulseAlpha1 = 0.15 + Math.sin(h.poisonPulse) * 0.1;
           const pulseAlpha2 = 0.08 + Math.sin(h.poisonPulse2) * 0.05;
