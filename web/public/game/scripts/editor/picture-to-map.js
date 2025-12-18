@@ -6,30 +6,47 @@
   if (typeof window === 'undefined') return;
 
   /**
-   * Detect black/dark pixels (for anime/cartoon outlines)
-   * Much better than edge detection for line art
+   * Detect outline boundaries (black pixels adjacent to light pixels)
+   * Only detects actual outlines, not interior shading
    * @param {ImageData} imageData 
-   * @param {number} threshold - Darkness threshold (0-255, lower = darker)
-   * @returns {Uint8ClampedArray} Binary edge map (255 = dark pixel, 0 = light pixel)
+   * @param {number} darkThreshold - Darkness threshold (0-255)
+   * @returns {Uint8ClampedArray} Binary edge map (255 = outline, 0 = not outline)
    */
-  function detectEdges(imageData, threshold = 100) {
+  function detectEdges(imageData, darkThreshold = 80) {
     const { width, height, data } = imageData;
     const edges = new Uint8ClampedArray(width * height);
     
-    // Detect dark pixels (black outlines)
+    // First pass: identify dark pixels
+    const darkPixels = new Uint8Array(width * height);
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const idx = (y * width + x) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        
-        // Calculate brightness (0 = black, 255 = white)
-        const brightness = (r + g + b) / 3;
-        
-        // If dark enough, mark as edge
-        const edgeIdx = y * width + x;
-        edges[edgeIdx] = brightness < threshold ? 255 : 0;
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        const pixelIdx = y * width + x;
+        darkPixels[pixelIdx] = brightness < darkThreshold ? 1 : 0;
+      }
+    }
+    
+    // Second pass: only keep dark pixels at boundaries (adjacent to light pixels)
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const pixelIdx = y * width + x;
+        if (darkPixels[pixelIdx] === 1) {
+          // Check if adjacent to light pixel (outline boundary)
+          let isBoundary = false;
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nidx = (y + dy) * width + (x + dx);
+              if (darkPixels[nidx] === 0) {
+                isBoundary = true;
+                break;
+              }
+            }
+            if (isBoundary) break;
+          }
+          edges[pixelIdx] = isBoundary ? 255 : 0;
+        }
       }
     }
     
