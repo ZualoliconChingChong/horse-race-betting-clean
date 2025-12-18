@@ -11,13 +11,16 @@
    * @param {number} threshold - Edge strength threshold (0-255)
    * @returns {Uint8ClampedArray} Binary edge map (255 = edge, 0 = no edge)
    */
-  function detectEdges(imageData, threshold = 100) {
+  function detectEdges(imageData, threshold = 50) {
     const { width, height, data } = imageData;
     const edges = new Uint8ClampedArray(width * height);
     
     // Sobel kernels
     const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
     const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+    
+    let edgeCount = 0;
+    let maxMagnitude = 0;
     
     // Convert to grayscale and apply Sobel
     for (let y = 1; y < height - 1; y++) {
@@ -28,7 +31,12 @@
         for (let ky = -1; ky <= 1; ky++) {
           for (let kx = -1; kx <= 1; kx++) {
             const idx = ((y + ky) * width + (x + kx)) * 4;
-            const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+            // Include alpha channel in grayscale calculation
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+            const gray = (r + g + b) / 3 * (a / 255); // Account for transparency
             const kernelIdx = (ky + 1) * 3 + (kx + 1);
             gx += gray * sobelX[kernelIdx];
             gy += gray * sobelY[kernelIdx];
@@ -36,10 +44,14 @@
         }
         
         const magnitude = Math.sqrt(gx * gx + gy * gy);
+        maxMagnitude = Math.max(maxMagnitude, magnitude);
         const edgeIdx = y * width + x;
         edges[edgeIdx] = magnitude > threshold ? 255 : 0;
+        if (edges[edgeIdx] === 255) edgeCount++;
       }
     }
+    
+    console.log(`[Picture-to-Map] Edge detection: ${edgeCount} edge pixels, max magnitude: ${maxMagnitude.toFixed(2)}, threshold: ${threshold}`);
     
     return edges;
   }
@@ -51,7 +63,7 @@
    * @param {number} height 
    * @param {number} canvasWidth - Target canvas width
    * @param {number} canvasHeight - Target canvas height
-   * @returns {Array<{x1: number, y1: number, x2: number, y2: number}>}
+   * @returns {Array<{x: number, y: number, w: number, h: number, r: number}>}
    */
   function edgesToWalls(edges, width, height, canvasWidth, canvasHeight) {
     const walls = [];
@@ -59,60 +71,66 @@
     const scaleY = canvasHeight / height;
     const visited = new Uint8Array(width * height);
     
-    // Sample every N pixels to reduce wall count
-    const step = Math.max(1, Math.floor(Math.min(width, height) / 100));
+    // Dilate edges to make them thicker (more visible as walls)
+    const dilatedEdges = new Uint8ClampedArray(width * height);
+    for (let i = 0; i < edges.length; i++) {
+      if (edges[i] === 255) {
+        dilatedEdges[i] = 255;
+        // Dilate: mark neighbors too
+        const y = Math.floor(i / width);
+        const x = i % width;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const ny = y + dy;
+            const nx = x + dx;
+            if (ny >= 0 && ny < height && nx >= 0 && nx < width) {
+              dilatedEdges[ny * width + nx] = 255;
+            }
+          }
+        }
+      }
+    }
     
-    for (let y = 0; y < height; y += step) {
-      for (let x = 0; x < width; x += step) {
+    // Convert edge pixels to rectangular walls
+    const wallThickness = Math.max(4, Math.min(scaleX, scaleY) * 0.5);
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
         const idx = y * width + x;
-        if (edges[idx] === 255 && !visited[idx]) {
-          // Found edge pixel, trace horizontal/vertical line
+        if (dilatedEdges[idx] === 255 && !visited[idx]) {
           visited[idx] = 1;
           
-          // Try horizontal line
+          // Find extent of this edge region
           let x2 = x;
-          while (x2 < width && edges[y * width + x2] === 255) {
+          while (x2 < width && dilatedEdges[y * width + x2] === 255) {
             visited[y * width + x2] = 1;
             x2++;
           }
           
-          if (x2 - x > 3) { // Minimum line length
-            walls.push({
-              x1: x * scaleX,
-              y1: y * scaleY,
-              x2: x2 * scaleX,
-              y2: y * scaleY
-            });
-          }
-        }
-      }
-    }
-    
-    // Vertical pass
-    for (let x = 0; x < width; x += step) {
-      for (let y = 0; y < height; y += step) {
-        const idx = y * width + x;
-        if (edges[idx] === 255 && !visited[idx]) {
-          visited[idx] = 1;
-          
           let y2 = y;
-          while (y2 < height && edges[y2 * width + x] === 255) {
-            visited[y2 * width + x] = 1;
+          while (y2 < height && dilatedEdges[y2 * width + x] === 255) {
             y2++;
           }
           
-          if (y2 - y > 3) {
+          const w = (x2 - x) * scaleX;
+          const h = (y2 - y) * scaleY;
+          
+          // Create wall if large enough
+          if (w > wallThickness && h > wallThickness) {
             walls.push({
-              x1: x * scaleX,
-              y1: y * scaleY,
-              x2: x * scaleX,
-              y2: y2 * scaleY
+              x: x * scaleX,
+              y: y * scaleY,
+              w: w,
+              h: h,
+              r: wallThickness / 2,
+              color: '#8B4513' // Brown wall color
             });
           }
         }
       }
     }
     
+    console.log(`[Picture-to-Map] Generated ${walls.length} walls from edges`);
     return walls;
   }
 
