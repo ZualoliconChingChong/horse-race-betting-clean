@@ -206,9 +206,9 @@
           // Get image data
           const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
           
-          // Detect edges (lower threshold to catch black lines)
+          // Detect edges (higher threshold to catch only strong black lines/outline)
           console.log('[Picture-to-Map] Detecting edges...');
-          const edges = detectEdges(imageData, 50);
+          const edges = detectEdges(imageData, 120);
           
           // Count edge pixels for debugging
           let edgeCount = 0;
