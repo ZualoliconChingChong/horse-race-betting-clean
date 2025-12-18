@@ -45,8 +45,8 @@
   }
 
   /**
-   * Trace contours from edge map and convert to wall segments
-   * Uses Moore-Neighbor contour tracing
+   * Convert edge pixels to wall segments (simple approach)
+   * Groups connected edge pixels and creates walls from them
    * @param {Uint8ClampedArray} edges 
    * @param {number} width 
    * @param {number} height 
@@ -60,97 +60,54 @@
     const scaleY = canvasHeight / height;
     const visited = new Uint8Array(width * height);
     
-    // Find all contours
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
+    // Sample edge pixels at intervals to reduce computation
+    const sampleRate = Math.max(1, Math.floor(Math.min(width, height) / 200));
+    
+    for (let y = 0; y < height; y += sampleRate) {
+      for (let x = 0; x < width; x += sampleRate) {
         const idx = y * width + x;
         if (edges[idx] === 255 && !visited[idx]) {
-          // Start new contour
-          const contour = traceContour(edges, width, height, x, y, visited);
+          // Mark as visited
+          visited[idx] = 1;
           
-          if (contour.length > 5) { // Minimum contour length
-            // Convert contour points to wall segments
-            for (let i = 0; i < contour.length - 1; i++) {
-              const p1 = contour[i];
-              const p2 = contour[i + 1];
-              walls.push({
-                x1: p1.x * scaleX,
-                y1: p1.y * scaleY,
-                x2: p2.x * scaleX,
-                y2: p2.y * scaleY
-              });
+          // Find nearest edge pixel in 8 directions
+          let bestDist = Infinity;
+          let bestX = x, bestY = y;
+          
+          for (let dy = -sampleRate; dy <= sampleRate; dy++) {
+            for (let dx = -sampleRate; dx <= sampleRate; dx++) {
+              if (dx === 0 && dy === 0) continue;
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                const nidx = ny * width + nx;
+                if (edges[nidx] === 255) {
+                  const dist = dx * dx + dy * dy;
+                  if (dist < bestDist) {
+                    bestDist = dist;
+                    bestX = nx;
+                    bestY = ny;
+                  }
+                }
+              }
             }
-            // Close contour
-            const p1 = contour[contour.length - 1];
-            const p2 = contour[0];
+          }
+          
+          // Create wall segment
+          if (bestDist < Infinity) {
             walls.push({
-              x1: p1.x * scaleX,
-              y1: p1.y * scaleY,
-              x2: p2.x * scaleX,
-              y2: p2.y * scaleY
+              x1: x * scaleX,
+              y1: y * scaleY,
+              x2: bestX * scaleX,
+              y2: bestY * scaleY
             });
           }
         }
       }
     }
     
+    console.log(`[Picture-to-Map] Sampled ${walls.length} edge segments`);
     return walls;
-  }
-
-  /**
-   * Moore-Neighbor contour tracing
-   * @param {Uint8ClampedArray} edges 
-   * @param {number} width 
-   * @param {number} height 
-   * @param {number} startX 
-   * @param {number} startY 
-   * @param {Uint8Array} visited 
-   * @returns {Array<{x: number, y: number}>}
-   */
-  function traceContour(edges, width, height, startX, startY, visited) {
-    const contour = [];
-    let x = startX, y = startY;
-    let prevX = x, prevY = y - 1; // Start direction (up)
-    
-    // 8-neighbor directions (clockwise from up)
-    const dirs = [
-      [0, -1], [1, -1], [1, 0], [1, 1],
-      [0, 1], [-1, 1], [-1, 0], [-1, -1]
-    ];
-    
-    let dirIdx = 0;
-    let steps = 0;
-    const maxSteps = width * height * 2; // Prevent infinite loops
-    
-    do {
-      contour.push({ x, y });
-      visited[y * width + x] = 1;
-      
-      // Find next edge pixel
-      let found = false;
-      for (let i = 0; i < 8; i++) {
-        const newDirIdx = (dirIdx + i) % 8;
-        const [dx, dy] = dirs[newDirIdx];
-        const nx = x + dx;
-        const ny = y + dy;
-        
-        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-          const nidx = ny * width + nx;
-          if (edges[nidx] === 255) {
-            x = nx;
-            y = ny;
-            dirIdx = newDirIdx;
-            found = true;
-            break;
-          }
-        }
-      }
-      
-      if (!found) break;
-      steps++;
-    } while ((x !== startX || y !== startY) && steps < maxSteps);
-    
-    return contour;
   }
 
   /**
