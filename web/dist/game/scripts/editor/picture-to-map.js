@@ -6,14 +6,15 @@
   if (typeof window === 'undefined') return;
 
   /**
-   * Sobel edge detection
+   * Sobel edge detection with adaptive threshold
    * @param {ImageData} imageData 
    * @param {number} threshold - Edge strength threshold (0-255)
    * @returns {Uint8ClampedArray} Binary edge map (255 = edge, 0 = no edge)
    */
-  function detectEdges(imageData, threshold = 100) {
+  function detectEdges(imageData, threshold = 50) {
     const { width, height, data } = imageData;
     const edges = new Uint8ClampedArray(width * height);
+    const magnitudes = [];
     
     // Sobel kernels
     const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
@@ -36,9 +37,41 @@
         }
         
         const magnitude = Math.sqrt(gx * gx + gy * gy);
+        magnitudes.push(magnitude);
         const edgeIdx = y * width + x;
         edges[edgeIdx] = magnitude > threshold ? 255 : 0;
       }
+    }
+    
+    // If no edges found, try adaptive threshold (median of magnitudes)
+    let edgeCount = 0;
+    for (let i = 0; i < edges.length; i++) {
+      if (edges[i] === 255) edgeCount++;
+    }
+    
+    if (edgeCount === 0 && magnitudes.length > 0) {
+      console.log('[Picture-to-Map] No edges with threshold ' + threshold + ', trying adaptive threshold...');
+      magnitudes.sort((a, b) => a - b);
+      const adaptiveThreshold = magnitudes[Math.floor(magnitudes.length * 0.3)]; // 30th percentile
+      
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          let gx = 0, gy = 0;
+          for (let ky = -1; ky <= 1; ky++) {
+            for (let kx = -1; kx <= 1; kx++) {
+              const idx = ((y + ky) * width + (x + kx)) * 4;
+              const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+              const kernelIdx = (ky + 1) * 3 + (kx + 1);
+              gx += gray * sobelX[kernelIdx];
+              gy += gray * sobelY[kernelIdx];
+            }
+          }
+          const magnitude = Math.sqrt(gx * gx + gy * gy);
+          const edgeIdx = y * width + x;
+          edges[edgeIdx] = magnitude > adaptiveThreshold ? 255 : 0;
+        }
+      }
+      console.log('[Picture-to-Map] Using adaptive threshold: ' + adaptiveThreshold.toFixed(2));
     }
     
     return edges;
@@ -150,6 +183,18 @@
           // Detect edges (lower threshold to catch black lines)
           console.log('[Picture-to-Map] Detecting edges...');
           const edges = detectEdges(imageData, 50);
+          
+          // Count edge pixels for debugging
+          let edgeCount = 0;
+          for (let i = 0; i < edges.length; i++) {
+            if (edges[i] === 255) edgeCount++;
+          }
+          console.log(`[Picture-to-Map] Found ${edgeCount} edge pixels out of ${edges.length}`);
+          
+          // Debug: show edge map as canvas overlay (optional)
+          if (edgeCount === 0) {
+            console.warn('[Picture-to-Map] No edges detected! Try adjusting threshold or image contrast.');
+          }
           
           // Convert edges to walls
           console.log('[Picture-to-Map] Converting edges to walls...');
