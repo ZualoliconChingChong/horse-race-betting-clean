@@ -632,6 +632,18 @@
             <button class="teb-action-btn" data-click="loadLS">📥 Load</button>
           </div>
           
+          <div class="teb-menu-section">📸 Picture to Map</div>
+          <div class="teb-menu-setting">
+            <label>Image File</label>
+            <input type="file" id="pictureToMapFile" accept="image/*" class="teb-file-input">
+          </div>
+          <div class="teb-menu-actions">
+            <button class="teb-action-btn teb-green" id="convertPictureBtn">✨ Convert</button>
+          </div>
+          <div style="font-size:11px;color:#888;padding:4px 8px;line-height:1.3">
+            Edges → Walls, Colors → Visual only
+          </div>
+          
           <div class="teb-menu-section">🚪 Waiting Room</div>
           <div class="teb-menu-setting">
             <label>Width</label>
@@ -1424,6 +1436,7 @@
 <script src="scripts/editor/carrot-ui-controls.js"></script>
 <script src="scripts/editor/text-walls.js"></script>
 <script src="scripts/editor/editor-shortcuts.js"></script>
+<script src="scripts/editor/picture-to-map.js"></script>
 <!-- ui-initialization.js removed - keeping event handlers in extracted-inline.js for stability -->
 <!-- Load race module AFTER mapDef is defined -->
 <script src="scripts/core/race.js"></script>

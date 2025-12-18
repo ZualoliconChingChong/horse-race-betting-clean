@@ -5533,6 +5533,44 @@ document.getElementById('clearWalls').addEventListener('click', ()=>{
   }, { once: false });
 })();
 
+// Picture-to-Map Converter
+(function(){
+  const fileInput = document.getElementById('pictureToMapFile');
+  const convertBtn = document.getElementById('convertPictureBtn');
+  if (!fileInput || !convertBtn) return;
+  
+  convertBtn.addEventListener('click', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      alert('Please select an image file first');
+      return;
+    }
+    
+    if (typeof window.convertPictureToMap !== 'function') {
+      alert('Picture-to-Map module not loaded');
+      return;
+    }
+    
+    try { pushHistory('pictureToMap'); } catch {}
+    
+    // Show loading indicator
+    convertBtn.disabled = true;
+    convertBtn.textContent = '⏳ Converting...';
+    
+    window.convertPictureToMap(file, (result) => {
+      // Apply to map
+      window.applyPictureToMap(result);
+      
+      // Reset button
+      convertBtn.disabled = false;
+      convertBtn.textContent = '✨ Convert';
+      
+      // Clear file input
+      fileInput.value = '';
+    });
+  });
+})();
+
 // Random Map Generator
 function generateRandomMap() {
   try { pushHistory('randomMap'); } catch {}
@@ -12500,12 +12538,32 @@ function drawMap(){
     // Draw static content to the main canvas using existing helpers
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
+    // Picture-to-Map Background (if exists)
+    if (mapDef.pictureBackground) {
+      try {
+        if (!mapDef._pictureBackgroundImage || mapDef._pictureBackgroundImage.src !== mapDef.pictureBackground) {
+          mapDef._pictureBackgroundImage = new Image();
+          mapDef._pictureBackgroundImage.src = mapDef.pictureBackground;
+        }
+        if (mapDef._pictureBackgroundImage.complete) {
+          ctx.save();
+          ctx.globalAlpha = 0.6; // Semi-transparent for better visibility
+          ctx.drawImage(mapDef._pictureBackgroundImage, 0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
+      } catch (e) {
+        console.warn('[Picture-to-Map] Failed to render background:', e);
+      }
+    }
+
     // Base track fill (lane) + gentle vertical gradient + subtle noise
     try {
       ctx.save();
-      // Base lane
-      ctx.fillStyle = LANE;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Base lane (only if no picture background)
+      if (!mapDef.pictureBackground) {
+        ctx.fillStyle = LANE;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
       // Gentle vertical gradient to add depth
       const lg = ctx.createLinearGradient(0, 0, 0, canvas.height);
       lg.addColorStop(0, 'rgba(255,255,255,0.06)');
