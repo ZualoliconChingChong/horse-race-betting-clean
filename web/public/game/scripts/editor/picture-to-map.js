@@ -78,14 +78,14 @@
   }
 
   /**
-   * Convert edge pixels to wall segments (simple approach)
-   * Groups connected edge pixels and creates walls from them
+   * Convert edge pixels to brush walls (with width/height)
+   * Creates rectangular walls from edge pixels
    * @param {Uint8ClampedArray} edges 
    * @param {number} width 
    * @param {number} height 
    * @param {number} canvasWidth - Target canvas width
    * @param {number} canvasHeight - Target canvas height
-   * @returns {Array<{x1: number, y1: number, x2: number, y2: number}>}
+   * @returns {Array<{x: number, y: number, w: number, h: number, r: number}>}
    */
   function edgesToWalls(edges, width, height, canvasWidth, canvasHeight) {
     const walls = [];
@@ -93,8 +93,11 @@
     const scaleY = canvasHeight / height;
     const visited = new Uint8Array(width * height);
     
+    // Wall thickness in pixels (will be scaled)
+    const wallThickness = 8;
+    
     // Sample edge pixels at intervals to reduce computation
-    const sampleRate = Math.max(1, Math.floor(Math.min(width, height) / 200));
+    const sampleRate = Math.max(1, Math.floor(Math.min(width, height) / 150));
     
     for (let y = 0; y < height; y += sampleRate) {
       for (let x = 0; x < width; x += sampleRate) {
@@ -107,8 +110,8 @@
           let bestDist = Infinity;
           let bestX = x, bestY = y;
           
-          for (let dy = -sampleRate; dy <= sampleRate; dy++) {
-            for (let dx = -sampleRate; dx <= sampleRate; dx++) {
+          for (let dy = -sampleRate * 2; dy <= sampleRate * 2; dy++) {
+            for (let dx = -sampleRate * 2; dx <= sampleRate * 2; dx++) {
               if (dx === 0 && dy === 0) continue;
               const nx = x + dx;
               const ny = y + dy;
@@ -126,20 +129,35 @@
             }
           }
           
-          // Create wall segment
+          // Create brush wall from line segment
           if (bestDist < Infinity) {
-            walls.push({
-              x1: x * scaleX,
-              y1: y * scaleY,
-              x2: bestX * scaleX,
-              y2: bestY * scaleY
-            });
+            const x1 = x * scaleX;
+            const y1 = y * scaleY;
+            const x2 = bestX * scaleX;
+            const y2 = bestY * scaleY;
+            
+            // Calculate wall dimensions
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const len = Math.sqrt(dx * dx + dy * dy);
+            
+            if (len > 2) {
+              // Create rectangular wall
+              walls.push({
+                x: (x1 + x2) / 2,
+                y: (y1 + y2) / 2,
+                w: len,
+                h: wallThickness * scaleX,
+                r: (wallThickness / 2) * scaleX,
+                angle: Math.atan2(dy, dx)
+              });
+            }
           }
         }
       }
     }
     
-    console.log(`[Picture-to-Map] Sampled ${walls.length} edge segments`);
+    console.log(`[Picture-to-Map] Created ${walls.length} brush walls`);
     return walls;
   }
 
