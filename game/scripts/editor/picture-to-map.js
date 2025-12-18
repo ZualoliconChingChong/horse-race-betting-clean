@@ -6,72 +6,31 @@
   if (typeof window === 'undefined') return;
 
   /**
-   * Sobel edge detection with adaptive threshold
+   * Detect black/dark pixels (for anime/cartoon outlines)
+   * Much better than edge detection for line art
    * @param {ImageData} imageData 
-   * @param {number} threshold - Edge strength threshold (0-255)
-   * @returns {Uint8ClampedArray} Binary edge map (255 = edge, 0 = no edge)
+   * @param {number} threshold - Darkness threshold (0-255, lower = darker)
+   * @returns {Uint8ClampedArray} Binary edge map (255 = dark pixel, 0 = light pixel)
    */
-  function detectEdges(imageData, threshold = 50) {
+  function detectEdges(imageData, threshold = 100) {
     const { width, height, data } = imageData;
     const edges = new Uint8ClampedArray(width * height);
-    const magnitudes = [];
     
-    // Sobel kernels
-    const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
-    const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-    
-    // Convert to grayscale and apply Sobel
-    for (let y = 1; y < height - 1; y++) {
-      for (let x = 1; x < width - 1; x++) {
-        let gx = 0, gy = 0;
+    // Detect dark pixels (black outlines)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
         
-        // Apply 3x3 kernel
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            const idx = ((y + ky) * width + (x + kx)) * 4;
-            const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-            const kernelIdx = (ky + 1) * 3 + (kx + 1);
-            gx += gray * sobelX[kernelIdx];
-            gy += gray * sobelY[kernelIdx];
-          }
-        }
+        // Calculate brightness (0 = black, 255 = white)
+        const brightness = (r + g + b) / 3;
         
-        const magnitude = Math.sqrt(gx * gx + gy * gy);
-        magnitudes.push(magnitude);
+        // If dark enough, mark as edge
         const edgeIdx = y * width + x;
-        edges[edgeIdx] = magnitude > threshold ? 255 : 0;
+        edges[edgeIdx] = brightness < threshold ? 255 : 0;
       }
-    }
-    
-    // If no edges found, try adaptive threshold (median of magnitudes)
-    let edgeCount = 0;
-    for (let i = 0; i < edges.length; i++) {
-      if (edges[i] === 255) edgeCount++;
-    }
-    
-    if (edgeCount === 0 && magnitudes.length > 0) {
-      console.log('[Picture-to-Map] No edges with threshold ' + threshold + ', trying adaptive threshold...');
-      magnitudes.sort((a, b) => a - b);
-      const adaptiveThreshold = magnitudes[Math.floor(magnitudes.length * 0.3)]; // 30th percentile
-      
-      for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-          let gx = 0, gy = 0;
-          for (let ky = -1; ky <= 1; ky++) {
-            for (let kx = -1; kx <= 1; kx++) {
-              const idx = ((y + ky) * width + (x + kx)) * 4;
-              const gray = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-              const kernelIdx = (ky + 1) * 3 + (kx + 1);
-              gx += gray * sobelX[kernelIdx];
-              gy += gray * sobelY[kernelIdx];
-            }
-          }
-          const magnitude = Math.sqrt(gx * gx + gy * gy);
-          const edgeIdx = y * width + x;
-          edges[edgeIdx] = magnitude > adaptiveThreshold ? 255 : 0;
-        }
-      }
-      console.log('[Picture-to-Map] Using adaptive threshold: ' + adaptiveThreshold.toFixed(2));
     }
     
     return edges;
@@ -206,9 +165,9 @@
           // Get image data
           const imageData = ctx.getImageData(0, 0, targetWidth, targetHeight);
           
-          // Detect edges (higher threshold to catch only strong black lines/outline)
-          console.log('[Picture-to-Map] Detecting edges...');
-          const edges = detectEdges(imageData, 120);
+          // Detect dark pixels (black outlines) - lower threshold = darker pixels only
+          console.log('[Picture-to-Map] Detecting dark pixels (outlines)...');
+          const edges = detectEdges(imageData, 100);
           
           // Count edge pixels for debugging
           let edgeCount = 0;
