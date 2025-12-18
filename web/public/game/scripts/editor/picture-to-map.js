@@ -44,20 +44,32 @@
     // Save background image
     window.mapDef.pictureBackground = result.backgroundImage;
     
-    // Redraw
-    try {
-      if (typeof window.invalidateStaticLayer === 'function') {
-        window.invalidateStaticLayer();
+    // Pre-load image to ensure it's ready
+    const img = new Image();
+    img.onload = function() {
+      console.log('[Picture-to-Map] Image pre-loaded successfully');
+      window.mapDef._pictureBackgroundImage = img;
+      
+      // Redraw after image is loaded
+      try {
+        if (typeof window.invalidateStaticLayer === 'function') {
+          window.invalidateStaticLayer();
+        }
+        if (typeof window.drawMap === 'function') {
+          window.drawMap();
+        }
+      } catch (e) {
+        console.warn('[Picture-to-Map] Could not redraw:', e);
       }
-      if (typeof window.drawMap === 'function') {
-        window.drawMap();
-      }
-    } catch (e) {
-      console.warn('[Picture-to-Map] Could not redraw:', e);
-    }
-    
-    console.log('[Picture-to-Map] Applied successfully!');
-    alert('Background image applied!');
+      
+      console.log('[Picture-to-Map] Applied successfully!');
+      alert('Background image applied!');
+    };
+    img.onerror = function() {
+      console.error('[Picture-to-Map] Failed to load image');
+      alert('Failed to load background image');
+    };
+    img.src = result.backgroundImage;
   };
 
   console.log('[Picture-to-Map] Module loaded');
