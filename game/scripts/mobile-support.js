@@ -60,7 +60,7 @@
     };
   }
 
-  // Add touch support to canvas - with retry mechanism
+  // Add touch support - attach to document to avoid being blocked
   function initCanvasTouchHandlers() {
     const canvas = document.getElementById('cv');
     if (!canvas) {
@@ -77,8 +77,21 @@
     console.log('[MobileSupport] Canvas element:', canvas);
     console.log('[MobileSupport] StageTransform available:', !!window.StageTransform);
     
-    // Unified touch handler - use capture phase to intercept before other handlers
-    canvas.addEventListener('touchstart', (e) => {
+    // Helper to check if touch is on canvas
+    function isTouchOnCanvas(touch) {
+      const rect = canvas.getBoundingClientRect();
+      return touch.clientX >= rect.left && touch.clientX <= rect.right &&
+             touch.clientY >= rect.top && touch.clientY <= rect.bottom;
+    }
+    
+    // Attach to document with capture phase to intercept ALL touch events
+    document.addEventListener('touchstart', (e) => {
+      // Only handle if touch is on canvas
+      if (e.touches.length > 0 && !isTouchOnCanvas(e.touches[0])) {
+        console.log('[MobileSupport] Touch not on canvas, ignoring');
+        return;
+      }
+      
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
       if (e.touches.length === 2) {
@@ -122,9 +135,14 @@
         canvas.dispatchEvent(mouseEvent);
         console.log('[MobileSupport] 1-finger - dispatched mousedown');
       }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
-    canvas.addEventListener('touchmove', (e) => {
+    document.addEventListener('touchmove', (e) => {
+      // Only handle if touch is on canvas
+      if (e.touches.length > 0 && !isTouchOnCanvas(e.touches[0])) {
+        return;
+      }
+      
       if (e.touches.length === 2 && (pinchState.active || panState.active)) {
         // 2-finger: pinch & pan
         e.preventDefault();
@@ -188,9 +206,9 @@
         });
         canvas.dispatchEvent(mouseEvent);
       }
-    }, { passive: false });
+    }, { passive: false, capture: true });
 
-    canvas.addEventListener('touchend', (e) => {
+    document.addEventListener('touchend', (e) => {
       if (e.touches.length < 2) {
         pinchState.active = false;
         panState.active = false;
@@ -207,11 +225,11 @@
       }
     });
 
-    canvas.addEventListener('touchcancel', () => {
+    document.addEventListener('touchcancel', () => {
       pinchState.active = false;
       panState.active = false;
       touchToMouseActive = false;
-    });
+    }, { capture: true });
   }
   
   // Initialize handlers
