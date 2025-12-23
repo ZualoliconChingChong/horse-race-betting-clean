@@ -65,19 +65,27 @@
   if (canvas && isMobile) {
     let touchToMouseActive = false;
     
+    console.log('[MobileSupport] Canvas touch handlers initialized');
+    console.log('[MobileSupport] StageTransform available:', !!window.StageTransform);
+    
     // Unified touch handler
     canvas.addEventListener('touchstart', (e) => {
+      console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
+      
       if (e.touches.length === 2) {
         // 2-finger: pinch zoom & pan
         e.preventDefault();
+        console.log('[MobileSupport] 2-finger detected - activating pinch/pan');
         
         pinchState.active = true;
         pinchState.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
         
         if (window.StageTransform && typeof window.StageTransform.getZoom === 'function') {
           pinchState.initialScale = window.StageTransform.getZoom();
+          console.log('[MobileSupport] Initial zoom:', pinchState.initialScale);
         } else {
           pinchState.initialScale = 1;
+          console.log('[MobileSupport] StageTransform not available, using default zoom');
         }
         
         panState.active = true;
@@ -89,6 +97,7 @@
           const currentPan = window.StageTransform.getPan();
           panState.initialPanX = currentPan.x;
           panState.initialPanY = currentPan.y;
+          console.log('[MobileSupport] Initial pan:', currentPan);
         }
       } else if (e.touches.length === 1 && !pinchState.active && !panState.active) {
         // 1-finger: convert to mouse event for drag/draw
@@ -102,6 +111,7 @@
           cancelable: true
         });
         canvas.dispatchEvent(mouseEvent);
+        console.log('[MobileSupport] 1-finger - dispatched mousedown');
       }
     }, { passive: false });
 
