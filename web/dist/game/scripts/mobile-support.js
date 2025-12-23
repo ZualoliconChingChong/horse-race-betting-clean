@@ -145,24 +145,67 @@
           console.log('[MobileSupport] Initial pan:', currentPan);
         }
       } else if (e.touches.length === 1 && !pinchState.active && !panState.active) {
-        // 1-finger: only convert to mouse event if touch is ON canvas
-        if (!isTouchOnCanvas(e.touches[0])) {
-          updateDebug('1-finger NOT on canvas');
-          return;
-        }
-        
-        touchToMouseActive = true;
         const touch = e.touches[0];
-        const mouseEvent = new MouseEvent('mousedown', {
-          clientX: touch.clientX,
-          clientY: touch.clientY,
-          button: 0,
-          bubbles: true,
-          cancelable: true
-        });
-        canvas.dispatchEvent(mouseEvent);
-        updateDebug('1-finger ON canvas - mousedown');
-        console.log('[MobileSupport] 1-finger - dispatched mousedown');
+        
+        // Check if touch is on canvas → mouse event for draw/drag
+        if (isTouchOnCanvas(touch)) {
+          touchToMouseActive = true;
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            button: 0,
+            bubbles: true,
+            cancelable: true
+          });
+          canvas.dispatchEvent(mouseEvent);
+          updateDebug('1-finger ON canvas');
+          console.log('[MobileSupport] 1-finger on canvas - dispatched mousedown');
+        } else {
+          // Check if touch is on stage area → drag stage
+          const stage = document.getElementById('stage');
+          if (stage) {
+            const stageRect = stage.getBoundingClientRect();
+            const onStage = touch.clientX >= stageRect.left && touch.clientX <= stageRect.right &&
+                           touch.clientY >= stageRect.top && touch.clientY <= stageRect.bottom;
+            
+            if (onStage) {
+              e.preventDefault();
+              updateDebug('1-finger ON stage - DRAG');
+              console.log('[MobileSupport] 1-finger on stage - starting drag');
+              
+              // Start stage drag
+              const startX = touch.clientX;
+              const startY = touch.clientY;
+              const computedStyle = window.getComputedStyle(stage);
+              const matrix = new DOMMatrix(computedStyle.transform);
+              const currentX = matrix.m41 || 0;
+              const currentY = matrix.m42 || 0;
+              
+              const stageDragMove = (moveEvent) => {
+                if (moveEvent.touches.length !== 1) return;
+                moveEvent.preventDefault();
+                const moveTouch = moveEvent.touches[0];
+                const dx = moveTouch.clientX - startX;
+                const dy = moveTouch.clientY - startY;
+                stage.style.transform = `translate(${currentX + dx}px, ${currentY + dy}px)`;
+                updateDebug('DRAG: ' + (currentX + dx).toFixed(0) + ',' + (currentY + dy).toFixed(0));
+              };
+              
+              const stageDragEnd = () => {
+                updateDebug('DRAG ended');
+                document.removeEventListener('touchmove', stageDragMove);
+                document.removeEventListener('touchend', stageDragEnd);
+                document.removeEventListener('touchcancel', stageDragEnd);
+              };
+              
+              document.addEventListener('touchmove', stageDragMove, { passive: false });
+              document.addEventListener('touchend', stageDragEnd);
+              document.addEventListener('touchcancel', stageDragEnd);
+            } else {
+              updateDebug('1-finger outside stage');
+            }
+          }
+        }
       }
     }, { passive: false, capture: true });
 
