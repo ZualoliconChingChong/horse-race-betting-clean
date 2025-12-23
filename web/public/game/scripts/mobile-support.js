@@ -5,9 +5,18 @@
 (function() {
   if (typeof window === 'undefined') return;
 
-  // Detect if device is mobile
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  // Detect if device is mobile - improved detection
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+    || 'ontouchstart' in window 
+    || navigator.maxTouchPoints > 0
+    || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  
+  // Also detect if touch is available (for hybrid devices like Surface)
+  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
   const isLandscape = () => window.innerWidth > window.innerHeight;
+  
+  console.log('[MobileSupport] isMobile:', isMobile, 'hasTouch:', hasTouch, 'userAgent:', navigator.userAgent.substring(0, 50));
 
   // Add mobile class to body for CSS targeting
   if (isMobile) {
@@ -89,9 +98,9 @@
     
     console.log('[MobileSupport] Canvas touch handlers initialized');
     console.log('[MobileSupport] Canvas element:', canvas);
-    console.log('[MobileSupport] isMobile:', isMobile);
+    console.log('[MobileSupport] isMobile:', isMobile, 'hasTouch:', hasTouch);
     console.log('[MobileSupport] StageTransform available:', !!window.StageTransform);
-    updateDebug('Touch: Ready! isMobile=' + isMobile);
+    updateDebug('Ready! mobile=' + isMobile + ' touch=' + hasTouch);
     
     // Helper to check if touch is on canvas
     function isTouchOnCanvas(touch) {
@@ -265,13 +274,33 @@
     
     console.log('[MobileSupport] Stage touch handlers initialized');
     
+    // Update debug indicator
+    const debugDiv = document.getElementById('touch-debug');
+    if (debugDiv) debugDiv.textContent = 'Stage handlers ready';
+    
     // Find all resize handles
     const resizeHandles = stage.querySelectorAll('.resize-handle');
     console.log('[MobileSupport] Found resize handles:', resizeHandles.length);
     
-    // Make resize handles bigger on mobile for easier touch
-    resizeHandles.forEach(handle => {
-      handle.style.cssText += ';min-width:40px;min-height:40px;opacity:0.7;';
+    if (resizeHandles.length === 0) {
+      console.log('[MobileSupport] No resize handles found! Creating them...');
+      // Create resize handles if they don't exist
+      const cornerHandle = document.createElement('div');
+      cornerHandle.className = 'resize-handle corner';
+      cornerHandle.style.cssText = 'position:absolute;bottom:0;right:0;width:40px;height:40px;background:rgba(0,120,255,0.5);cursor:nwse-resize;z-index:100;border-radius:8px 0 0 0;';
+      stage.appendChild(cornerHandle);
+      
+      // Re-query
+      const newHandles = stage.querySelectorAll('.resize-handle');
+      console.log('[MobileSupport] Created resize handles, now have:', newHandles.length);
+    }
+    
+    // Re-query and setup all resize handles
+    const allResizeHandles = stage.querySelectorAll('.resize-handle');
+    
+    // Make resize handles bigger and visible for touch
+    allResizeHandles.forEach(handle => {
+      handle.style.cssText += ';min-width:40px;min-height:40px;opacity:1;background:rgba(0,120,255,0.6);';
       
       handle.addEventListener('touchstart', (e) => {
         e.preventDefault();
