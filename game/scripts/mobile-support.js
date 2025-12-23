@@ -124,8 +124,19 @@
           const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
           const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
           
+          console.log('[MobileSupport] Pinch zoom - scale:', scale);
+          
           if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
             window.StageTransform.setZoom(scale, true);
+            console.log('[MobileSupport] Applied zoom via StageTransform');
+          } else {
+            // Fallback: apply zoom directly to stage
+            const stage = document.getElementById('stage');
+            if (stage) {
+              stage.style.transform = `scale(${scale})`;
+              stage.style.transformOrigin = 'center center';
+              console.log('[MobileSupport] Applied zoom via direct CSS');
+            }
           }
         }
         
@@ -137,9 +148,24 @@
           panState.lastX = center.x;
           panState.lastY = center.y;
           
+          console.log('[MobileSupport] Pan delta:', deltaX, deltaY);
+          
           if (window.StageTransform && typeof window.StageTransform.getPan === 'function') {
             const currentPan = window.StageTransform.getPan();
             window.StageTransform.setPan(currentPan.x + deltaX, currentPan.y + deltaY, true);
+            console.log('[MobileSupport] Applied pan via StageTransform');
+          } else {
+            // Fallback: apply pan directly to stage
+            const stage = document.getElementById('stage');
+            if (stage) {
+              const currentTransform = stage.style.transform || '';
+              const translateMatch = currentTransform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+              const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+              const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+              
+              stage.style.transform = `translate(${currentX + deltaX}px, ${currentY + deltaY}px)`;
+              console.log('[MobileSupport] Applied pan via direct CSS');
+            }
           }
         }
       } else if (e.touches.length === 1 && touchToMouseActive) {
