@@ -17,6 +17,7 @@
       <h1 class="game-title">HORSE MAZE RACE</h1>
       <p class="game-subtitle">Ultimate Racing Experience</p>
     </div>
+
     
     <div class="loading-progress">
       <div class="progress-bar">
@@ -42,7 +43,7 @@
 </div>
 
 <div class="wrap">
-  <div class="stage" id="stage">
+  <div class="stage" id="stage" data-stage>
   <!-- Top Editor Bar - Inside stage to stay attached to canvas -->
   <div class="top-editor-bar" id="topEditorBar">
       <!-- 🛠️ TOOLS Dropdown -->
@@ -117,7 +118,7 @@
             <button class="teb-menu-item" data-tool="shield" title="Shield">🛡️</button>
             <button class="teb-menu-item" data-tool="teleport" title="Teleport">🌀</button>
             <button class="teb-menu-item" data-tool="magnet" title="Magnet">🧲</button>
-            <button class="teb-menu-item" data-tool="timefreeze" title="Freeze">❄️</button>
+            <button class="teb-menu-item" data-tool="timefreeze" title="Time Freeze">❄️</button>
             <button class="teb-menu-item" data-tool="icefreezer" title="Ice">🧊</button>
             <button class="teb-menu-item" data-tool="poison" title="Poison">☠️</button>
             <button class="teb-menu-item" data-tool="fireaura" title="Fire">🔥</button>
@@ -159,7 +160,20 @@
         </div>
       </div>
 
-      <div class="teb-divider"></div>
+      <!-- 🧠 LOGIC Dropdown -->
+      <div class="teb-dropdown">
+        <button class="teb-btn teb-dropdown-toggle" title="Game Logic">🧠</button>
+        <div class="teb-dropdown-menu teb-menu-wide">
+          <div class="teb-menu-section">🏁 Race Elements</div>
+          <div class="teb-menu-grid">
+            <button class="teb-menu-item" data-tool="spawn" title="Spawns">🏁</button>
+            <button class="teb-menu-item" data-tool="carrotA" title="Finish A">🥕</button>
+            <button class="teb-menu-item" data-tool="carrotB" title="Finish B">🏆</button>
+            <button class="teb-menu-item" data-tool="room" title="Room">🏠</button>
+            <button class="teb-menu-item" data-tool="start" title="Start Gate">🚦</button>
+          </div>
+        </div>
+      </div>
 
       <!-- ⚙️ SETTINGS Dropdown -->
       <div class="teb-dropdown">
@@ -632,16 +646,16 @@
             <button class="teb-action-btn" data-click="loadLS">📥 Load</button>
           </div>
           
-          <div class="teb-menu-section">📸 Picture to Map</div>
+          <div class="teb-menu-section">🖼️ Map Background</div>
           <div class="teb-menu-setting">
-            <label>Image File</label>
+            <label>Background Image</label>
             <input type="file" id="pictureToMapFile" accept="image/*" class="teb-file-input">
           </div>
           <div class="teb-menu-actions">
-            <button class="teb-action-btn teb-green" id="convertPictureBtn">✨ Convert</button>
+            <button class="teb-action-btn teb-green" id="convertPictureBtn">🖼️ Set Background</button>
           </div>
           <div style="font-size:11px;color:#888;padding:4px 8px;line-height:1.3">
-            Edges → Walls, Colors → Visual only
+            Upload an image to use as a semi-transparent backdrop. Walls stay unchanged.
           </div>
           
           <div class="teb-menu-section">🚪 Waiting Room</div>
@@ -672,7 +686,9 @@
     <!-- Floating button to restore top bar when hidden -->
     <button class="teb-restore-btn" id="tebRestoreBar" title="Mở thanh editor (M)">🛠️</button>
 
-    <canvas id="cv" width="1920" height="1000"></canvas>
+    <div class="canvas-viewport" id="canvasViewport">
+      <canvas id="cv" width="1920" height="1000"></canvas>
+    </div>
     
     <!-- Thanh thông báo overlay trên map -->
     <div class="notification-bar show" id="notificationBar">
@@ -1061,6 +1077,16 @@
         <div class="row"><label data-i18n="fan_spread">🍕 Spread</label><input id="fanSpread" type="range" min="10" max="180" step="1" value="60" /><span id="fanSpreadVal">60°</span></div>
         <div class="row"><label data-i18n="fan_strength">💨 Strength</label><input id="fanStrength" type="range" min="0" max="0.3" step="0.005" value="0.08" /><span id="fanStrengthVal">0.08</span></div>
       </div>
+    </div>
+
+    <!-- Mobile quick actions (touch devices only) -->
+    <div class="mobile-editor-controls" id="mobileEditorControls" hidden aria-label="Mobile quick actions">
+      <button class="mobile-control-btn" data-mobile-target="[data-click='clearMap']">🗑️ Clear</button>
+      <button class="mobile-control-btn" data-mobile-target="[data-click='randomMap']">🎲 Generate</button>
+      <button class="mobile-control-btn" data-mobile-target="[data-click='saveLS']">💾 Save</button>
+      <button class="mobile-control-btn" data-mobile-target="[data-click='loadLS']">📥 Load</button>
+      <button class="mobile-control-btn" data-mobile-target="#convertPictureBtn">🖼️ Background</button>
+      <button class="mobile-control-btn mobile-accent" data-mobile-target="#hudPlayTest">▶ Play</button>
     </div>
 
     <!-- Spawn Settings Section -->
@@ -1781,7 +1807,7 @@
     border-radius: 12px;
     padding: 24px;
     width: 400px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   }
 
   .text-walls-dialog h3 {
@@ -1861,9 +1887,6 @@
       <option value="900 Arial Black">Extra Bold</option>
     </select>
     
-    <label>🧱 Stroke Width (px): <span style="font-size:11px; color:#a0aec0;">(thickness)</span></label>
-    <input type="number" id="textWallsBlockSize" min="1" max="8" step="1" value="3" />
-    
     <label style="display: flex; align-items: center; gap: 8px; margin-top: 10px; cursor: pointer;">
       <input type="checkbox" id="textWallsMerge" style="cursor: pointer;" checked />
       <span>🔗 Merge into single brush <span style="font-size:11px; color:#a0aec0;">(1 object instead of many)</span></span>
@@ -1884,7 +1907,7 @@
 (function() {
   const topEditorBar = document.getElementById('topEditorBar');
   const sidebar = document.getElementById('editorBar');
-  const collapseBtn = document.getElementById('collapseEditorBtn');
+  const collapseBtn = document.getElementById('collapseRightBar');
   
   // Collapse sidebar button
   if (collapseBtn && sidebar) {
@@ -2087,6 +2110,48 @@
   const stopBtn = document.getElementById('toEditor');
   if (playBtn) playBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
   if (stopBtn) stopBtn.addEventListener('click', () => setTimeout(updateTopEditorBarVisibility, 100));
+
+  // Mobile quick controls (touch devices)
+  const mobileControls = document.getElementById('mobileEditorControls');
+  const pointerQuery = window.matchMedia && window.matchMedia('(pointer: coarse)');
+
+  function isTouchDevice() {
+    return (pointerQuery && pointerQuery.matches) ||
+           ('ontouchstart' in window) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+  }
+
+  function updateMobileControlsVisibility() {
+    if (!mobileControls) return;
+    const show = isTouchDevice();
+    mobileControls.hidden = !show;
+    mobileControls.classList.toggle('show', show);
+  }
+
+  function bindMobileControls() {
+    if (!mobileControls) return;
+    mobileControls.querySelectorAll('.mobile-control-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const selector = btn.dataset.mobileTarget;
+        if (!selector) return;
+        const target = document.querySelector(selector);
+        if (target) {
+          target.click();
+          closeAllDropdowns();
+        } else {
+          console.warn('[MobileControls] Target not found for selector:', selector);
+        }
+      });
+    });
+  }
+
+  bindMobileControls();
+  updateMobileControlsVisibility();
+  if (pointerQuery && pointerQuery.addEventListener) {
+    pointerQuery.addEventListener('change', updateMobileControlsVisibility);
+  } else if (pointerQuery && pointerQuery.addListener) {
+    pointerQuery.addListener(updateMobileControlsVisibility);
+  }
 })();
 </script>
 
