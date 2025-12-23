@@ -60,15 +60,24 @@
     };
   }
 
-  // Add touch support to canvas
-  const canvas = document.getElementById('cv');
-  if (canvas && isMobile) {
+  // Add touch support to canvas - with retry mechanism
+  function initCanvasTouchHandlers() {
+    const canvas = document.getElementById('cv');
+    if (!canvas) {
+      console.log('[MobileSupport] Canvas not found, retrying...');
+      setTimeout(initCanvasTouchHandlers, 100);
+      return;
+    }
+    
+    if (!isMobile) return;
+    
     let touchToMouseActive = false;
     
     console.log('[MobileSupport] Canvas touch handlers initialized');
+    console.log('[MobileSupport] Canvas element:', canvas);
     console.log('[MobileSupport] StageTransform available:', !!window.StageTransform);
     
-    // Unified touch handler
+    // Unified touch handler - use capture phase to intercept before other handlers
     canvas.addEventListener('touchstart', (e) => {
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
@@ -204,6 +213,9 @@
       touchToMouseActive = false;
     });
   }
+  
+  // Initialize handlers
+  initCanvasTouchHandlers();
 
   // Add touch support for stage resize handles
   if (isMobile) {
