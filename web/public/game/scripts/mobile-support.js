@@ -179,33 +179,30 @@
           
           if (stage && !isButton) {
             e.preventDefault();
+            e.stopPropagation();
             updateDebug('1-finger DRAG stage');
             console.log('[MobileSupport] 1-finger outside canvas - starting stage drag');
             
-            // Start stage drag using margin instead of transform (works better with flex layout)
+            // Use window scroll instead of moving stage element
             const startX = touch.clientX;
             const startY = touch.clientY;
+            const startScrollX = window.scrollX;
+            const startScrollY = window.scrollY;
             
-            // Get current margins
-            const computedStyle = window.getComputedStyle(stage);
-            const currentMarginLeft = parseInt(computedStyle.marginLeft) || 0;
-            const currentMarginTop = parseInt(computedStyle.marginTop) || 0;
-            
-            console.log('[MobileSupport] Starting drag, current margins:', currentMarginLeft, currentMarginTop);
+            console.log('[MobileSupport] Starting drag, scroll:', startScrollX, startScrollY);
             
             const stageDragMove = (moveEvent) => {
               if (moveEvent.touches.length !== 1) return;
               moveEvent.preventDefault();
+              moveEvent.stopPropagation();
               const moveTouch = moveEvent.touches[0];
               const dx = moveTouch.clientX - startX;
               const dy = moveTouch.clientY - startY;
               
-              // Apply movement via margins (works with flex layout)
-              stage.style.marginLeft = (currentMarginLeft + dx) + 'px';
-              stage.style.marginTop = (currentMarginTop + dy) + 'px';
+              // Scroll the window in opposite direction of drag
+              window.scrollTo(startScrollX - dx, startScrollY - dy);
               
-              updateDebug('DRAG: ' + dx.toFixed(0) + ',' + dy.toFixed(0));
-              console.log('[MobileSupport] Dragging, new margins:', currentMarginLeft + dx, currentMarginTop + dy);
+              updateDebug('SCROLL: ' + (-dx).toFixed(0) + ',' + (-dy).toFixed(0));
             };
             
             const stageDragEnd = () => {
