@@ -253,63 +253,187 @@
   // Initialize handlers
   initCanvasTouchHandlers();
 
-  // Add touch support for stage resize handles
-  if (isMobile) {
+  // Add touch support for stage resize handles and stage dragging
+  function initStageTouch() {
     const stage = document.getElementById('stage');
-    if (stage) {
-      // Find all resize handles
-      const resizeHandles = stage.querySelectorAll('.resize-handle');
+    const canvas = document.getElementById('cv');
+    if (!stage || !canvas) {
+      console.log('[MobileSupport] Stage/canvas not found for resize, retrying...');
+      setTimeout(initStageTouch, 200);
+      return;
+    }
+    
+    console.log('[MobileSupport] Stage touch handlers initialized');
+    
+    // Find all resize handles
+    const resizeHandles = stage.querySelectorAll('.resize-handle');
+    console.log('[MobileSupport] Found resize handles:', resizeHandles.length);
+    
+    // Make resize handles bigger on mobile for easier touch
+    resizeHandles.forEach(handle => {
+      handle.style.cssText += ';min-width:40px;min-height:40px;opacity:0.7;';
       
-      resizeHandles.forEach(handle => {
-        handle.addEventListener('touchstart', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
+      handle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const debugDiv = document.getElementById('touch-debug');
+        if (debugDiv) debugDiv.textContent = 'RESIZE started';
+        
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
           
-          if (e.touches.length === 1) {
-            const touch = e.touches[0];
-            const canvas = document.getElementById('cv');
-            if (!canvas) return;
+          const startW = canvas.width;
+          const startH = canvas.height;
+          const startX = touch.clientX;
+          const startY = touch.clientY;
+          const handleType = handle.classList.contains('corner') ? 'corner' :
+                           handle.classList.contains('right') ? 'right' : 'bottom';
+          
+          const doResize = (moveEvent) => {
+            moveEvent.preventDefault();
+            if (moveEvent.touches.length !== 1) return;
+            const moveTouch = moveEvent.touches[0];
+            const dx = moveTouch.clientX - startX;
+            const dy = moveTouch.clientY - startY;
             
-            const startW = canvas.width;
-            const startH = canvas.height;
-            const startX = touch.clientX;
-            const startY = touch.clientY;
-            const handleType = handle.classList.contains('corner') ? 'corner' :
-                             handle.classList.contains('right') ? 'right' : 'bottom';
+            if (handleType === 'corner' || handleType === 'right') {
+              canvas.width = Math.round(Math.max(320, startW + dx));
+            }
+            if (handleType === 'corner' || handleType === 'bottom') {
+              canvas.height = Math.round(Math.max(240, startH + dy));
+            }
             
-            const doResize = (moveEvent) => {
-              if (moveEvent.touches.length !== 1) return;
-              const moveTouch = moveEvent.touches[0];
-              const dx = moveTouch.clientX - startX;
-              const dy = moveTouch.clientY - startY;
-              
-              if (handleType === 'corner' || handleType === 'right') {
-                canvas.width = Math.round(Math.max(320, startW + dx));
-              }
-              if (handleType === 'corner' || handleType === 'bottom') {
-                canvas.height = Math.round(Math.max(240, startH + dy));
-              }
-              
-              // Trigger redraw if function exists
-              if (typeof window.drawMap === 'function') {
-                window.drawMap();
-              }
-            };
+            if (debugDiv) debugDiv.textContent = 'RESIZE: ' + canvas.width + 'x' + canvas.height;
             
-            const stopResize = () => {
-              window.removeEventListener('touchmove', doResize);
-              window.removeEventListener('touchend', stopResize);
-              window.removeEventListener('touchcancel', stopResize);
-            };
+            // Trigger redraw if function exists
+            if (typeof window.drawMap === 'function') {
+              window.drawMap();
+            }
+          };
+          
+          const stopResize = () => {
+            if (debugDiv) debugDiv.textContent = 'RESIZE ended';
+            window.removeEventListener('touchmove', doResize);
+            window.removeEventListener('touchend', stopResize);
+            window.removeEventListener('touchcancel', stopResize);
+          };
+          
+          window.addEventListener('touchmove', doResize, { passive: false });
+          window.addEventListener('touchend', stopResize);
+          window.addEventListener('touchcancel', stopResize);
+        }
+      }, { passive: false });
+    });
+    
+    // Add stage drag handle for moving the entire stage
+    const stageHandle = stage.querySelector('.stage-handle');
+    if (stageHandle) {
+      console.log('[MobileSupport] Stage handle found, adding touch support');
+      stageHandle.style.cssText += ';min-width:80px;min-height:40px;';
+      
+      stageHandle.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const debugDiv = document.getElementById('touch-debug');
+        if (debugDiv) debugDiv.textContent = 'DRAG stage started';
+        
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          const startX = touch.clientX;
+          const startY = touch.clientY;
+          const stageRect = stage.getBoundingClientRect();
+          const startLeft = stageRect.left;
+          const startTop = stageRect.top;
+          
+          const doDrag = (moveEvent) => {
+            moveEvent.preventDefault();
+            if (moveEvent.touches.length !== 1) return;
+            const moveTouch = moveEvent.touches[0];
+            const dx = moveTouch.clientX - startX;
+            const dy = moveTouch.clientY - startY;
             
-            window.addEventListener('touchmove', doResize, { passive: false });
-            window.addEventListener('touchend', stopResize);
-            window.addEventListener('touchcancel', stopResize);
-          }
-        }, { passive: false });
-      });
+            stage.style.position = 'relative';
+            stage.style.left = dx + 'px';
+            stage.style.top = dy + 'px';
+            
+            if (debugDiv) debugDiv.textContent = 'DRAG: ' + dx + ', ' + dy;
+          };
+          
+          const stopDrag = () => {
+            if (debugDiv) debugDiv.textContent = 'DRAG ended';
+            window.removeEventListener('touchmove', doDrag);
+            window.removeEventListener('touchend', stopDrag);
+            window.removeEventListener('touchcancel', stopDrag);
+          };
+          
+          window.addEventListener('touchmove', doDrag, { passive: false });
+          window.addEventListener('touchend', stopDrag);
+          window.addEventListener('touchcancel', stopDrag);
+        }
+      }, { passive: false });
+    } else {
+      console.log('[MobileSupport] Stage handle not found');
+    }
+    
+    // Add a mobile-only drag button if stage handle is not visible
+    if (!stageHandle || window.getComputedStyle(stageHandle).display === 'none') {
+      const mobileDragBtn = document.createElement('div');
+      mobileDragBtn.id = 'mobile-stage-drag';
+      mobileDragBtn.textContent = '✥ DRAG';
+      mobileDragBtn.style.cssText = 'position:absolute;top:-35px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:bold;z-index:100;cursor:grab;touch-action:none;';
+      stage.appendChild(mobileDragBtn);
+      
+      console.log('[MobileSupport] Created mobile drag button');
+      
+      mobileDragBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const debugDiv = document.getElementById('touch-debug');
+        if (debugDiv) debugDiv.textContent = 'DRAG stage started';
+        
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          const startX = touch.clientX;
+          const startY = touch.clientY;
+          
+          // Get current transform or position
+          const computedStyle = window.getComputedStyle(stage);
+          const matrix = new DOMMatrix(computedStyle.transform);
+          const currentX = matrix.m41 || 0;
+          const currentY = matrix.m42 || 0;
+          
+          const doDrag = (moveEvent) => {
+            moveEvent.preventDefault();
+            if (moveEvent.touches.length !== 1) return;
+            const moveTouch = moveEvent.touches[0];
+            const dx = moveTouch.clientX - startX;
+            const dy = moveTouch.clientY - startY;
+            
+            stage.style.transform = `translate(${currentX + dx}px, ${currentY + dy}px)`;
+            
+            if (debugDiv) debugDiv.textContent = 'DRAG: ' + (currentX + dx).toFixed(0) + ', ' + (currentY + dy).toFixed(0);
+          };
+          
+          const stopDrag = () => {
+            if (debugDiv) debugDiv.textContent = 'DRAG ended';
+            window.removeEventListener('touchmove', doDrag);
+            window.removeEventListener('touchend', stopDrag);
+            window.removeEventListener('touchcancel', stopDrag);
+          };
+          
+          window.addEventListener('touchmove', doDrag, { passive: false });
+          window.addEventListener('touchend', stopDrag);
+          window.addEventListener('touchcancel', stopDrag);
+        }
+      }, { passive: false });
     }
   }
+  
+  // Initialize stage touch handlers
+  initStageTouch();
 
   // Mobile UI Enhancements
   if (isMobile) {
