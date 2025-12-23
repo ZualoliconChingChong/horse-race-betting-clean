@@ -91,7 +91,7 @@
      * Setup canvas interaction events
      */
     setupCanvasEvents() {
-      const canvas = document.getElementById('canvas');
+      const canvas = document.getElementById('cv');
       if (!canvas) return;
 
       // Mouse events
@@ -100,10 +100,8 @@
       canvas.addEventListener('mouseup', (e) => this.handleCanvasMouseUp(e));
       canvas.addEventListener('mouseleave', (e) => this.handleCanvasMouseLeave(e));
       
-      // Touch events for mobile
-      canvas.addEventListener('touchstart', (e) => this.handleCanvasTouchStart(e));
-      canvas.addEventListener('touchmove', (e) => this.handleCanvasTouchMove(e));
-      canvas.addEventListener('touchend', (e) => this.handleCanvasTouchEnd(e));
+      // Touch events are handled by mobile-support.js which converts them to mouse events
+      // Do NOT add touch listeners here to avoid conflicts
       
       // Wheel event for zooming
       canvas.addEventListener('wheel', (e) => this.handleCanvasWheel(e));
