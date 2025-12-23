@@ -69,13 +69,29 @@
       return;
     }
     
-    if (!isMobile) return;
+    // REMOVED isMobile check - always enable touch handlers for testing
+    // if (!isMobile) return;
     
     let touchToMouseActive = false;
     
+    // Create visual indicator for debugging
+    const debugDiv = document.createElement('div');
+    debugDiv.id = 'touch-debug';
+    debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:rgba(0,0,0,0.8);color:#0f0;padding:10px;font-size:12px;z-index:999999;font-family:monospace;max-width:300px;pointer-events:none;';
+    debugDiv.textContent = 'Touch: waiting...';
+    document.body.appendChild(debugDiv);
+    
+    function updateDebug(msg) {
+      debugDiv.textContent = msg;
+      debugDiv.style.background = 'rgba(0,100,0,0.9)';
+      setTimeout(() => { debugDiv.style.background = 'rgba(0,0,0,0.8)'; }, 200);
+    }
+    
     console.log('[MobileSupport] Canvas touch handlers initialized');
     console.log('[MobileSupport] Canvas element:', canvas);
+    console.log('[MobileSupport] isMobile:', isMobile);
     console.log('[MobileSupport] StageTransform available:', !!window.StageTransform);
+    updateDebug('Touch: Ready! isMobile=' + isMobile);
     
     // Helper to check if touch is on canvas
     function isTouchOnCanvas(touch) {
@@ -86,17 +102,22 @@
     
     // Attach to document with capture phase to intercept ALL touch events
     document.addEventListener('touchstart', (e) => {
+      updateDebug('Touch START: ' + e.touches.length + ' fingers');
+      
       // Only handle if touch is on canvas
       if (e.touches.length > 0 && !isTouchOnCanvas(e.touches[0])) {
-        console.log('[MobileSupport] Touch not on canvas, ignoring');
+        updateDebug('Touch NOT on canvas');
         return;
       }
       
+      updateDebug('Touch ON canvas: ' + e.touches.length + ' fingers');
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
       if (e.touches.length === 2) {
         // 2-finger: pinch zoom & pan
         e.preventDefault();
+        e.stopPropagation();
+        updateDebug('PINCH activated!');
         console.log('[MobileSupport] 2-finger detected - activating pinch/pan');
         
         pinchState.active = true;
@@ -146,11 +167,13 @@
       if (e.touches.length === 2 && (pinchState.active || panState.active)) {
         // 2-finger: pinch & pan
         e.preventDefault();
+        e.stopPropagation();
         
         if (pinchState.active) {
           const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
           const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
           
+          updateDebug('ZOOM: ' + scale.toFixed(2));
           console.log('[MobileSupport] Pinch zoom - scale:', scale);
           
           if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
