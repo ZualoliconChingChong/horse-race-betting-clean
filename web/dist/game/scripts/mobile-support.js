@@ -181,35 +181,43 @@
             e.preventDefault();
             updateDebug('1-finger DRAG stage');
             console.log('[MobileSupport] 1-finger outside canvas - starting stage drag');
+            
+            // Start stage drag using margin instead of transform (works better with flex layout)
+            const startX = touch.clientX;
+            const startY = touch.clientY;
+            
+            // Get current margins
+            const computedStyle = window.getComputedStyle(stage);
+            const currentMarginLeft = parseInt(computedStyle.marginLeft) || 0;
+            const currentMarginTop = parseInt(computedStyle.marginTop) || 0;
+            
+            console.log('[MobileSupport] Starting drag, current margins:', currentMarginLeft, currentMarginTop);
+            
+            const stageDragMove = (moveEvent) => {
+              if (moveEvent.touches.length !== 1) return;
+              moveEvent.preventDefault();
+              const moveTouch = moveEvent.touches[0];
+              const dx = moveTouch.clientX - startX;
+              const dy = moveTouch.clientY - startY;
               
-              // Start stage drag
-              const startX = touch.clientX;
-              const startY = touch.clientY;
-              const computedStyle = window.getComputedStyle(stage);
-              const matrix = new DOMMatrix(computedStyle.transform);
-              const currentX = matrix.m41 || 0;
-              const currentY = matrix.m42 || 0;
+              // Apply movement via margins (works with flex layout)
+              stage.style.marginLeft = (currentMarginLeft + dx) + 'px';
+              stage.style.marginTop = (currentMarginTop + dy) + 'px';
               
-              const stageDragMove = (moveEvent) => {
-                if (moveEvent.touches.length !== 1) return;
-                moveEvent.preventDefault();
-                const moveTouch = moveEvent.touches[0];
-                const dx = moveTouch.clientX - startX;
-                const dy = moveTouch.clientY - startY;
-                stage.style.transform = `translate(${currentX + dx}px, ${currentY + dy}px)`;
-                updateDebug('DRAG: ' + (currentX + dx).toFixed(0) + ',' + (currentY + dy).toFixed(0));
-              };
-              
-              const stageDragEnd = () => {
-                updateDebug('DRAG ended');
-                document.removeEventListener('touchmove', stageDragMove);
-                document.removeEventListener('touchend', stageDragEnd);
-                document.removeEventListener('touchcancel', stageDragEnd);
-              };
-              
-              document.addEventListener('touchmove', stageDragMove, { passive: false });
-              document.addEventListener('touchend', stageDragEnd);
-              document.addEventListener('touchcancel', stageDragEnd);
+              updateDebug('DRAG: ' + dx.toFixed(0) + ',' + dy.toFixed(0));
+              console.log('[MobileSupport] Dragging, new margins:', currentMarginLeft + dx, currentMarginTop + dy);
+            };
+            
+            const stageDragEnd = () => {
+              updateDebug('DRAG ended');
+              document.removeEventListener('touchmove', stageDragMove);
+              document.removeEventListener('touchend', stageDragEnd);
+              document.removeEventListener('touchcancel', stageDragEnd);
+            };
+            
+            document.addEventListener('touchmove', stageDragMove, { passive: false });
+            document.addEventListener('touchend', stageDragEnd);
+            document.addEventListener('touchcancel', stageDragEnd);
           } else {
             updateDebug('Touch on UI element');
           }
