@@ -161,29 +161,26 @@
           updateDebug('1-finger ON canvas');
           console.log('[MobileSupport] 1-finger on canvas - dispatched mousedown');
         } else {
-          // Check if touch is on stage area or wrap → drag stage
+          // Touch is outside canvas - allow dragging stage from anywhere
+          // (except UI buttons which will handle their own events)
           const stage = document.getElementById('stage');
-          const wrap = document.querySelector('.wrap');
           
-          if (stage) {
-            const stageRect = stage.getBoundingClientRect();
-            const wrapRect = wrap ? wrap.getBoundingClientRect() : stageRect;
-            
-            // Debug: show bounds
-            console.log('[MobileSupport] Touch:', touch.clientX, touch.clientY);
-            console.log('[MobileSupport] Stage bounds:', stageRect.left, stageRect.top, stageRect.right, stageRect.bottom);
-            console.log('[MobileSupport] Wrap bounds:', wrapRect.left, wrapRect.top, wrapRect.right, wrapRect.bottom);
-            
-            // Check both stage and wrap areas
-            const onStage = touch.clientX >= stageRect.left && touch.clientX <= stageRect.right &&
-                           touch.clientY >= stageRect.top && touch.clientY <= stageRect.bottom;
-            const onWrap = touch.clientX >= wrapRect.left && touch.clientX <= wrapRect.right &&
-                          touch.clientY >= wrapRect.top && touch.clientY <= wrapRect.bottom;
-            
-            if (onStage || onWrap) {
-              e.preventDefault();
-              updateDebug('1-finger DRAG stage');
-              console.log('[MobileSupport] 1-finger on stage/wrap - starting drag');
+          // Check if touch target is a button or interactive element
+          const target = e.target;
+          const isButton = target && (
+            target.tagName === 'BUTTON' || 
+            target.tagName === 'INPUT' || 
+            target.tagName === 'SELECT' ||
+            target.closest('button') ||
+            target.closest('.btn') ||
+            target.closest('.dropdown') ||
+            target.closest('.top-editor-bar')
+          );
+          
+          if (stage && !isButton) {
+            e.preventDefault();
+            updateDebug('1-finger DRAG stage');
+            console.log('[MobileSupport] 1-finger outside canvas - starting stage drag');
               
               // Start stage drag
               const startX = touch.clientX;
@@ -213,9 +210,8 @@
               document.addEventListener('touchmove', stageDragMove, { passive: false });
               document.addEventListener('touchend', stageDragEnd);
               document.addEventListener('touchcancel', stageDragEnd);
-            } else {
-              updateDebug('1-finger outside stage');
-            }
+          } else {
+            updateDebug('Touch on UI element');
           }
         }
       }
