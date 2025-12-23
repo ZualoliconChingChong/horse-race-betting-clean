@@ -111,6 +111,18 @@
     
     // Attach to document with capture phase to intercept ALL touch events
     document.addEventListener('touchstart', (e) => {
+      // Skip if touching mobile control buttons - let them handle their own events
+      const target = e.target;
+      if (target && (
+        target.id === 'mobile-move-btn' || 
+        target.id === 'mobile-resize-btn' ||
+        target.id === 'mobile-control-panel' ||
+        target.closest('#mobile-control-panel')
+      )) {
+        console.log('[MobileSupport] Touch on control button, skipping');
+        return; // Don't interfere with button handlers
+      }
+      
       updateDebug('Touch START: ' + e.touches.length + ' fingers');
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
