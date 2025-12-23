@@ -103,16 +103,9 @@
     // Attach to document with capture phase to intercept ALL touch events
     document.addEventListener('touchstart', (e) => {
       updateDebug('Touch START: ' + e.touches.length + ' fingers');
-      
-      // Only handle if touch is on canvas
-      if (e.touches.length > 0 && !isTouchOnCanvas(e.touches[0])) {
-        updateDebug('Touch NOT on canvas');
-        return;
-      }
-      
-      updateDebug('Touch ON canvas: ' + e.touches.length + ' fingers');
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
+      // 2-finger gestures (pinch/pan) work ANYWHERE on the page
       if (e.touches.length === 2) {
         // 2-finger: pinch zoom & pan
         e.preventDefault();
@@ -143,7 +136,12 @@
           console.log('[MobileSupport] Initial pan:', currentPan);
         }
       } else if (e.touches.length === 1 && !pinchState.active && !panState.active) {
-        // 1-finger: convert to mouse event for drag/draw
+        // 1-finger: only convert to mouse event if touch is ON canvas
+        if (!isTouchOnCanvas(e.touches[0])) {
+          updateDebug('1-finger NOT on canvas');
+          return;
+        }
+        
         touchToMouseActive = true;
         const touch = e.touches[0];
         const mouseEvent = new MouseEvent('mousedown', {
@@ -154,16 +152,13 @@
           cancelable: true
         });
         canvas.dispatchEvent(mouseEvent);
+        updateDebug('1-finger ON canvas - mousedown');
         console.log('[MobileSupport] 1-finger - dispatched mousedown');
       }
     }, { passive: false, capture: true });
 
     document.addEventListener('touchmove', (e) => {
-      // Only handle if touch is on canvas
-      if (e.touches.length > 0 && !isTouchOnCanvas(e.touches[0])) {
-        return;
-      }
-      
+      // 2-finger gestures work ANYWHERE
       if (e.touches.length === 2 && (pinchState.active || panState.active)) {
         // 2-finger: pinch & pan
         e.preventDefault();
