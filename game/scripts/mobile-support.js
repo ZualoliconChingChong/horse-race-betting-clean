@@ -60,26 +60,26 @@
     };
   }
 
-  // Add pinch zoom to canvas
+  // Add touch support to canvas
   const canvas = document.getElementById('cv');
   if (canvas && isMobile) {
-    // Pinch zoom & pan (2 fingers)
+    let touchToMouseActive = false;
+    
+    // Unified touch handler
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
+        // 2-finger: pinch zoom & pan
         e.preventDefault();
         
-        // Initialize pinch zoom
         pinchState.active = true;
         pinchState.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
         
-        // Get current zoom from stage transform if available
         if (window.StageTransform && typeof window.StageTransform.getZoom === 'function') {
           pinchState.initialScale = window.StageTransform.getZoom();
         } else {
           pinchState.initialScale = 1;
         }
         
-        // Initialize pan state
         panState.active = true;
         const center = getTouchCenter(e.touches[0], e.touches[1]);
         panState.lastX = center.x;
@@ -90,60 +90,8 @@
           panState.initialPanX = currentPan.x;
           panState.initialPanY = currentPan.y;
         }
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        
-        if (pinchState.active) {
-          // Pinch zoom
-          const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-          const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
-          
-          // Apply zoom via stage transform if available
-          if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
-            window.StageTransform.setZoom(scale, true);
-          }
-        }
-        
-        if (panState.active) {
-          // 2-finger pan (move map viewport)
-          const center = getTouchCenter(e.touches[0], e.touches[1]);
-          const deltaX = center.x - panState.lastX;
-          const deltaY = center.y - panState.lastY;
-          
-          panState.lastX = center.x;
-          panState.lastY = center.y;
-          
-          // Apply pan via stage transform
-          if (window.StageTransform && typeof window.StageTransform.getPan === 'function') {
-            const currentPan = window.StageTransform.getPan();
-            window.StageTransform.setPan(currentPan.x + deltaX, currentPan.y + deltaY, true);
-          }
-        }
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', (e) => {
-      if (e.touches.length < 2) {
-        pinchState.active = false;
-        panState.active = false;
-      }
-    });
-
-    canvas.addEventListener('touchcancel', () => {
-      pinchState.active = false;
-      panState.active = false;
-    });
-
-    // Convert single-touch to mouse events for drag/resize compatibility
-    // This allows existing mouse-based drag logic to work with touch
-    let touchToMouseActive = false;
-    
-    canvas.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1 && !pinchState.active) {
+      } else if (e.touches.length === 1 && !pinchState.active && !panState.active) {
+        // 1-finger: convert to mouse event for drag/draw
         touchToMouseActive = true;
         const touch = e.touches[0];
         const mouseEvent = new MouseEvent('mousedown', {
@@ -158,7 +106,34 @@
     }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1 && touchToMouseActive && !pinchState.active) {
+      if (e.touches.length === 2 && (pinchState.active || panState.active)) {
+        // 2-finger: pinch & pan
+        e.preventDefault();
+        
+        if (pinchState.active) {
+          const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+          const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
+          
+          if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
+            window.StageTransform.setZoom(scale, true);
+          }
+        }
+        
+        if (panState.active) {
+          const center = getTouchCenter(e.touches[0], e.touches[1]);
+          const deltaX = center.x - panState.lastX;
+          const deltaY = center.y - panState.lastY;
+          
+          panState.lastX = center.x;
+          panState.lastY = center.y;
+          
+          if (window.StageTransform && typeof window.StageTransform.getPan === 'function') {
+            const currentPan = window.StageTransform.getPan();
+            window.StageTransform.setPan(currentPan.x + deltaX, currentPan.y + deltaY, true);
+          }
+        }
+      } else if (e.touches.length === 1 && touchToMouseActive) {
+        // 1-finger: convert to mousemove
         const touch = e.touches[0];
         const mouseEvent = new MouseEvent('mousemove', {
           clientX: touch.clientX,
@@ -171,7 +146,12 @@
     }, { passive: false });
 
     canvas.addEventListener('touchend', (e) => {
-      if (touchToMouseActive) {
+      if (e.touches.length < 2) {
+        pinchState.active = false;
+        panState.active = false;
+      }
+      
+      if (touchToMouseActive && e.touches.length === 0) {
         touchToMouseActive = false;
         const mouseEvent = new MouseEvent('mouseup', {
           button: 0,
@@ -180,6 +160,12 @@
         });
         canvas.dispatchEvent(mouseEvent);
       }
+    });
+
+    canvas.addEventListener('touchcancel', () => {
+      pinchState.active = false;
+      panState.active = false;
+      touchToMouseActive = false;
     });
   }
 
