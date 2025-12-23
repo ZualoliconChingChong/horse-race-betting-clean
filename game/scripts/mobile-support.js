@@ -32,11 +32,19 @@
     }
   });
 
-  // Pinch-to-Zoom Support
+  // Pinch-to-Zoom & Pan Support
   let pinchState = {
     active: false,
     initialDistance: 0,
     initialScale: 1
+  };
+
+  let panState = {
+    active: false,
+    lastX: 0,
+    lastY: 0,
+    initialPanX: 0,
+    initialPanY: 0
   };
 
   function getTouchDistance(touch1, touch2) {
@@ -55,10 +63,12 @@
   // Add pinch zoom to canvas
   const canvas = document.getElementById('cv');
   if (canvas && isMobile) {
-    // Pinch zoom (2 fingers)
+    // Pinch zoom & pan (2 fingers)
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         e.preventDefault();
+        
+        // Initialize pinch zoom
         pinchState.active = true;
         pinchState.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
         
@@ -68,20 +78,50 @@
         } else {
           pinchState.initialScale = 1;
         }
+        
+        // Initialize pan state
+        panState.active = true;
+        const center = getTouchCenter(e.touches[0], e.touches[1]);
+        panState.lastX = center.x;
+        panState.lastY = center.y;
+        
+        if (window.StageTransform && typeof window.StageTransform.getPan === 'function') {
+          const currentPan = window.StageTransform.getPan();
+          panState.initialPanX = currentPan.x;
+          panState.initialPanY = currentPan.y;
+        }
       }
     }, { passive: false });
 
     canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 2 && pinchState.active) {
+      if (e.touches.length === 2) {
         e.preventDefault();
         
-        const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-        const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
-        const center = getTouchCenter(e.touches[0], e.touches[1]);
+        if (pinchState.active) {
+          // Pinch zoom
+          const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+          const scale = (currentDistance / pinchState.initialDistance) * pinchState.initialScale;
+          
+          // Apply zoom via stage transform if available
+          if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
+            window.StageTransform.setZoom(scale, true);
+          }
+        }
         
-        // Apply zoom via stage transform if available
-        if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
-          window.StageTransform.setZoom(scale, true);
+        if (panState.active) {
+          // 2-finger pan (move map viewport)
+          const center = getTouchCenter(e.touches[0], e.touches[1]);
+          const deltaX = center.x - panState.lastX;
+          const deltaY = center.y - panState.lastY;
+          
+          panState.lastX = center.x;
+          panState.lastY = center.y;
+          
+          // Apply pan via stage transform
+          if (window.StageTransform && typeof window.StageTransform.getPan === 'function') {
+            const currentPan = window.StageTransform.getPan();
+            window.StageTransform.setPan(currentPan.x + deltaX, currentPan.y + deltaY, true);
+          }
         }
       }
     }, { passive: false });
@@ -89,11 +129,13 @@
     canvas.addEventListener('touchend', (e) => {
       if (e.touches.length < 2) {
         pinchState.active = false;
+        panState.active = false;
       }
     });
 
     canvas.addEventListener('touchcancel', () => {
       pinchState.active = false;
+      panState.active = false;
     });
 
     // Convert single-touch to mouse events for drag/resize compatibility
@@ -139,6 +181,64 @@
         canvas.dispatchEvent(mouseEvent);
       }
     });
+  }
+
+  // Add touch support for stage resize handles
+  if (isMobile) {
+    const stage = document.getElementById('stage');
+    if (stage) {
+      // Find all resize handles
+      const resizeHandles = stage.querySelectorAll('.resize-handle');
+      
+      resizeHandles.forEach(handle => {
+        handle.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            const canvas = document.getElementById('cv');
+            if (!canvas) return;
+            
+            const startW = canvas.width;
+            const startH = canvas.height;
+            const startX = touch.clientX;
+            const startY = touch.clientY;
+            const handleType = handle.classList.contains('corner') ? 'corner' :
+                             handle.classList.contains('right') ? 'right' : 'bottom';
+            
+            const doResize = (moveEvent) => {
+              if (moveEvent.touches.length !== 1) return;
+              const moveTouch = moveEvent.touches[0];
+              const dx = moveTouch.clientX - startX;
+              const dy = moveTouch.clientY - startY;
+              
+              if (handleType === 'corner' || handleType === 'right') {
+                canvas.width = Math.round(Math.max(320, startW + dx));
+              }
+              if (handleType === 'corner' || handleType === 'bottom') {
+                canvas.height = Math.round(Math.max(240, startH + dy));
+              }
+              
+              // Trigger redraw if function exists
+              if (typeof window.drawMap === 'function') {
+                window.drawMap();
+              }
+            };
+            
+            const stopResize = () => {
+              window.removeEventListener('touchmove', doResize);
+              window.removeEventListener('touchend', stopResize);
+              window.removeEventListener('touchcancel', stopResize);
+            };
+            
+            window.addEventListener('touchmove', doResize, { passive: false });
+            window.addEventListener('touchend', stopResize);
+            window.addEventListener('touchcancel', stopResize);
+          }
+        }, { passive: false });
+      });
+    }
   }
 
   // Mobile UI Enhancements
