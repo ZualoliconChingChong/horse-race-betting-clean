@@ -161,17 +161,29 @@
           updateDebug('1-finger ON canvas');
           console.log('[MobileSupport] 1-finger on canvas - dispatched mousedown');
         } else {
-          // Check if touch is on stage area → drag stage
+          // Check if touch is on stage area or wrap → drag stage
           const stage = document.getElementById('stage');
+          const wrap = document.querySelector('.wrap');
+          
           if (stage) {
             const stageRect = stage.getBoundingClientRect();
+            const wrapRect = wrap ? wrap.getBoundingClientRect() : stageRect;
+            
+            // Debug: show bounds
+            console.log('[MobileSupport] Touch:', touch.clientX, touch.clientY);
+            console.log('[MobileSupport] Stage bounds:', stageRect.left, stageRect.top, stageRect.right, stageRect.bottom);
+            console.log('[MobileSupport] Wrap bounds:', wrapRect.left, wrapRect.top, wrapRect.right, wrapRect.bottom);
+            
+            // Check both stage and wrap areas
             const onStage = touch.clientX >= stageRect.left && touch.clientX <= stageRect.right &&
                            touch.clientY >= stageRect.top && touch.clientY <= stageRect.bottom;
+            const onWrap = touch.clientX >= wrapRect.left && touch.clientX <= wrapRect.right &&
+                          touch.clientY >= wrapRect.top && touch.clientY <= wrapRect.bottom;
             
-            if (onStage) {
+            if (onStage || onWrap) {
               e.preventDefault();
-              updateDebug('1-finger ON stage - DRAG');
-              console.log('[MobileSupport] 1-finger on stage - starting drag');
+              updateDebug('1-finger DRAG stage');
+              console.log('[MobileSupport] 1-finger on stage/wrap - starting drag');
               
               // Start stage drag
               const startX = touch.clientX;
