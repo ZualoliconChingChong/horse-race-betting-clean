@@ -55,6 +55,7 @@
   // Add pinch zoom to canvas
   const canvas = document.getElementById('cv');
   if (canvas && isMobile) {
+    // Pinch zoom (2 fingers)
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 2) {
         e.preventDefault();
@@ -62,8 +63,8 @@
         pinchState.initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
         
         // Get current zoom from stage transform if available
-        if (window.stageTransform && window.stageTransform.scale) {
-          pinchState.initialScale = window.stageTransform.scale;
+        if (window.StageTransform && typeof window.StageTransform.getZoom === 'function') {
+          pinchState.initialScale = window.StageTransform.getZoom();
         } else {
           pinchState.initialScale = 1;
         }
@@ -79,8 +80,8 @@
         const center = getTouchCenter(e.touches[0], e.touches[1]);
         
         // Apply zoom via stage transform if available
-        if (window.stageTransform && typeof window.stageTransform.setScale === 'function') {
-          window.stageTransform.setScale(scale, center.x, center.y);
+        if (window.StageTransform && typeof window.StageTransform.setZoom === 'function') {
+          window.StageTransform.setZoom(scale, true);
         }
       }
     }, { passive: false });
@@ -93,6 +94,50 @@
 
     canvas.addEventListener('touchcancel', () => {
       pinchState.active = false;
+    });
+
+    // Convert single-touch to mouse events for drag/resize compatibility
+    // This allows existing mouse-based drag logic to work with touch
+    let touchToMouseActive = false;
+    
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1 && !pinchState.active) {
+        touchToMouseActive = true;
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousedown', {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          button: 0,
+          bubbles: true,
+          cancelable: true
+        });
+        canvas.dispatchEvent(mouseEvent);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && touchToMouseActive && !pinchState.active) {
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent('mousemove', {
+          clientX: touch.clientX,
+          clientY: touch.clientY,
+          bubbles: true,
+          cancelable: true
+        });
+        canvas.dispatchEvent(mouseEvent);
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (touchToMouseActive) {
+        touchToMouseActive = false;
+        const mouseEvent = new MouseEvent('mouseup', {
+          button: 0,
+          bubbles: true,
+          cancelable: true
+        });
+        canvas.dispatchEvent(mouseEvent);
+      }
     });
   }
 
