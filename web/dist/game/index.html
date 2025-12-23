@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <title>Horse Maze Race — WITH RESULTS TABLE v2025</title>
 <link rel="stylesheet" href="styles/main.css">
 
@@ -632,16 +632,16 @@
             <button class="teb-action-btn" data-click="loadLS">📥 Load</button>
           </div>
           
-          <div class="teb-menu-section">📸 Picture to Map</div>
+          <div class="teb-menu-section">🖼️ Map Background</div>
           <div class="teb-menu-setting">
-            <label>Image File</label>
+            <label>Background Image</label>
             <input type="file" id="pictureToMapFile" accept="image/*" class="teb-file-input">
           </div>
           <div class="teb-menu-actions">
-            <button class="teb-action-btn teb-green" id="convertPictureBtn">✨ Convert</button>
+            <button class="teb-action-btn teb-green" id="convertPictureBtn">🖼️ Set Background</button>
           </div>
           <div style="font-size:11px;color:#888;padding:4px 8px;line-height:1.3">
-            Edges → Walls, Colors → Visual only
+            Upload an image to use as a semi-transparent backdrop. Walls stay unchanged.
           </div>
           
           <div class="teb-menu-section">🚪 Waiting Room</div>
@@ -1437,6 +1437,7 @@
 <script src="scripts/editor/text-walls.js"></script>
 <script src="scripts/editor/editor-shortcuts.js"></script>
 <script src="scripts/editor/picture-to-map.js"></script>
+<script src="scripts/mobile-support.js"></script>
 <!-- ui-initialization.js removed - keeping event handlers in extracted-inline.js for stability -->
 <!-- Load race module AFTER mapDef is defined -->
 <script src="scripts/core/race.js"></script>
