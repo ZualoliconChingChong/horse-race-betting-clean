@@ -332,24 +332,172 @@
     
     // Update debug indicator
     const debugDiv = document.getElementById('touch-debug');
-    if (debugDiv) debugDiv.textContent = 'Stage handlers ready';
+    if (debugDiv) debugDiv.textContent = 'Stage ready';
     
+    // ===== CREATE MOBILE CONTROL PANEL =====
+    // Remove old controls if exist
+    const oldPanel = document.getElementById('mobile-control-panel');
+    if (oldPanel) oldPanel.remove();
+    
+    // Create floating control panel
+    const panel = document.createElement('div');
+    panel.id = 'mobile-control-panel';
+    panel.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 99999;
+    `;
+    
+    // MOVE button
+    const moveBtn = document.createElement('div');
+    moveBtn.id = 'mobile-move-btn';
+    moveBtn.innerHTML = '✥<br>MOVE';
+    moveBtn.style.cssText = `
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+    `;
+    
+    // RESIZE button
+    const resizeBtn = document.createElement('div');
+    resizeBtn.id = 'mobile-resize-btn';
+    resizeBtn.innerHTML = '⤡<br>SIZE';
+    resizeBtn.style.cssText = `
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #2196F3, #1976D2);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      touch-action: none;
+      user-select: none;
+      cursor: nwse-resize;
+    `;
+    
+    panel.appendChild(moveBtn);
+    panel.appendChild(resizeBtn);
+    document.body.appendChild(panel);
+    
+    console.log('[MobileSupport] Created mobile control panel');
+    if (debugDiv) debugDiv.textContent = 'Controls ready!';
+    
+    // ===== MOVE BUTTON HANDLER =====
+    moveBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const startX = touch.clientX;
+        const startY = touch.clientY;
+        
+        // Get current stage position
+        const computedStyle = window.getComputedStyle(stage);
+        const matrix = new DOMMatrix(computedStyle.transform);
+        const currentX = matrix.m41 || 0;
+        const currentY = matrix.m42 || 0;
+        
+        moveBtn.style.background = 'linear-gradient(135deg, #66BB6A, #4CAF50)';
+        if (debugDiv) debugDiv.textContent = 'MOVING...';
+        
+        const doMove = (moveEvent) => {
+          moveEvent.preventDefault();
+          if (moveEvent.touches.length !== 1) return;
+          const moveTouch = moveEvent.touches[0];
+          const dx = moveTouch.clientX - startX;
+          const dy = moveTouch.clientY - startY;
+          
+          stage.style.transform = `translate(${currentX + dx}px, ${currentY + dy}px)`;
+          if (debugDiv) debugDiv.textContent = 'MOVE: ' + (currentX + dx).toFixed(0) + ',' + (currentY + dy).toFixed(0);
+        };
+        
+        const stopMove = () => {
+          moveBtn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
+          if (debugDiv) debugDiv.textContent = 'Move done';
+          window.removeEventListener('touchmove', doMove);
+          window.removeEventListener('touchend', stopMove);
+          window.removeEventListener('touchcancel', stopMove);
+        };
+        
+        window.addEventListener('touchmove', doMove, { passive: false });
+        window.addEventListener('touchend', stopMove);
+        window.addEventListener('touchcancel', stopMove);
+      }
+    }, { passive: false });
+    
+    // ===== RESIZE BUTTON HANDLER =====
+    resizeBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const startX = touch.clientX;
+        const startY = touch.clientY;
+        const startW = canvas.width;
+        const startH = canvas.height;
+        
+        resizeBtn.style.background = 'linear-gradient(135deg, #42A5F5, #2196F3)';
+        if (debugDiv) debugDiv.textContent = 'RESIZING...';
+        
+        const doResize = (moveEvent) => {
+          moveEvent.preventDefault();
+          if (moveEvent.touches.length !== 1) return;
+          const moveTouch = moveEvent.touches[0];
+          const dx = moveTouch.clientX - startX;
+          const dy = moveTouch.clientY - startY;
+          
+          canvas.width = Math.round(Math.max(320, startW + dx));
+          canvas.height = Math.round(Math.max(240, startH + dy));
+          
+          if (debugDiv) debugDiv.textContent = 'SIZE: ' + canvas.width + 'x' + canvas.height;
+          
+          // Trigger redraw
+          if (typeof window.drawMap === 'function') {
+            window.drawMap();
+          }
+        };
+        
+        const stopResize = () => {
+          resizeBtn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+          if (debugDiv) debugDiv.textContent = 'Resize done';
+          window.removeEventListener('touchmove', doResize);
+          window.removeEventListener('touchend', stopResize);
+          window.removeEventListener('touchcancel', stopResize);
+        };
+        
+        window.addEventListener('touchmove', doResize, { passive: false });
+        window.addEventListener('touchend', stopResize);
+        window.addEventListener('touchcancel', stopResize);
+      }
+    }, { passive: false });
+    
+    // ===== OLD RESIZE HANDLES (keep for compatibility) =====
     // Find all resize handles
     const resizeHandles = stage.querySelectorAll('.resize-handle');
     console.log('[MobileSupport] Found resize handles:', resizeHandles.length);
-    
-    if (resizeHandles.length === 0) {
-      console.log('[MobileSupport] No resize handles found! Creating them...');
-      // Create resize handles if they don't exist
-      const cornerHandle = document.createElement('div');
-      cornerHandle.className = 'resize-handle corner';
-      cornerHandle.style.cssText = 'position:absolute;bottom:0;right:0;width:40px;height:40px;background:rgba(0,120,255,0.5);cursor:nwse-resize;z-index:100;border-radius:8px 0 0 0;';
-      stage.appendChild(cornerHandle);
-      
-      // Re-query
-      const newHandles = stage.querySelectorAll('.resize-handle');
-      console.log('[MobileSupport] Created resize handles, now have:', newHandles.length);
-    }
     
     // Re-query and setup all resize handles
     const allResizeHandles = stage.querySelectorAll('.resize-handle');
