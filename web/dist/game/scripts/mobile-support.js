@@ -330,6 +330,10 @@
     
     console.log('[MobileSupport] Creating mobile controls');
     
+    // Reset any existing margin that might have moved stage off-screen
+    stage.style.marginLeft = '0px';
+    stage.style.marginTop = '0px';
+    
     // Create mobile control panel
     const controlPanel = document.createElement('div');
     controlPanel.id = 'mobile-editor-controls';
@@ -337,7 +341,8 @@
       <div style="display:flex;gap:8px;align-items:center;">
         <span style="font-size:11px;opacity:0.7;">Map:</span>
         <button id="mobile-move-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#4a90d9;color:white;font-size:14px;touch-action:none;">✋ Move</button>
-        <button id="mobile-resize-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#d94a4a;color:white;font-size:14px;touch-action:none;">↔️ Resize</button>
+        <button id="mobile-resize-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#d94a4a;color:white;font-size:14px;touch-action:none;">↔️ Size</button>
+        <button id="mobile-reset-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#888;color:white;font-size:14px;touch-action:none;">🔄</button>
       </div>
     `;
     controlPanel.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);padding:12px 16px;border-radius:16px;z-index:10000;display:flex;gap:12px;align-items:center;';
@@ -348,7 +353,19 @@
     
     const moveBtn = document.getElementById('mobile-move-btn');
     const resizeBtn = document.getElementById('mobile-resize-btn');
+    const resetBtn = document.getElementById('mobile-reset-btn');
     const debugDiv = document.getElementById('touch-debug');
+    
+    // Reset button - bring map back to center
+    resetBtn.addEventListener('click', () => {
+      stage.style.marginLeft = '0px';
+      stage.style.marginTop = '0px';
+      moveMode = false;
+      resizeMode = false;
+      moveBtn.style.background = '#4a90d9';
+      resizeBtn.style.background = '#d94a4a';
+      if (debugDiv) debugDiv.textContent = 'Map reset to center';
+    });
     
     // Move mode
     moveBtn.addEventListener('click', () => {
