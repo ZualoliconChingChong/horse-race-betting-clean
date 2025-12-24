@@ -330,9 +330,7 @@
     
     console.log('[MobileSupport] Creating mobile controls');
     
-    // Reset any existing margin that might have moved stage off-screen
-    stage.style.marginLeft = '0px';
-    stage.style.marginTop = '0px';
+    // DO NOT modify stage margins - it breaks layout
     
     // Create mobile control panel
     const controlPanel = document.createElement('div');
@@ -357,14 +355,13 @@
     const debugDiv = document.getElementById('touch-debug');
     
     // Reset button - bring map back to center
-    resetBtn.addEventListener('click', () => {
-      stage.style.marginLeft = '0px';
-      stage.style.marginTop = '0px';
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+      stage.style.transform = '';
       moveMode = false;
       resizeMode = false;
-      moveBtn.style.background = '#4a90d9';
-      resizeBtn.style.background = '#d94a4a';
-      if (debugDiv) debugDiv.textContent = 'Map reset to center';
+      if (moveBtn) moveBtn.style.background = '#4a90d9';
+      if (resizeBtn) resizeBtn.style.background = '#d94a4a';
+      if (debugDiv) debugDiv.textContent = 'Map reset';
     });
     
     // Move mode
@@ -420,8 +417,8 @@
       const dy = touch.clientY - activeDrag.startY;
       
       if (moveMode) {
-        stage.style.marginLeft = (activeDrag.startMarginLeft + dx) + 'px';
-        stage.style.marginTop = (activeDrag.startMarginTop + dy) + 'px';
+        // Use transform instead of margin to avoid breaking layout
+        stage.style.transform = `translate(${dx}px, ${dy}px)`;
         if (debugDiv) debugDiv.textContent = 'MOVE: ' + dx + ', ' + dy;
       } else if (resizeMode) {
         canvas.width = Math.max(320, activeDrag.startWidth + dx);
