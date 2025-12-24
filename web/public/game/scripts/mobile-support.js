@@ -439,8 +439,8 @@
     console.log('[MobileSupport] Mobile controls created');
   }
   
-  // Initialize mobile controls
-  createMobileControls();
+  // DISABLED - was breaking map
+  // createMobileControls();
 
   // Legacy: Add touch support for existing resize handles
   function initStageTouch() {
