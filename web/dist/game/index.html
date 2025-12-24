@@ -674,37 +674,27 @@
 
     <canvas id="cv" width="1920" height="1000"></canvas>
     
-    <!-- DEBUG: Mobile canvas test -->
+    <!-- DEBUG: Mobile canvas test + error catcher -->
     <script>
     (function(){
-      var c = document.getElementById('cv');
       var debugDiv = document.createElement('div');
-      debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:99999;font-size:12px;max-width:90%;';
+      debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:99999;font-size:11px;max-width:90%;max-height:50%;overflow:auto;';
       debugDiv.id = 'canvas-debug';
       document.body.appendChild(debugDiv);
+      window._debugLog = function(msg) {
+        debugDiv.innerHTML += '<br>' + msg;
+      };
       
-      if (!c) {
-        debugDiv.innerHTML = 'ERROR: Canvas not found!';
-        return;
-      }
+      // Catch ALL JS errors
+      window.onerror = function(msg, url, line) {
+        debugDiv.innerHTML += '<br>❌ ERROR: ' + msg + ' (line ' + line + ')';
+        return false;
+      };
       
-      debugDiv.innerHTML = 'Canvas: ' + c.width + 'x' + c.height + '<br>Display: ' + c.offsetWidth + 'x' + c.offsetHeight + '<br>Screen: ' + window.innerWidth + 'x' + window.innerHeight;
-      
-      // Try to draw something simple
-      var ctx = c.getContext('2d');
-      if (!ctx) {
-        debugDiv.innerHTML += '<br>ERROR: No 2D context!';
-        return;
-      }
-      
-      // Draw a red rectangle in top-left corner
-      ctx.fillStyle = 'red';
-      ctx.fillRect(0, 0, 200, 200);
-      ctx.fillStyle = 'white';
-      ctx.font = '30px Arial';
-      ctx.fillText('CANVAS TEST', 20, 100);
-      
-      debugDiv.innerHTML += '<br>Drew test rect!';
+      var c = document.getElementById('cv');
+      debugDiv.innerHTML = 'Canvas: ' + (c ? c.width + 'x' + c.height : 'NOT FOUND');
+      debugDiv.innerHTML += '<br>Screen: ' + window.innerWidth + 'x' + window.innerHeight;
+      debugDiv.innerHTML += '<br>Waiting for errors...';
     })();
     </script>
     
