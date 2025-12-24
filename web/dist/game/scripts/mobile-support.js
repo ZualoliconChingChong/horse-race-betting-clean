@@ -317,6 +317,23 @@
   
   // Initialize handlers
   initCanvasTouchHandlers();
+  
+  // EMERGENCY FIX: Reset stage position that may have been broken by previous code
+  function emergencyResetStage() {
+    const stage = document.getElementById('stage');
+    if (stage) {
+      // Clear ALL positioning that might have broken layout
+      stage.style.marginLeft = '';
+      stage.style.marginTop = '';
+      stage.style.transform = '';
+      stage.style.left = '';
+      stage.style.top = '';
+      console.log('[MobileSupport] Emergency stage reset applied');
+    } else {
+      setTimeout(emergencyResetStage, 100);
+    }
+  }
+  emergencyResetStage();
 
   // Create mobile control panel for map editor
   function createMobileControls() {
