@@ -6,12 +6,9 @@
   
   if (typeof window === 'undefined') return;
 
-  // Detect touch capability
-  const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  if (!hasTouch) {
-    console.log('[MobileSupport] No touch support detected, module disabled');
-    return;
-  }
+  // Always run on all devices - don't check hasTouch
+  // This ensures no early return that could cause issues
+  console.log('[MobileSupport] Module starting...');
   
   console.log('[MobileSupport] Touch support detected, initializing...');
 
