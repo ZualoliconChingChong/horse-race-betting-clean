@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Horse Maze Race — WITH RESULTS TABLE v2025</title>
 <link rel="stylesheet" href="styles/main.css">
 
@@ -632,16 +632,16 @@
             <button class="teb-action-btn" data-click="loadLS">📥 Load</button>
           </div>
           
-          <div class="teb-menu-section">🖼️ Map Background</div>
+          <div class="teb-menu-section">📸 Picture to Map</div>
           <div class="teb-menu-setting">
-            <label>Background Image</label>
+            <label>Image File</label>
             <input type="file" id="pictureToMapFile" accept="image/*" class="teb-file-input">
           </div>
           <div class="teb-menu-actions">
-            <button class="teb-action-btn teb-green" id="convertPictureBtn">🖼️ Set Background</button>
+            <button class="teb-action-btn teb-green" id="convertPictureBtn">✨ Convert</button>
           </div>
           <div style="font-size:11px;color:#888;padding:4px 8px;line-height:1.3">
-            Upload an image to use as a semi-transparent backdrop. Walls stay unchanged.
+            Edges → Walls, Colors → Visual only
           </div>
           
           <div class="teb-menu-section">🚪 Waiting Room</div>
@@ -673,53 +673,6 @@
     <button class="teb-restore-btn" id="tebRestoreBar" title="Mở thanh editor (M)">🛠️</button>
 
     <canvas id="cv" width="1920" height="1000"></canvas>
-    
-    <!-- DEBUG: Mobile canvas + stage visibility test -->
-    <script>
-    (function(){
-      var debugDiv = document.createElement('div');
-      debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:red;color:white;padding:8px;z-index:99999;font-size:10px;max-width:95%;';
-      debugDiv.id = 'canvas-debug';
-      document.body.appendChild(debugDiv);
-      
-      window.onerror = function(msg) {
-        debugDiv.innerHTML += '<br>❌ ' + msg;
-        return false;
-      };
-      
-      var c = document.getElementById('cv');
-      var stage = document.getElementById('stage');
-      var wrap = document.querySelector('.wrap');
-      
-      // FORCE VISIBILITY on all containers
-      if (wrap) {
-        wrap.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;';
-      }
-      if (stage) {
-        stage.style.cssText += ';display:block!important;visibility:visible!important;opacity:1!important;overflow:visible!important;';
-        var sr = stage.getBoundingClientRect();
-        debugDiv.innerHTML = 'Stage: ' + Math.round(sr.width) + 'x' + Math.round(sr.height) + ' @' + Math.round(sr.top);
-      }
-      if (c) {
-        c.style.cssText += ';display:block!important;visibility:visible!important;opacity:1!important;border:8px solid red!important;background:lime!important;';
-        var cr = c.getBoundingClientRect();
-        debugDiv.innerHTML += '<br>Canvas: ' + Math.round(cr.width) + 'x' + Math.round(cr.height) + ' @' + Math.round(cr.top);
-        debugDiv.innerHTML += '<br>Screen: ' + window.innerWidth + 'x' + window.innerHeight;
-        
-        setTimeout(function() {
-          var ctx = c.getContext('2d');
-          ctx.fillStyle = 'blue';
-          ctx.fillRect(0, 0, 400, 300);
-          ctx.fillStyle = 'yellow';
-          ctx.font = 'bold 50px Arial';
-          ctx.fillText('HELLO MOBILE', 20, 150);
-          debugDiv.innerHTML += '<br>✅ DREW!';
-        }, 300);
-      } else {
-        debugDiv.innerHTML += '<br>❌ No canvas!';
-      }
-    })();
-    </script>
     
     <!-- Thanh thông báo overlay trên map -->
     <div class="notification-bar show" id="notificationBar">
@@ -1484,8 +1437,6 @@
 <script src="scripts/editor/text-walls.js"></script>
 <script src="scripts/editor/editor-shortcuts.js"></script>
 <script src="scripts/editor/picture-to-map.js"></script>
-<!-- DISABLED FOR TESTING -->
-<!-- <script src="scripts/mobile-support.js"></script> -->
 <!-- ui-initialization.js removed - keeping event handlers in extracted-inline.js for stability -->
 <!-- Load race module AFTER mapDef is defined -->
 <script src="scripts/core/race.js"></script>
