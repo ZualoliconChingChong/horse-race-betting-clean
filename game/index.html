@@ -674,42 +674,49 @@
 
     <canvas id="cv" width="1920" height="1000"></canvas>
     
-    <!-- DEBUG: Mobile canvas visibility test -->
+    <!-- DEBUG: Mobile canvas + stage visibility test -->
     <script>
     (function(){
       var debugDiv = document.createElement('div');
-      debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:99999;font-size:11px;max-width:90%;';
+      debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;background:red;color:white;padding:8px;z-index:99999;font-size:10px;max-width:95%;';
       debugDiv.id = 'canvas-debug';
       document.body.appendChild(debugDiv);
       
-      window.onerror = function(msg, url, line) {
+      window.onerror = function(msg) {
         debugDiv.innerHTML += '<br>❌ ' + msg;
         return false;
       };
       
       var c = document.getElementById('cv');
+      var stage = document.getElementById('stage');
+      var wrap = document.querySelector('.wrap');
+      
+      // FORCE VISIBILITY on all containers
+      if (wrap) {
+        wrap.style.cssText += ';display:flex!important;visibility:visible!important;opacity:1!important;';
+      }
+      if (stage) {
+        stage.style.cssText += ';display:block!important;visibility:visible!important;opacity:1!important;overflow:visible!important;';
+        var sr = stage.getBoundingClientRect();
+        debugDiv.innerHTML = 'Stage: ' + Math.round(sr.width) + 'x' + Math.round(sr.height) + ' @' + Math.round(sr.top);
+      }
       if (c) {
-        // ADD BRIGHT BORDER so we can SEE the canvas
-        c.style.border = '5px solid magenta';
-        c.style.background = 'yellow';
-        
-        var rect = c.getBoundingClientRect();
-        debugDiv.innerHTML = 'Canvas pos: ' + Math.round(rect.left) + ',' + Math.round(rect.top);
-        debugDiv.innerHTML += '<br>Canvas size: ' + Math.round(rect.width) + 'x' + Math.round(rect.height);
+        c.style.cssText += ';display:block!important;visibility:visible!important;opacity:1!important;border:8px solid red!important;background:lime!important;';
+        var cr = c.getBoundingClientRect();
+        debugDiv.innerHTML += '<br>Canvas: ' + Math.round(cr.width) + 'x' + Math.round(cr.height) + ' @' + Math.round(cr.top);
         debugDiv.innerHTML += '<br>Screen: ' + window.innerWidth + 'x' + window.innerHeight;
         
-        // Draw test after short delay
         setTimeout(function() {
           var ctx = c.getContext('2d');
           ctx.fillStyle = 'blue';
-          ctx.fillRect(50, 50, 300, 200);
-          ctx.fillStyle = 'white';
-          ctx.font = 'bold 40px Arial';
-          ctx.fillText('MOBILE TEST', 70, 160);
-          debugDiv.innerHTML += '<br>✅ Drew blue box!';
-        }, 500);
+          ctx.fillRect(0, 0, 400, 300);
+          ctx.fillStyle = 'yellow';
+          ctx.font = 'bold 50px Arial';
+          ctx.fillText('HELLO MOBILE', 20, 150);
+          debugDiv.innerHTML += '<br>✅ DREW!';
+        }, 300);
       } else {
-        debugDiv.innerHTML = '❌ Canvas not found!';
+        debugDiv.innerHTML += '<br>❌ No canvas!';
       }
     })();
     </script>
