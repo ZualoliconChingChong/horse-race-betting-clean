@@ -1,29 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mobile Canvas Test</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #333; min-height: 100vh; }
-canvas { 
-  display: block;
-  background: lime;
-  border: 10px solid red;
-  width: 100%;
-  max-width: 800px;
-  margin: 20px auto;
-}
+body { background: white; min-height: 100vh; padding: 20px; }
 #info {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  background: blue;
+  background: red;
   color: white;
   padding: 15px;
-  font-size: 16px;
-  z-index: 9999;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+#testCanvas {
+  display: block;
+  background: yellow;
+  border: 5px solid blue;
+}
+.test-div {
+  width: 300px;
+  height: 200px;
+  background: green;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
 }
 </style>
 </head>
@@ -31,32 +37,36 @@ canvas {
 
 <div id="info">Loading...</div>
 
-<canvas id="testCanvas" width="800" height="500"></canvas>
+<!-- TINY canvas - 300x200 -->
+<canvas id="testCanvas" width="300" height="200"></canvas>
+
+<!-- Regular div for comparison -->
+<div class="test-div">DIV TEST</div>
 
 <script>
 var info = document.getElementById('info');
 var canvas = document.getElementById('testCanvas');
-var ctx = canvas.getContext('2d');
 
-// Show info
-var rect = canvas.getBoundingClientRect();
 info.innerHTML = 'Screen: ' + window.innerWidth + 'x' + window.innerHeight;
-info.innerHTML += '<br>Canvas display: ' + Math.round(rect.width) + 'x' + Math.round(rect.height);
-info.innerHTML += '<br>Canvas pos: ' + Math.round(rect.left) + ',' + Math.round(rect.top);
 
-// Draw something
-ctx.fillStyle = 'blue';
-ctx.fillRect(0, 0, 800, 500);
-
-ctx.fillStyle = 'yellow';
-ctx.font = 'bold 60px Arial';
-ctx.fillText('MOBILE OK!', 150, 280);
-
-ctx.fillStyle = 'white';
-ctx.font = '30px Arial';
-ctx.fillText('If you see this, canvas works', 120, 350);
-
-info.innerHTML += '<br>✅ Canvas drawn!';
+if (canvas) {
+  var rect = canvas.getBoundingClientRect();
+  info.innerHTML += '<br>Canvas: ' + rect.width + 'x' + rect.height;
+  
+  var ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = 'purple';
+    ctx.fillRect(0, 0, 300, 200);
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 30px Arial';
+    ctx.fillText('CANVAS OK', 60, 110);
+    info.innerHTML += '<br>✅ Drew on canvas!';
+  } else {
+    info.innerHTML += '<br>❌ No 2D context!';
+  }
+} else {
+  info.innerHTML += '<br>❌ No canvas element!';
+}
 </script>
 
 </body>
