@@ -111,18 +111,6 @@
     
     // Attach to document with capture phase to intercept ALL touch events
     document.addEventListener('touchstart', (e) => {
-      // Skip if touching mobile control buttons - let them handle their own events
-      const target = e.target;
-      if (target && (
-        target.id === 'mobile-move-btn' || 
-        target.id === 'mobile-resize-btn' ||
-        target.id === 'mobile-control-panel' ||
-        target.closest('#mobile-control-panel')
-      )) {
-        console.log('[MobileSupport] Touch on control button, skipping');
-        return; // Don't interfere with button handlers
-      }
-      
       updateDebug('Touch START: ' + e.touches.length + ' fingers');
       console.log('[MobileSupport] touchstart - fingers:', e.touches.length);
       
@@ -330,193 +318,130 @@
   // Initialize handlers
   initCanvasTouchHandlers();
 
-  // Add touch support for stage resize handles and stage dragging
+  // Create mobile control panel for map editor
+  function createMobileControls() {
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('cv');
+    if (!stage || !canvas) {
+      console.log('[MobileSupport] Stage/canvas not found, retrying...');
+      setTimeout(createMobileControls, 200);
+      return;
+    }
+    
+    console.log('[MobileSupport] Creating mobile controls');
+    
+    // Create mobile control panel
+    const controlPanel = document.createElement('div');
+    controlPanel.id = 'mobile-editor-controls';
+    controlPanel.innerHTML = `
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:11px;opacity:0.7;">Map:</span>
+        <button id="mobile-move-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#4a90d9;color:white;font-size:14px;touch-action:none;">✋ Move</button>
+        <button id="mobile-resize-btn" style="padding:8px 12px;border:none;border-radius:8px;background:#d94a4a;color:white;font-size:14px;touch-action:none;">↔️ Resize</button>
+      </div>
+    `;
+    controlPanel.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);padding:12px 16px;border-radius:16px;z-index:10000;display:flex;gap:12px;align-items:center;';
+    document.body.appendChild(controlPanel);
+    
+    let moveMode = false;
+    let resizeMode = false;
+    
+    const moveBtn = document.getElementById('mobile-move-btn');
+    const resizeBtn = document.getElementById('mobile-resize-btn');
+    const debugDiv = document.getElementById('touch-debug');
+    
+    // Move mode
+    moveBtn.addEventListener('click', () => {
+      moveMode = !moveMode;
+      resizeMode = false;
+      moveBtn.style.background = moveMode ? '#2ecc71' : '#4a90d9';
+      resizeBtn.style.background = '#d94a4a';
+      if (debugDiv) debugDiv.textContent = moveMode ? 'MOVE mode ON - drag anywhere' : 'MOVE mode OFF';
+    });
+    
+    // Resize mode
+    resizeBtn.addEventListener('click', () => {
+      resizeMode = !resizeMode;
+      moveMode = false;
+      resizeBtn.style.background = resizeMode ? '#2ecc71' : '#d94a4a';
+      moveBtn.style.background = '#4a90d9';
+      if (debugDiv) debugDiv.textContent = resizeMode ? 'RESIZE mode ON - drag to resize' : 'RESIZE mode OFF';
+    });
+    
+    // Handle touch on stage when in move/resize mode
+    let activeDrag = null;
+    
+    stage.addEventListener('touchstart', (e) => {
+      if (!moveMode && !resizeMode) return;
+      if (e.touches.length !== 1) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const touch = e.touches[0];
+      activeDrag = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startMarginLeft: parseInt(window.getComputedStyle(stage).marginLeft) || 0,
+        startMarginTop: parseInt(window.getComputedStyle(stage).marginTop) || 0,
+        startWidth: canvas.width,
+        startHeight: canvas.height
+      };
+      
+      if (debugDiv) debugDiv.textContent = moveMode ? 'MOVING...' : 'RESIZING...';
+    }, { passive: false });
+    
+    stage.addEventListener('touchmove', (e) => {
+      if (!activeDrag) return;
+      if (e.touches.length !== 1) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const touch = e.touches[0];
+      const dx = touch.clientX - activeDrag.startX;
+      const dy = touch.clientY - activeDrag.startY;
+      
+      if (moveMode) {
+        stage.style.marginLeft = (activeDrag.startMarginLeft + dx) + 'px';
+        stage.style.marginTop = (activeDrag.startMarginTop + dy) + 'px';
+        if (debugDiv) debugDiv.textContent = 'MOVE: ' + dx + ', ' + dy;
+      } else if (resizeMode) {
+        canvas.width = Math.max(320, activeDrag.startWidth + dx);
+        canvas.height = Math.max(240, activeDrag.startHeight + dy);
+        if (debugDiv) debugDiv.textContent = 'SIZE: ' + canvas.width + 'x' + canvas.height;
+        // Trigger redraw
+        if (typeof window.drawMap === 'function') window.drawMap();
+      }
+    }, { passive: false });
+    
+    stage.addEventListener('touchend', () => {
+      if (activeDrag) {
+        activeDrag = null;
+        if (debugDiv) debugDiv.textContent = moveMode ? 'MOVE mode ON' : resizeMode ? 'RESIZE mode ON' : 'Ready';
+      }
+    });
+    
+    console.log('[MobileSupport] Mobile controls created');
+  }
+  
+  // Initialize mobile controls
+  createMobileControls();
+
+  // Legacy: Add touch support for existing resize handles
   function initStageTouch() {
     const stage = document.getElementById('stage');
     const canvas = document.getElementById('cv');
     if (!stage || !canvas) {
-      console.log('[MobileSupport] Stage/canvas not found for resize, retrying...');
-      setTimeout(initStageTouch, 200);
-      return;
+      return; // Mobile controls handle this now
     }
     
-    console.log('[MobileSupport] Stage touch handlers initialized');
-    
-    // Update debug indicator
-    const debugDiv = document.getElementById('touch-debug');
-    if (debugDiv) debugDiv.textContent = 'Stage ready';
-    
-    // ===== CREATE MOBILE CONTROL PANEL =====
-    // Remove old controls if exist
-    const oldPanel = document.getElementById('mobile-control-panel');
-    if (oldPanel) oldPanel.remove();
-    
-    // Create floating control panel
-    const panel = document.createElement('div');
-    panel.id = 'mobile-control-panel';
-    panel.style.cssText = `
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 99999;
-    `;
-    
-    // MOVE button
-    const moveBtn = document.createElement('div');
-    moveBtn.id = 'mobile-move-btn';
-    moveBtn.innerHTML = '✥<br>MOVE';
-    moveBtn.style.cssText = `
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #4CAF50, #45a049);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      touch-action: none;
-      user-select: none;
-      cursor: grab;
-    `;
-    
-    // RESIZE button
-    const resizeBtn = document.createElement('div');
-    resizeBtn.id = 'mobile-resize-btn';
-    resizeBtn.innerHTML = '⤡<br>SIZE';
-    resizeBtn.style.cssText = `
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #2196F3, #1976D2);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      touch-action: none;
-      user-select: none;
-      cursor: nwse-resize;
-    `;
-    
-    panel.appendChild(moveBtn);
-    panel.appendChild(resizeBtn);
-    document.body.appendChild(panel);
-    
-    console.log('[MobileSupport] Created mobile control panel');
-    if (debugDiv) debugDiv.textContent = 'Controls ready!';
-    
-    // ===== MOVE BUTTON HANDLER =====
-    moveBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        const startX = touch.clientX;
-        const startY = touch.clientY;
-        
-        // Get current stage position
-        const computedStyle = window.getComputedStyle(stage);
-        const matrix = new DOMMatrix(computedStyle.transform);
-        const currentX = matrix.m41 || 0;
-        const currentY = matrix.m42 || 0;
-        
-        moveBtn.style.background = 'linear-gradient(135deg, #66BB6A, #4CAF50)';
-        if (debugDiv) debugDiv.textContent = 'MOVING...';
-        
-        const doMove = (moveEvent) => {
-          moveEvent.preventDefault();
-          if (moveEvent.touches.length !== 1) return;
-          const moveTouch = moveEvent.touches[0];
-          const dx = moveTouch.clientX - startX;
-          const dy = moveTouch.clientY - startY;
-          
-          stage.style.transform = `translate(${currentX + dx}px, ${currentY + dy}px)`;
-          if (debugDiv) debugDiv.textContent = 'MOVE: ' + (currentX + dx).toFixed(0) + ',' + (currentY + dy).toFixed(0);
-        };
-        
-        const stopMove = () => {
-          moveBtn.style.background = 'linear-gradient(135deg, #4CAF50, #45a049)';
-          if (debugDiv) debugDiv.textContent = 'Move done';
-          window.removeEventListener('touchmove', doMove);
-          window.removeEventListener('touchend', stopMove);
-          window.removeEventListener('touchcancel', stopMove);
-        };
-        
-        window.addEventListener('touchmove', doMove, { passive: false });
-        window.addEventListener('touchend', stopMove);
-        window.addEventListener('touchcancel', stopMove);
-      }
-    }, { passive: false });
-    
-    // ===== RESIZE BUTTON HANDLER =====
-    resizeBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        const startX = touch.clientX;
-        const startY = touch.clientY;
-        const startW = canvas.width;
-        const startH = canvas.height;
-        
-        resizeBtn.style.background = 'linear-gradient(135deg, #42A5F5, #2196F3)';
-        if (debugDiv) debugDiv.textContent = 'RESIZING...';
-        
-        const doResize = (moveEvent) => {
-          moveEvent.preventDefault();
-          if (moveEvent.touches.length !== 1) return;
-          const moveTouch = moveEvent.touches[0];
-          const dx = moveTouch.clientX - startX;
-          const dy = moveTouch.clientY - startY;
-          
-          canvas.width = Math.round(Math.max(320, startW + dx));
-          canvas.height = Math.round(Math.max(240, startH + dy));
-          
-          if (debugDiv) debugDiv.textContent = 'SIZE: ' + canvas.width + 'x' + canvas.height;
-          
-          // Trigger redraw
-          if (typeof window.drawMap === 'function') {
-            window.drawMap();
-          }
-        };
-        
-        const stopResize = () => {
-          resizeBtn.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
-          if (debugDiv) debugDiv.textContent = 'Resize done';
-          window.removeEventListener('touchmove', doResize);
-          window.removeEventListener('touchend', stopResize);
-          window.removeEventListener('touchcancel', stopResize);
-        };
-        
-        window.addEventListener('touchmove', doResize, { passive: false });
-        window.addEventListener('touchend', stopResize);
-        window.addEventListener('touchcancel', stopResize);
-      }
-    }, { passive: false });
-    
-    // ===== OLD RESIZE HANDLES (keep for compatibility) =====
     // Find all resize handles
     const resizeHandles = stage.querySelectorAll('.resize-handle');
-    console.log('[MobileSupport] Found resize handles:', resizeHandles.length);
-    
-    // Re-query and setup all resize handles
-    const allResizeHandles = stage.querySelectorAll('.resize-handle');
     
     // Make resize handles bigger and visible for touch
-    allResizeHandles.forEach(handle => {
-      handle.style.cssText += ';min-width:40px;min-height:40px;opacity:1;background:rgba(0,120,255,0.6);';
+    resizeHandles.forEach(handle => {
+      handle.style.cssText += ';min-width:50px;min-height:50px;opacity:1;background:rgba(0,120,255,0.8);';
       
       handle.addEventListener('touchstart', (e) => {
         e.preventDefault();
