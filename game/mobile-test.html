@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile Canvas Test</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #333; min-height: 100vh; }
+canvas { 
+  display: block;
+  background: lime;
+  border: 10px solid red;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+}
+#info {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  background: blue;
+  color: white;
+  padding: 15px;
+  font-size: 16px;
+  z-index: 9999;
+}
+</style>
+</head>
+<body>
+
+<div id="info">Loading...</div>
+
+<canvas id="testCanvas" width="800" height="500"></canvas>
+
+<script>
+var info = document.getElementById('info');
+var canvas = document.getElementById('testCanvas');
+var ctx = canvas.getContext('2d');
+
+// Show info
+var rect = canvas.getBoundingClientRect();
+info.innerHTML = 'Screen: ' + window.innerWidth + 'x' + window.innerHeight;
+info.innerHTML += '<br>Canvas display: ' + Math.round(rect.width) + 'x' + Math.round(rect.height);
+info.innerHTML += '<br>Canvas pos: ' + Math.round(rect.left) + ',' + Math.round(rect.top);
+
+// Draw something
+ctx.fillStyle = 'blue';
+ctx.fillRect(0, 0, 800, 500);
+
+ctx.fillStyle = 'yellow';
+ctx.font = 'bold 60px Arial';
+ctx.fillText('MOBILE OK!', 150, 280);
+
+ctx.fillStyle = 'white';
+ctx.font = '30px Arial';
+ctx.fillText('If you see this, canvas works', 120, 350);
+
+info.innerHTML += '<br>✅ Canvas drawn!';
+</script>
+
+</body>
+</html>
