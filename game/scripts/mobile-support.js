@@ -29,7 +29,8 @@
     let isLongPressPan = false;
     let panStartX = 0, panStartY = 0;
     let lastPanX = 0, lastPanY = 0;
-    const LONG_PRESS_DELAY = 300; // ms
+    let hasStartedDrawing = false;
+    const LONG_PRESS_DELAY = 400; // ms
     
     // Convert touch to mouse event
     function touchToMouse(type, touch, target) {
@@ -96,21 +97,25 @@
         panStartY = touch.clientY;
         lastPanX = touch.clientX;
         lastPanY = touch.clientY;
+        hasStartedDrawing = false;
         
         // Start long-press timer
         longPressTimer = setTimeout(() => {
-          isLongPressPan = true;
-          showPanIndicator(true);
-          // Vibrate if supported
-          if (navigator.vibrate) navigator.vibrate(50);
+          if (!hasStartedDrawing) {
+            isLongPressPan = true;
+            showPanIndicator(true);
+            if (navigator.vibrate) navigator.vibrate(50);
+          }
         }, LONG_PRESS_DELAY);
         
-        // Don't send mousedown yet - wait to see if it's a long press
+        // Send mousedown immediately for drawing
+        touchToMouse('touchstart', touch, canvas);
         e.preventDefault();
       } else if (e.touches.length === 2) {
-        // Cancel long-press timer
+        // Cancel long-press timer and drawing
         clearTimeout(longPressTimer);
         isLongPressPan = false;
+        hasStartedDrawing = false;
         showPanIndicator(false);
         
         // 2-finger - start zoom/pan
@@ -129,11 +134,10 @@
           Math.pow(touch.clientY - panStartY, 2)
         );
         
-        // If moved before long-press triggered, cancel and treat as draw
-        if (!isLongPressPan && moveDistance > 10) {
+        // If moved, mark as drawing started (cancels potential long-press)
+        if (moveDistance > 5) {
+          hasStartedDrawing = true;
           clearTimeout(longPressTimer);
-          // Send mousedown now for drawing
-          touchToMouse('touchstart', e.touches[0], canvas);
         }
         
         if (isLongPressPan) {
@@ -143,9 +147,9 @@
           window.scrollBy(-dx, -dy);
           lastPanX = touch.clientX;
           lastPanY = touch.clientY;
-        } else if (!isTwoFinger && moveDistance > 10) {
+        } else if (!isTwoFinger) {
           // Normal drawing
-          touchToMouse('touchmove', e.touches[0], canvas);
+          touchToMouse('touchmove', touch, canvas);
         }
         e.preventDefault();
       } else if (e.touches.length === 2) {
@@ -153,11 +157,11 @@
         const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
         const currentCenter = getTouchCenter(e.touches[0], e.touches[1]);
         
-        // Pinch zoom via StageTransform
+        // Pinch zoom via StageTransform (no limits - let StageTransform handle it)
         if (lastTouchDistance > 0 && window.StageTransform) {
           const scaleFactor = currentDistance / lastTouchDistance;
           const currentScale = window.StageTransform.getScale ? window.StageTransform.getScale() : 1;
-          const newScale = Math.max(0.25, Math.min(3, currentScale * scaleFactor));
+          const newScale = Math.max(0.1, Math.min(5, currentScale * scaleFactor));
           if (window.StageTransform.setScale) {
             window.StageTransform.setScale(newScale, currentCenter.x, currentCenter.y);
           }
@@ -187,6 +191,7 @@
           touchToMouse('touchend', e.changedTouches[0], canvas);
         }
         isTwoFinger = false;
+        hasStartedDrawing = false;
         lastTouchDistance = 0;
       } else if (e.touches.length === 1) {
         // Went from 2 fingers to 1
