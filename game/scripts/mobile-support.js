@@ -24,6 +24,13 @@
     let lastTouchCenter = { x: 0, y: 0 };
     let isTwoFinger = false;
     
+    // Long-press pan state (like middle mouse on PC)
+    let longPressTimer = null;
+    let isLongPressPan = false;
+    let panStartX = 0, panStartY = 0;
+    let lastPanX = 0, lastPanY = 0;
+    const LONG_PRESS_DELAY = 300; // ms
+    
     // Convert touch to mouse event
     function touchToMouse(type, touch, target) {
       const mouseType = {
@@ -64,13 +71,48 @@
       };
     }
     
+    // Show visual feedback for long-press pan mode
+    function showPanIndicator(show) {
+      let indicator = document.getElementById('mobile-pan-indicator');
+      if (show) {
+        if (!indicator) {
+          indicator = document.createElement('div');
+          indicator.id = 'mobile-pan-indicator';
+          indicator.innerHTML = '✋ Pan Mode';
+          indicator.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:12px 24px;border-radius:8px;font-size:16px;z-index:99999;pointer-events:none;';
+          document.body.appendChild(indicator);
+        }
+        indicator.style.display = 'block';
+      } else if (indicator) {
+        indicator.style.display = 'none';
+      }
+    }
+    
     // Canvas touch handlers - convert to mouse for drawing
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
-        // Single finger - convert to mouse for drawing
-        touchToMouse('touchstart', e.touches[0], canvas);
+        const touch = e.touches[0];
+        panStartX = touch.clientX;
+        panStartY = touch.clientY;
+        lastPanX = touch.clientX;
+        lastPanY = touch.clientY;
+        
+        // Start long-press timer
+        longPressTimer = setTimeout(() => {
+          isLongPressPan = true;
+          showPanIndicator(true);
+          // Vibrate if supported
+          if (navigator.vibrate) navigator.vibrate(50);
+        }, LONG_PRESS_DELAY);
+        
+        // Don't send mousedown yet - wait to see if it's a long press
         e.preventDefault();
       } else if (e.touches.length === 2) {
+        // Cancel long-press timer
+        clearTimeout(longPressTimer);
+        isLongPressPan = false;
+        showPanIndicator(false);
+        
         // 2-finger - start zoom/pan
         isTwoFinger = true;
         lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
@@ -80,9 +122,31 @@
     }, { passive: false });
     
     canvas.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1 && !isTwoFinger) {
-        // Single finger - convert to mouse for drawing
-        touchToMouse('touchmove', e.touches[0], canvas);
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const moveDistance = Math.sqrt(
+          Math.pow(touch.clientX - panStartX, 2) + 
+          Math.pow(touch.clientY - panStartY, 2)
+        );
+        
+        // If moved before long-press triggered, cancel and treat as draw
+        if (!isLongPressPan && moveDistance > 10) {
+          clearTimeout(longPressTimer);
+          // Send mousedown now for drawing
+          touchToMouse('touchstart', e.touches[0], canvas);
+        }
+        
+        if (isLongPressPan) {
+          // Long-press pan mode - scroll the page like middle mouse
+          const dx = touch.clientX - lastPanX;
+          const dy = touch.clientY - lastPanY;
+          window.scrollBy(-dx, -dy);
+          lastPanX = touch.clientX;
+          lastPanY = touch.clientY;
+        } else if (!isTwoFinger && moveDistance > 10) {
+          // Normal drawing
+          touchToMouse('touchmove', e.touches[0], canvas);
+        }
         e.preventDefault();
       } else if (e.touches.length === 2) {
         // 2-finger zoom/pan
@@ -111,8 +175,14 @@
     }, { passive: false });
     
     canvas.addEventListener('touchend', (e) => {
+      clearTimeout(longPressTimer);
+      
       if (e.touches.length === 0) {
-        if (!isTwoFinger) {
+        if (isLongPressPan) {
+          // End pan mode
+          isLongPressPan = false;
+          showPanIndicator(false);
+        } else if (!isTwoFinger) {
           // Single finger ended - send mouseup
           touchToMouse('touchend', e.changedTouches[0], canvas);
         }
