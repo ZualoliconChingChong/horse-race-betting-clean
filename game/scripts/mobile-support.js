@@ -24,6 +24,11 @@
     let lastTouchCenter = { x: 0, y: 0 };
     let isTwoFinger = false;
     
+    // CSS Transform zoom state
+    let currentScale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    
     // Long-press pan state (like middle mouse on PC)
     let longPressTimer = null;
     let isLongPressPan = false;
@@ -31,6 +36,31 @@
     let lastPanX = 0, lastPanY = 0;
     let hasStartedDrawing = false;
     const LONG_PRESS_DELAY = 400; // ms
+    
+    // Apply CSS transform to stage
+    function applyTransform() {
+      stage.style.transformOrigin = 'center center';
+      stage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+    }
+    
+    // Initialize with scale that fits screen
+    function initScale() {
+      const stageRect = stage.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate scale to fit canvas in viewport
+      const scaleX = viewportWidth / stageRect.width;
+      const scaleY = (viewportHeight - 100) / stageRect.height; // Leave room for UI
+      currentScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
+      currentScale = Math.max(0.2, currentScale); // Minimum 20%
+      
+      applyTransform();
+      console.log('[Mobile] Initial scale:', currentScale);
+    }
+    
+    // Initialize scale after a short delay to let layout settle
+    setTimeout(initScale, 500);
     
     // Convert touch to mouse event
     function touchToMouse(type, touch, target) {
@@ -153,24 +183,24 @@
         }
         e.preventDefault();
       } else if (e.touches.length === 2) {
-        // 2-finger zoom/pan
+        // 2-finger zoom/pan using CSS transform
         const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
         const currentCenter = getTouchCenter(e.touches[0], e.touches[1]);
         
-        // Pinch zoom via StageTransform (no limits - let StageTransform handle it)
-        if (lastTouchDistance > 0 && window.StageTransform) {
+        // Pinch zoom using CSS transform
+        if (lastTouchDistance > 0) {
           const scaleFactor = currentDistance / lastTouchDistance;
-          const currentScale = window.StageTransform.getScale ? window.StageTransform.getScale() : 1;
-          const newScale = Math.max(0.1, Math.min(5, currentScale * scaleFactor));
-          if (window.StageTransform.setScale) {
-            window.StageTransform.setScale(newScale, currentCenter.x, currentCenter.y);
-          }
+          const newScale = Math.max(0.15, Math.min(3, currentScale * scaleFactor));
+          currentScale = newScale;
         }
         
-        // Pan (scroll page)
+        // Pan using CSS transform
         const dx = currentCenter.x - lastTouchCenter.x;
         const dy = currentCenter.y - lastTouchCenter.y;
-        window.scrollBy(-dx, -dy);
+        translateX += dx;
+        translateY += dy;
+        
+        applyTransform();
         
         lastTouchDistance = currentDistance;
         lastTouchCenter = currentCenter;
