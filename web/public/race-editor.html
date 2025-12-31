@@ -138,17 +138,19 @@
                         // }
                         console.log('[Editor] Editor bar hidden by default - use ≡ button or M key to open');
                         
-                        // Wait a bit more then click edit button
-                        setTimeout(() => {
-                            const editBtn = gameWindow.document.getElementById('editBtn');
-                            if (editBtn) {
-                                console.log('[Editor] Clicking edit button...');
-                                editBtn.click();
-                                console.log('[Editor] ✅ Entered editor mode');
-                            } else {
-                                console.error('[Editor] ❌ Edit button not found');
-                            }
-                        }, 300);
+                        // Don't auto-click edit button - it triggers setMode('editor') which we don't want
+                        // User can manually switch to editor mode if needed
+                        // setTimeout(() => {
+                        //     const editBtn = gameWindow.document.getElementById('editBtn');
+                        //     if (editBtn) {
+                        //         console.log('[Editor] Clicking edit button...');
+                        //         editBtn.click();
+                        //         console.log('[Editor] ✅ Entered editor mode');
+                        //     } else {
+                        //         console.error('[Editor] ❌ Edit button not found');
+                        //     }
+                        // }, 300);
+                        console.log('[Editor] Edit button NOT auto-clicked - Map Editor stays hidden');
                         
                         // Override play button to start actual race (not just test)
                         setTimeout(() => {
