@@ -109,35 +109,36 @@
                 console.log('[Race Mode] ✅ Enabled editor UI');
             }
             
-            // Enter editor mode
-            setTimeout(() => {
-                const editBtn = document.getElementById('editBtn');
-                if (editBtn) {
-                    // Click to toggle editor mode
-                    editBtn.click();
-                    console.log('[Race Mode] ✅ Clicked edit button');
-                    
-                    // Ensure content stays visible after click
-                    setTimeout(() => {
-                        if (editorBar) {
-                            editorBar.classList.remove('collapsed');
-                            const editorContent = editorBar.querySelector('.editor-content');
-                            if (editorContent) {
-                                editorContent.style.display = 'block !important';
-                                editorContent.style.visibility = 'visible';
-                            }
-                        }
-                        
-                        // Call ensureEditorContentVisible if available
-                        if (typeof window.ensureEditorContentVisible === 'function') {
-                            window.ensureEditorContentVisible();
-                            console.log('[Race Mode] ✅ Called ensureEditorContentVisible');
-                        }
-                        
-                        console.log('[Race Mode] ✅ Editor mode fully activated');
-                    }, 300);
-                }
-            }, 500);
+            // Don't auto-enter editor mode - let Map Editor stay hidden
+            // setTimeout(() => {
+            //     const editBtn = document.getElementById('editBtn');
+            //     if (editBtn) {
+            //         // Click to toggle editor mode
+            //         editBtn.click();
+            //         console.log('[Race Mode] ✅ Clicked edit button');
+            //         
+            //         // Ensure content stays visible after click
+            //         setTimeout(() => {
+            //             if (editorBar) {
+            //                 editorBar.classList.remove('collapsed');
+            //                 const editorContent = editorBar.querySelector('.editor-content');
+            //                 if (editorContent) {
+            //                     editorContent.style.display = 'block !important';
+            //                     editorContent.style.visibility = 'visible';
+            //                 }
+            //             }
+            //             
+            //             // Call ensureEditorContentVisible if available
+            //             if (typeof window.ensureEditorContentVisible === 'function') {
+            //                 window.ensureEditorContentVisible();
+            //                 console.log('[Race Mode] ✅ Called ensureEditorContentVisible');
+            //             }
+            //             
+            //             console.log('[Race Mode] ✅ Editor mode fully activated');
+            //         }, 300);
+            //     }
+            // }, 500);
+            console.log('[Race Mode] Editor mode NOT auto-activated - Map Editor stays hidden');
             
             // Override play button to submit results
             const originalStartRace = window.startRace;

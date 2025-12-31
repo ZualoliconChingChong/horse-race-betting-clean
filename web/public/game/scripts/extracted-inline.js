@@ -18495,8 +18495,8 @@ setTimeout(() => {
   initializeGameHubSpeedSlider();
 }, 1000);
 
-// Initialize editor mode
-document.getElementById('editBtn').click();
+// Don't auto-click editBtn on page load - let Map Editor stay hidden by default
+// document.getElementById('editBtn').click();
 
 // Start main game loop
 startMainLoop();
