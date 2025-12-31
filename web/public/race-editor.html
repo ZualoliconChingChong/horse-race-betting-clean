@@ -108,7 +108,8 @@
                 
                 // Load game editor with editor mode and raceId params
                 const gameFrame = document.getElementById('gameFrame');
-                gameFrame.src = `/game/index.html?editor=true&raceId=${raceId}`;
+                // Add cache-busting timestamp to force reload
+                gameFrame.src = `/game/index.html?editor=true&raceId=${raceId}&v=${Date.now()}`;
                 
                 gameFrame.onload = async () => {
                     gameWindow = gameFrame.contentWindow;
