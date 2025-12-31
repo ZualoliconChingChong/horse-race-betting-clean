@@ -18445,13 +18445,15 @@ function setMode(next) {
     console.log('[Luck] 🧹 Cleanup complete');
     
     if (editorBar) {
-      editorBar.style.display = 'block';
-      if (editorBar.classList.contains('collapsed')) {
-        editorBar.classList.remove('collapsed');
-        try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
-        const cbtn = editorBar.querySelector('.collapse-btn');
-        if (cbtn) { cbtn.textContent = '━'; cbtn.title = 'Thu nhỏ Map Editor'; }
-      }
+      // Don't auto-show editor when switching to editor mode
+      // User must manually open it via button or keyboard shortcut
+      // editorBar.style.display = 'block';
+      // if (editorBar.classList.contains('collapsed')) {
+      //   editorBar.classList.remove('collapsed');
+      //   try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
+      //   const cbtn = editorBar.querySelector('.collapse-btn');
+      //   if (cbtn) { cbtn.textContent = '━'; cbtn.title = 'Thu nhỏ Map Editor'; }
+      // }
       ensureEditorContentVisible();
       try { ensureSpawnPointsForEditor(); } catch {}
     }

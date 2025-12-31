@@ -111,7 +111,7 @@ const CONFIG = {
       horseBounce: 0.6,
       detectionBuffer: 2,
       minSeparation: 1,
-      preventSpeedChange: false  // Ngăn chặn thay đổi tốc độ khi va chạm (ngựa, tường, vật thể)
+      preventSpeedChange: true  // Ngăn chặn thay đổi tốc độ khi va chạm (ngựa, tường, vật thể)
     },
     
     movement: {
