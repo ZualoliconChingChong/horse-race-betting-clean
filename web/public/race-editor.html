@@ -126,15 +126,16 @@
                             console.log('[Editor] ✅ Hidden loading screen');
                         }
                         
-                        // Show editor bar
-                        const editorBar = gameWindow.document.getElementById('editorBar');
-                        if (editorBar) {
-                            editorBar.style.display = 'flex';
-                            editorBar.style.visibility = 'visible';
-                            console.log('[Editor] ✅ Enabled editor UI');
-                        } else {
-                            console.error('[Editor] ❌ Editor bar not found');
-                        }
+                        // Don't force show editor bar - let user open it manually
+                        // const editorBar = gameWindow.document.getElementById('editorBar');
+                        // if (editorBar) {
+                        //     editorBar.style.display = 'flex';
+                        //     editorBar.style.visibility = 'visible';
+                        //     console.log('[Editor] ✅ Enabled editor UI');
+                        // } else {
+                        //     console.error('[Editor] ❌ Editor bar not found');
+                        // }
+                        console.log('[Editor] Editor bar hidden by default - use ≡ button or M key to open');
                         
                         // Wait a bit more then click edit button
                         setTimeout(() => {
