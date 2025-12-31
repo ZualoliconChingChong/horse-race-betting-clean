@@ -14470,13 +14470,15 @@ function setMode(next) {
       toggleFocusMode();
     }
     if (editorBar) {
-      editorBar.style.display = 'block';
-      if (editorBar.classList.contains('collapsed')) {
-        editorBar.classList.remove('collapsed');
-        try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
-        const cbtn = editorBar.querySelector('.collapse-btn');
-        if (cbtn) { cbtn.textContent = '≪'; cbtn.title = 'Collapse panel'; }
-      }
+      // Don't auto-show editor when switching to editor mode
+      // User must manually open it via button or keyboard shortcut
+      // editorBar.style.display = 'block';
+      // if (editorBar.classList.contains('collapsed')) {
+      //   editorBar.classList.remove('collapsed');
+      //   try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
+      //   const cbtn = editorBar.querySelector('.collapse-btn');
+      //   if (cbtn) { cbtn.textContent = '≪'; cbtn.title = 'Collapse panel'; }
+      // }
       ensureEditorContentVisible();
       try { ensureSpawnPointsForEditor(); } catch {}
     }
@@ -14726,10 +14728,13 @@ const dragHandle = document.getElementById('dragHandle');
       localStorage.removeItem('editorBarCollapsed');
     }
   } catch {}
-  // restore state
+  // restore state - default to collapsed (hidden)
   try {
     const collapsed = localStorage.getItem(COLLAPSE_KEY);
-    if (collapsed === '1') rightbar.classList.add('collapsed');
+    // Default to collapsed if no saved state
+    if (collapsed === null || collapsed === '1') {
+      rightbar.classList.add('collapsed');
+    }
     const size = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null');
     // Only apply saved size if it's reasonable (not from collapsed state)
     if (size && typeof size.w === 'number' && size.w >= MIN_W) rightbar.style.width = size.w + 'px';
