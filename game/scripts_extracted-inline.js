@@ -1411,7 +1411,7 @@ function loadSample(){
 // ===== Editor UI =====
 const editorBar = document.getElementById('editorBar');
 let hud = document.getElementById('hud');
-if (editorBar) editorBar.style.display = "block";
+if (editorBar) editorBar.style.display = "none"; // Hidden by default
 
 // Restore saved width/size (legacy keys) with clamping to avoid tiny start
 (function(){

@@ -63,10 +63,13 @@
       }
     } catch {}
 
-    // Restore state
+    // Restore state - default to collapsed (hidden)
     try {
       const collapsed = localStorage.getItem(COLLAPSE_KEY);
-      if (collapsed === '1') rightbar.classList.add('collapsed');
+      // Default to collapsed if no saved state
+      if (collapsed === null || collapsed === '1') {
+        rightbar.classList.add('collapsed');
+      }
       
       const size = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null');
       if (size && typeof size.w === 'number' && size.w >= MIN_W) rightbar.style.width = size.w + 'px';

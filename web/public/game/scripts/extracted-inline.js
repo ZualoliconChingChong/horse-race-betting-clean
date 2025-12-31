@@ -2336,7 +2336,7 @@ let hud = document.getElementById('hud');
 // Make UI elements globally accessible for other modules
 window.editorBar = editorBar;
 window.hud = hud;
-if (editorBar) editorBar.style.display = "block";
+if (editorBar) editorBar.style.display = "none"; // Hidden by default
 
 // Restore saved width/size (legacy keys) with clamping to avoid tiny start
 (function(){
