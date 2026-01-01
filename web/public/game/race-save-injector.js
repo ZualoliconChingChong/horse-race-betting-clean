@@ -16,6 +16,69 @@
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
     
+    // FORCE HIDE MAP EDITOR - Add aggressive hide mechanism
+    (function forceHideEditor() {
+        // Set localStorage to collapsed immediately
+        try {
+            localStorage.setItem('rightbarCollapsed', '1');
+            localStorage.setItem('editorBarCollapsed', '1');
+            console.log('[Race Save] Forced localStorage to collapsed state');
+        } catch (e) {
+            console.error('[Race Save] Failed to set localStorage:', e);
+        }
+        
+        // Wait for editorBar to exist, then aggressively hide it
+        const waitForEditor = setInterval(() => {
+            const editorBar = document.getElementById('editorBar');
+            if (editorBar) {
+                clearInterval(waitForEditor);
+                
+                const forceHide = () => {
+                    editorBar.style.display = 'none';
+                    editorBar.style.visibility = 'hidden';
+                    editorBar.classList.add('collapsed');
+                };
+                
+                forceHide();
+                console.log('[Race Save] ⚠️ AGGRESSIVE HIDE activated on editorBar');
+                
+                // MutationObserver to block any attempts to show editor
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes') {
+                            const attr = mutation.attributeName;
+                            if (attr === 'style' || attr === 'class') {
+                                const currentDisplay = editorBar.style.display;
+                                const hasCollapsed = editorBar.classList.contains('collapsed');
+                                
+                                if (currentDisplay !== 'none' || !hasCollapsed) {
+                                    console.log('[Race Save] 🚫 Blocked attempt to show editor');
+                                    forceHide();
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                observer.observe(editorBar, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+                
+                // Brute force hide every 500ms for first 5 seconds
+                let hideCount = 0;
+                const hideInterval = setInterval(() => {
+                    forceHide();
+                    hideCount++;
+                    if (hideCount >= 10) {
+                        clearInterval(hideInterval);
+                        console.log('[Race Save] ✅ Hide enforcement complete');
+                    }
+                }, 500);
+            }
+        }, 100);
+    })();
+    
     // Create floating save button
     const saveBtn = document.createElement('button');
     saveBtn.id = 'raceSaveBtn';
