@@ -335,9 +335,20 @@
             if (mapData.borderDamageEnabled !== undefined) window.mapDef.borderDamageEnabled = mapData.borderDamageEnabled;
             if (mapData.borderDamageAmount !== undefined) window.mapDef.borderDamageAmount = mapData.borderDamageAmount;
             
-            // Redraw map
-            if (typeof window.invalidateStaticLayer === 'function') window.invalidateStaticLayer();
-            if (typeof window.drawMap === 'function') window.drawMap();
+            // Redraw map - multiple times to ensure all elements render
+            const forceRedraw = () => {
+                if (typeof window.invalidateStaticLayer === 'function') window.invalidateStaticLayer();
+                if (typeof window.drawMap === 'function') window.drawMap();
+                if (typeof window.startMainLoop === 'function') window.startMainLoop();
+            };
+            
+            // Immediate redraw
+            forceRedraw();
+            
+            // Delayed redraws to ensure brushes render after all systems initialize
+            setTimeout(forceRedraw, 100);
+            setTimeout(forceRedraw, 500);
+            setTimeout(forceRedraw, 1000);
             
             console.log('[Race Save] ✅ Loaded saved map config');
         } catch (error) {
