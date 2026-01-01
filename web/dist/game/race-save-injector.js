@@ -2,19 +2,95 @@
 (function() {
     'use strict';
     
+    console.log('[Race Save] 🚀 Script loaded at:', new Date().toISOString());
+    console.log('[Race Save] URL:', window.location.href);
+    
     const urlParams = new URLSearchParams(window.location.search);
     const isEditorMode = urlParams.get('editor') === 'true';
     const raceId = urlParams.get('raceId');
     
+    console.log('[Race Save] URL Params - editor:', urlParams.get('editor'), 'raceId:', raceId);
+    console.log('[Race Save] Conditions - isEditorMode:', isEditorMode, 'hasRaceId:', !!raceId);
+    
     if (!isEditorMode || !raceId) {
-        console.log('[Race Save] Not in race editor mode');
+        console.log('[Race Save] ❌ Not in race editor mode - exiting');
         return;
     }
     
-    console.log('[Race Save] Injecting save functionality for race', raceId);
+    console.log('[Race Save] ✅ Injecting save functionality for race', raceId);
     
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
+    
+    // FORCE HIDE MAP EDITOR - ULTIMATE AGGRESSIVE MECHANISM
+    (function forceHideEditor() {
+        console.log('[Race Save] 🛡️ Starting ULTIMATE hide mechanism');
+        
+        // Set localStorage to collapsed immediately
+        try {
+            localStorage.setItem('rightbarCollapsed', '1');
+            localStorage.setItem('editorBarCollapsed', '1');
+            console.log('[Race Save] ✅ Forced localStorage to collapsed state');
+        } catch (e) {
+            console.error('[Race Save] ❌ Failed to set localStorage:', e);
+        }
+        
+        // OVERRIDE setEditorVisible to prevent ANY code from showing editor
+        const originalSetEditorVisible = window.setEditorVisible;
+        window.setEditorVisible = function(v) {
+            console.log('[Race Save] 🚫 Blocked setEditorVisible(' + v + ')');
+            // Force to always be false/hidden
+            if (originalSetEditorVisible) {
+                originalSetEditorVisible(false);
+            }
+        };
+        console.log('[Race Save] ✅ Overridden setEditorVisible function');
+        
+        // IMMEDIATE CHECK: Remove if already exists
+        const existingEditor = document.getElementById('editorBar');
+        if (existingEditor) {
+            existingEditor.remove();
+            console.log('[Race Save] 💣 REMOVED existing editorBar immediately');
+        }
+        
+        // MUTATION OBSERVER: Watch document body for editorBar being added
+        const bodyObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    // Check if added node is editorBar or contains editorBar
+                    if (node.id === 'editorBar') {
+                        node.remove();
+                        console.log('[Race Save] 💣 MutationObserver REMOVED editorBar on add');
+                    } else if (node.querySelector && node.querySelector('#editorBar')) {
+                        const editor = node.querySelector('#editorBar');
+                        editor.remove();
+                        console.log('[Race Save] 💣 MutationObserver REMOVED nested editorBar');
+                    }
+                });
+            });
+        });
+        
+        bodyObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        console.log('[Race Save] 👁️ MutationObserver watching for editorBar');
+        
+        // POLLING FALLBACK: Keep checking and removing
+        let removeCount = 0;
+        const removeInterval = setInterval(() => {
+            const editorBarCheck = document.getElementById('editorBar');
+            if (editorBarCheck) {
+                editorBarCheck.remove();
+                console.log('[Race Save] � Polling removed editorBar (count: ' + removeCount + ')');
+            }
+            removeCount++;
+            if (removeCount >= 20) {
+                clearInterval(removeInterval);
+                console.log('[Race Save] ✅ Polling complete (20 checks over 10 seconds)');
+            }
+        }, 500);
+    })();
     
     // Create floating save button
     const saveBtn = document.createElement('button');
