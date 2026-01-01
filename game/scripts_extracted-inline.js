@@ -14728,31 +14728,19 @@ const dragHandle = document.getElementById('dragHandle');
       localStorage.removeItem('editorBarCollapsed');
     }
   } catch {}
-  // restore state - default to collapsed (hidden)
+  // restore state - ALWAYS default to collapsed (hidden)
   try {
     const collapsed = localStorage.getItem(COLLAPSE_KEY);
-    // Default to collapsed if no saved state
-    if (collapsed === null || collapsed === '1') {
-      rightbar.classList.add('collapsed');
-    }
+    // ALWAYS default to collapsed regardless of localStorage value
+    rightbar.classList.add('collapsed');
+    rightbar.style.display = 'none';
+    
     const size = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null');
     // Only apply saved size if it's reasonable (not from collapsed state)
-    if (size && typeof size.w === 'number' && size.w >= MIN_W) rightbar.style.width = size.w + 'px';
-    if (size && typeof size.h === 'number' && size.h >= MIN_H) rightbar.style.height = size.h + 'px';
-    // set initial button glyph
-    const isCollapsed = rightbar.classList.contains('collapsed');
-    cbtn.textContent = isCollapsed ? '≫' : '≪';
-    cbtn.title = isCollapsed ? 'Expand panel' : 'Collapse panel';
-    // If collapsed on load, hide the panel entirely (reopen via HUD button)
-    rightbar.style.display = isCollapsed ? 'none' : 'block';
-  } catch {}
-  // Sync HUD open-editor button on init
-  try {
+    cbtn.textContent = '≫';
+    cbtn.title = 'Expand panel';
     const openBtn = document.getElementById('openEditorBtn');
-    if (openBtn) {
-      const isHidden = rightbar.classList.contains('collapsed') || getComputedStyle(rightbar).display === 'none';
-      openBtn.style.display = isHidden ? 'inline-block' : 'none';
-    }
+    if (openBtn) openBtn.style.display = 'inline-block';
   } catch {}
   cbtn.addEventListener('click', () => {
     rightbar.classList.toggle('collapsed');
