@@ -2049,14 +2049,53 @@ body.is-mobile .teb-dropdown-menu {
 @media (max-width: 768px) {
   body.is-mobile .game-hub {
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 2px;
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
     max-width: 100vw;
     box-sizing: border-box;
-    padding: 6px 8px;
+    padding: 4px 4px;
     overflow-x: hidden;
+  }
+  
+  /* Compact hub buttons on mobile - icon only */
+  body.is-mobile .hub-btn {
+    padding: 6px 8px;
+    min-width: auto;
+    font-size: 10px;
+    gap: 3px;
+    border-radius: 6px;
+  }
+  
+  /* Hide button text on mobile, show only icons */
+  body.is-mobile .hub-btn .btn-text {
+    display: none;
+  }
+  
+  /* Smaller icons on mobile */
+  body.is-mobile .hub-btn .btn-icon {
+    font-size: 12px;
+  }
+  
+  /* Compact hub sections */
+  body.is-mobile .hub-section {
+    gap: 2px;
+  }
+  
+  body.is-mobile .hub-stats {
+    gap: 4px;
+  }
+  
+  /* Smaller hub items (FPS, timer, etc) */
+  body.is-mobile .hub-item {
+    transform: scale(0.85);
+  }
+  
+  /* Compact speed slider */
+  body.is-mobile .hub-speed-control {
+    max-width: 80px;
+    transform: scale(0.85);
   }
   
   body.is-mobile .notification-bar {
