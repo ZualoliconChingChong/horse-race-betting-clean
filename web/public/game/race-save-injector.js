@@ -22,9 +22,9 @@
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
     
-    // FORCE HIDE MAP EDITOR - ULTIMATE AGGRESSIVE MECHANISM
+    // FORCE HIDE MAP EDITOR - CSS hiding without DOM removal to avoid breaking game
     (function forceHideEditor() {
-        console.log('[Race Save] 🛡️ Starting ULTIMATE hide mechanism');
+        console.log('[Race Save] 🛡️ Starting SAFE hide mechanism');
         
         // Set localStorage to collapsed immediately
         try {
@@ -46,50 +46,48 @@
         };
         console.log('[Race Save] ✅ Overridden setEditorVisible function');
         
-        // IMMEDIATE CHECK: Remove if already exists
-        const existingEditor = document.getElementById('editorBar');
-        if (existingEditor) {
-            existingEditor.remove();
-            console.log('[Race Save] 💣 REMOVED existing editorBar immediately');
-        }
+        // AGGRESSIVE HIDE with CSS - DON'T REMOVE from DOM to avoid breaking game
+        const forceHide = (element) => {
+            if (!element) return;
+            element.style.setProperty('display', 'none', 'important');
+            element.style.setProperty('visibility', 'hidden', 'important');
+            element.style.setProperty('opacity', '0', 'important');
+            element.style.setProperty('pointer-events', 'none', 'important');
+            element.classList.add('collapsed');
+        };
         
-        // MUTATION OBSERVER: Watch document body for editorBar being added
-        const bodyObserver = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    // Check if added node is editorBar or contains editorBar
-                    if (node.id === 'editorBar') {
-                        node.remove();
-                        console.log('[Race Save] 💣 MutationObserver REMOVED editorBar on add');
-                    } else if (node.querySelector && node.querySelector('#editorBar')) {
-                        const editor = node.querySelector('#editorBar');
-                        editor.remove();
-                        console.log('[Race Save] 💣 MutationObserver REMOVED nested editorBar');
-                    }
+        // Wait for editorBar to exist, then hide it
+        const waitForEditor = setInterval(() => {
+            const editorBar = document.getElementById('editorBar');
+            if (editorBar) {
+                clearInterval(waitForEditor);
+                
+                forceHide(editorBar);
+                console.log('[Race Save] � HIDDEN editorBar with aggressive CSS');
+                
+                // MutationObserver to re-hide if anything tries to show it
+                const observer = new MutationObserver(() => {
+                    forceHide(editorBar);
                 });
-            });
-        });
-        
-        bodyObserver.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-        console.log('[Race Save] 👁️ MutationObserver watching for editorBar');
-        
-        // POLLING FALLBACK: Keep checking and removing
-        let removeCount = 0;
-        const removeInterval = setInterval(() => {
-            const editorBarCheck = document.getElementById('editorBar');
-            if (editorBarCheck) {
-                editorBarCheck.remove();
-                console.log('[Race Save] � Polling removed editorBar (count: ' + removeCount + ')');
+                
+                observer.observe(editorBar, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+                console.log('[Race Save] 👁️ MutationObserver watching editorBar styles');
+                
+                // Polling fallback
+                let hideCount = 0;
+                const hideInterval = setInterval(() => {
+                    forceHide(editorBar);
+                    hideCount++;
+                    if (hideCount >= 10) {
+                        clearInterval(hideInterval);
+                        console.log('[Race Save] ✅ Hide enforcement complete');
+                    }
+                }, 500);
             }
-            removeCount++;
-            if (removeCount >= 20) {
-                clearInterval(removeInterval);
-                console.log('[Race Save] ✅ Polling complete (20 checks over 10 seconds)');
-            }
-        }, 500);
+        }, 100);
     })();
     
     // Create floating save button
