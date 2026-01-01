@@ -259,8 +259,13 @@
     
     // Load saved map config
     function loadSavedMapConfig() {
+        console.log('[Race Save] 📋 loadSavedMapConfig() called');
+        console.log('[Race Save] raceData exists:', !!raceData);
+        console.log('[Race Save] raceData.race exists:', !!raceData?.race);
+        console.log('[Race Save] raceData.race.map_data exists:', !!raceData?.race?.map_data);
+        
         if (!raceData?.race?.map_data) {
-            console.log('[Race Save] No saved map config');
+            console.log('[Race Save] ❌ No saved map config');
             return;
         }
         
