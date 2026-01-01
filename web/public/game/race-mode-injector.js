@@ -88,26 +88,27 @@
                 loadingScreen.style.display = 'none';
             }
             
-            // Enable editor UI and expand tools panel
-            const editorBar = document.getElementById('editorBar');
-            if (editorBar) {
-                // Show editor bar
-                editorBar.style.display = 'flex';
-                
-                // Remove collapsed class if present
-                editorBar.classList.remove('collapsed');
-                
-                // Find and show editor content
-                const editorContent = editorBar.querySelector('.editor-content');
-                if (editorContent) {
-                    editorContent.style.display = 'block';
-                    editorContent.style.visibility = 'visible';
-                    editorContent.style.opacity = '1';
-                    console.log('[Race Mode] ✅ Expanded editor content');
-                }
-                
-                console.log('[Race Mode] ✅ Enabled editor UI');
-            }
+            // Don't auto-show editor UI - let it stay hidden by default
+            // const editorBar = document.getElementById('editorBar');
+            // if (editorBar) {
+            //     // Show editor bar
+            //     editorBar.style.display = 'flex';
+            //     
+            //     // Remove collapsed class if present
+            //     editorBar.classList.remove('collapsed');
+            //     
+            //     // Find and show editor content
+            //     const editorContent = editorBar.querySelector('.editor-content');
+            //     if (editorContent) {
+            //         editorContent.style.display = 'block';
+            //         editorContent.style.visibility = 'visible';
+            //         editorContent.style.opacity = '1';
+            //         console.log('[Race Mode] ✅ Expanded editor content');
+            //     }
+            //     
+            //     console.log('[Race Mode] ✅ Enabled editor UI');
+            // }
+            console.log('[Race Mode] Editor UI stays hidden - use ≡ button or M key to open');
             
             // Don't auto-enter editor mode - let Map Editor stay hidden
             // setTimeout(() => {
