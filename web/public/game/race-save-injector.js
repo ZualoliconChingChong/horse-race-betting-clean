@@ -45,8 +45,9 @@
                 clearInterval(waitForEditor);
                 
                 const forceHide = () => {
-                    editorBar.style.display = 'none';
-                    editorBar.style.visibility = 'hidden';
+                    // Use setProperty with !important to maintain highest priority
+                    editorBar.style.setProperty('display', 'none', 'important');
+                    editorBar.style.setProperty('visibility', 'hidden', 'important');
                     editorBar.classList.add('collapsed');
                 };
                 
