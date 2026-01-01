@@ -275,6 +275,11 @@
             <input type="range" data-sync="mudSlowdown" min="0.1" max="0.9" step="0.05" value="0.4">
             <span class="teb-val">60%</span>
           </div>
+          <div class="teb-menu-setting">
+            <label>Spinner Angle</label>
+            <input type="range" data-sync="spinnerAngle" min="0" max="359" step="1" value="0">
+            <span class="teb-val">0°</span>
+          </div>
           
           <div class="teb-menu-section">🧲 Magnet</div>
           <div class="teb-menu-setting">
@@ -346,6 +351,15 @@
       <div class="teb-dropdown">
         <button class="teb-btn teb-dropdown-toggle" title="Game Settings">🎮</button>
         <div class="teb-dropdown-menu teb-menu-wide teb-menu-scroll">
+          <div class="teb-menu-section">🌐 Language</div>
+          <div class="teb-menu-setting">
+            <label>Language</label>
+            <select data-sync="languageSelect">
+              <option value="en">English</option>
+              <option value="vi">Tiếng Việt</option>
+            </select>
+          </div>
+          
           <div class="teb-menu-section">🎮 Game Settings</div>
           <div class="teb-menu-setting">
             <label>🐎 Horses</label>
@@ -654,6 +668,10 @@
             <input type="number" data-sync="waitingRoomH" min="160" max="1200" step="10" value="480">
           </div>
           <div class="teb-menu-setting">
+            <label>Corner R</label>
+            <input type="number" data-sync="waitingRoomR" min="0" max="60" step="1" value="18">
+          </div>
+          <div class="teb-menu-setting">
             <label>Auto-fit</label>
             <input type="checkbox" data-sync="autoFitWaitingRoom" checked>
           </div>
@@ -807,8 +825,8 @@
 <!-- FPS moved into HUD -->
 
 
-<!-- Modern Map Editor -->
-<div class="rightbar" id="editorBar">
+<!-- Modern Map Editor - Collapsed by default but can be expanded -->
+<div class="rightbar collapsed" id="editorBar">
   <div class="grip-l" id="gripL" title="Kéo để chỉnh rộng"></div>
   <div class="grip-br" id="gripBR" title="Kéo để đổi kích thước"></div>
   <div class="grip-bl" id="gripBL" title="Kéo để đổi kích thước"></div>
@@ -816,7 +834,7 @@
   <div class="grip-tl" id="gripTL" title="Kéo để đổi kích thước"></div>
   
   <div class="editor-header" id="editorHeader">
-    <div class="editor-title-section">
+   <div class="editor-title-section"></div> 
       <h2>🎨 Map Editor</h2>
       <div class="drag-handle" id="dragHandle" title="Kéo để di chuyển panel">⋮⋮</div>
       <button class="collapse-btn" id="collapseEditorBtn" title="Thu nhỏ Map Editor">━</button>
@@ -1878,7 +1896,7 @@
 </div>
 
 <!-- Race Save Injector for Editor Mode -->
-<script src="race-save-injector.js"></script>
+<script src="race-save-injector.js?v=20260102"></script>
 
 <!-- Top Editor Bar Controller -->
 <script>

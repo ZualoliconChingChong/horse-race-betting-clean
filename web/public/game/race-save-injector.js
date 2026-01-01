@@ -22,32 +22,15 @@
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
     
-    // FORCE HIDE MAP EDITOR - Simple one-time hide, no observers to avoid blocking game
-    (function forceHideEditor() {
-        console.log('[Race Save] ⏳ Will hide editor after game loads...');
-        
-        // Set localStorage to collapsed - this is safe
+    // SET MAP EDITOR COLLAPSED BY DEFAULT - but allow reopening via UI
+    (function setEditorCollapsedByDefault() {
+        // Just set localStorage to collapsed - game's own code will handle the rest
+        // User can still open it via the expand button
         try {
             localStorage.setItem('rightbarCollapsed', '1');
             localStorage.setItem('editorBarCollapsed', '1');
+            console.log('[Race Save] � Set editor to collapsed by default');
         } catch (e) {}
-        
-        // Simple one-time hide function
-        const hideOnce = () => {
-            const editorBar = document.getElementById('editorBar');
-            if (editorBar) {
-                editorBar.style.cssText = 'display:none!important;visibility:hidden!important;';
-                editorBar.classList.add('collapsed');
-                console.log('[Race Save] 👻 Editor hidden');
-            }
-        };
-        
-        // Wait for page load, then hide once
-        if (document.readyState === 'complete') {
-            setTimeout(hideOnce, 3000);
-        } else {
-            window.addEventListener('load', () => setTimeout(hideOnce, 3000));
-        }
     })();
     
     // Create floating save button

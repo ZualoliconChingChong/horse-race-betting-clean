@@ -1577,8 +1577,8 @@ input[type="number"] {
     transition: all 0.3s ease;
     user-select: none;
   }
-  /* Collapsed state: COMPLETELY HIDE THE ENTIRE PANEL */
-  .rightbar.collapsed{ display:none !important; }
+  /* Collapsed state: shrink to thin bar with expand button visible */
+  .rightbar.collapsed{ width:40px !important; min-width:40px !important; overflow:hidden; }
   .rightbar.collapsed > *:not(.editor-header){ display:none !important; }
   /* When collapsed, hide header controls to keep a slim title bar */
   .rightbar.collapsed .editor-controls{ display:none !important; }
