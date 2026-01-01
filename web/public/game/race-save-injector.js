@@ -320,25 +320,34 @@
             if (mapData.warpzoneSettings) window.mapDef.warpzoneSettings = mapData.warpzoneSettings;
             if (mapData.quantumdashSettings) window.mapDef.quantumdashSettings = mapData.quantumdashSettings;
             
+            // Helper to safely set properties (skip read-only getters)
+            const safeSet = (prop, value) => {
+                try {
+                    window.mapDef[prop] = value;
+                } catch (e) {
+                    console.log(`[Race Save] ⚠️ Cannot set ${prop} (read-only):`, e.message);
+                }
+            };
+            
             // Physics settings
-            if (mapData.horseRadius !== undefined) window.mapDef.horseRadius = mapData.horseRadius;
-            if (mapData.carrotRadius !== undefined) window.mapDef.carrotRadius = mapData.carrotRadius;
-            if (mapData.maxVel !== undefined) window.mapDef.maxVel = mapData.maxVel;
-            if (mapData.minCruise !== undefined) window.mapDef.minCruise = mapData.minCruise;
-            if (mapData.horseHitScale !== undefined) window.mapDef.horseHitScale = mapData.horseHitScale;
-            if (mapData.horseHitInset !== undefined) window.mapDef.horseHitInset = mapData.horseHitInset;
+            if (mapData.horseRadius !== undefined) safeSet('horseRadius', mapData.horseRadius);
+            if (mapData.carrotRadius !== undefined) safeSet('carrotRadius', mapData.carrotRadius);
+            if (mapData.maxVel !== undefined) safeSet('maxVel', mapData.maxVel);
+            if (mapData.minCruise !== undefined) safeSet('minCruise', mapData.minCruise);
+            if (mapData.horseHitScale !== undefined) safeSet('horseHitScale', mapData.horseHitScale);
+            if (mapData.horseHitInset !== undefined) safeSet('horseHitInset', mapData.horseHitInset);
             
             // Weather
-            if (mapData.weather) window.mapDef.weather = mapData.weather;
+            if (mapData.weather) safeSet('weather', mapData.weather);
             
             // Apply settings
-            if (mapData.lastHorseWins !== undefined) window.mapDef.lastHorseWins = mapData.lastHorseWins;
-            if (mapData.hpSystemEnabled !== undefined) window.mapDef.hpSystemEnabled = mapData.hpSystemEnabled;
-            if (mapData.horseMaxHP !== undefined) window.mapDef.horseMaxHP = mapData.horseMaxHP;
-            if (mapData.wallDamageEnabled !== undefined) window.mapDef.wallDamageEnabled = mapData.wallDamageEnabled;
-            if (mapData.wallDamageAmount !== undefined) window.mapDef.wallDamageAmount = mapData.wallDamageAmount;
-            if (mapData.borderDamageEnabled !== undefined) window.mapDef.borderDamageEnabled = mapData.borderDamageEnabled;
-            if (mapData.borderDamageAmount !== undefined) window.mapDef.borderDamageAmount = mapData.borderDamageAmount;
+            if (mapData.lastHorseWins !== undefined) safeSet('lastHorseWins', mapData.lastHorseWins);
+            if (mapData.hpSystemEnabled !== undefined) safeSet('hpSystemEnabled', mapData.hpSystemEnabled);
+            if (mapData.horseMaxHP !== undefined) safeSet('horseMaxHP', mapData.horseMaxHP);
+            if (mapData.wallDamageEnabled !== undefined) safeSet('wallDamageEnabled', mapData.wallDamageEnabled);
+            if (mapData.wallDamageAmount !== undefined) safeSet('wallDamageAmount', mapData.wallDamageAmount);
+            if (mapData.borderDamageEnabled !== undefined) safeSet('borderDamageEnabled', mapData.borderDamageEnabled);
+            if (mapData.borderDamageAmount !== undefined) safeSet('borderDamageAmount', mapData.borderDamageAmount);
             
             // Redraw map - use forceStaticLayerRebuild for complete cache clear
             const forceRedraw = () => {
