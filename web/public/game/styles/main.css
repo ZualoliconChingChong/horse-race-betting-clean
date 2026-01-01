@@ -2050,6 +2050,13 @@ body.is-mobile .teb-dropdown-menu {
   body.is-mobile .game-hub {
     flex-wrap: wrap;
     gap: 4px;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw;
+    box-sizing: border-box;
+    padding: 6px 8px;
+    overflow-x: hidden;
   }
   
   body.is-mobile .notification-bar {
