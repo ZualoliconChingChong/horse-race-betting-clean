@@ -38,53 +38,29 @@
         };
         console.log('[Race Save] ✅ Overridden setEditorVisible function');
         
-        // Wait for editorBar to exist, then aggressively hide it
+        // Wait for editorBar to exist, then REMOVE IT FROM DOM entirely
         const waitForEditor = setInterval(() => {
             const editorBar = document.getElementById('editorBar');
             if (editorBar) {
                 clearInterval(waitForEditor);
                 
-                const forceHide = () => {
-                    // Use setProperty with !important to maintain highest priority
-                    editorBar.style.setProperty('display', 'none', 'important');
-                    editorBar.style.setProperty('visibility', 'hidden', 'important');
-                    editorBar.classList.add('collapsed');
-                };
+                // NUCLEAR OPTION: Remove editorBar from DOM completely
+                // Can't show what doesn't exist!
+                editorBar.remove();
+                console.log('[Race Save] 💣 REMOVED editorBar from DOM entirely');
                 
-                forceHide();
-                console.log('[Race Save] ⚠️ AGGRESSIVE HIDE activated on editorBar');
-                
-                // MutationObserver to block any attempts to show editor
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.type === 'attributes') {
-                            const attr = mutation.attributeName;
-                            if (attr === 'style' || attr === 'class') {
-                                const currentDisplay = editorBar.style.display;
-                                const hasCollapsed = editorBar.classList.contains('collapsed');
-                                
-                                if (currentDisplay !== 'none' || !hasCollapsed) {
-                                    console.log('[Race Save] 🚫 Blocked attempt to show editor');
-                                    forceHide();
-                                }
-                            }
-                        }
-                    });
-                });
-                
-                observer.observe(editorBar, {
-                    attributes: true,
-                    attributeFilter: ['style', 'class']
-                });
-                
-                // Brute force hide every 500ms for first 5 seconds
-                let hideCount = 0;
-                const hideInterval = setInterval(() => {
-                    forceHide();
-                    hideCount++;
-                    if (hideCount >= 10) {
-                        clearInterval(hideInterval);
-                        console.log('[Race Save] ✅ Hide enforcement complete');
+                // Keep checking and removing if something tries to re-add it
+                let removeCount = 0;
+                const removeInterval = setInterval(() => {
+                    const editorBarCheck = document.getElementById('editorBar');
+                    if (editorBarCheck) {
+                        editorBarCheck.remove();
+                        console.log('[Race Save] 🚫 Removed re-added editorBar');
+                    }
+                    removeCount++;
+                    if (removeCount >= 10) {
+                        clearInterval(removeInterval);
+                        console.log('[Race Save] ✅ DOM removal enforcement complete');
                     }
                 }, 500);
             }
