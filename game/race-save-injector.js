@@ -2,16 +2,22 @@
 (function() {
     'use strict';
     
+    console.log('[Race Save] 🚀 Script loaded at:', new Date().toISOString());
+    console.log('[Race Save] URL:', window.location.href);
+    
     const urlParams = new URLSearchParams(window.location.search);
     const isEditorMode = urlParams.get('editor') === 'true';
     const raceId = urlParams.get('raceId');
     
+    console.log('[Race Save] URL Params - editor:', urlParams.get('editor'), 'raceId:', raceId);
+    console.log('[Race Save] Conditions - isEditorMode:', isEditorMode, 'hasRaceId:', !!raceId);
+    
     if (!isEditorMode || !raceId) {
-        console.log('[Race Save] Not in race editor mode');
+        console.log('[Race Save] ❌ Not in race editor mode - exiting');
         return;
     }
     
-    console.log('[Race Save] Injecting save functionality for race', raceId);
+    console.log('[Race Save] ✅ Injecting save functionality for race', raceId);
     
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
