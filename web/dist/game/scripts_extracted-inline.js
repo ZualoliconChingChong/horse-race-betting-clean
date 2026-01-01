@@ -641,6 +641,7 @@ function syncFanInspectorFrom(obj){
     }
   }
   function invalidateStaticLayer(){ staticLayerDirty = true; }
+  window.invalidateStaticLayer = invalidateStaticLayer; // Expose to window for external scripts
   
   // ===== HUD: fixed bottom under map (stretches to map width) =====
   const hudEl = document.getElementById('hud');
@@ -1411,7 +1412,7 @@ function loadSample(){
 // ===== Editor UI =====
 const editorBar = document.getElementById('editorBar');
 let hud = document.getElementById('hud');
-if (editorBar) editorBar.style.display = "block";
+if (editorBar) editorBar.style.display = "none"; // Hidden by default
 
 // Restore saved width/size (legacy keys) with clamping to avoid tiny start
 (function(){
@@ -1424,8 +1425,8 @@ if (editorBar) editorBar.style.display = "block";
   if (!Number.isNaN(h) && h >= MIN_H) editorBar.style.height = h + 'px';
 })();
 
-// Toggle show/hide editor
-let editorVisible = true;
+// Toggle show/hide editor - DEFAULT TO HIDDEN
+let editorVisible = false;
 function setEditorVisible(v){
   editorVisible = v;
   editorBar.style.display = v ? 'block' : 'none';
@@ -12769,6 +12770,8 @@ function startMainLoop(){
   _rafActive = true;
   _rafHandle = requestAnimationFrame(loop);
 }
+window.startMainLoop = startMainLoop; // Expose to window for external scripts
+window.drawMap = drawMap; // Expose to window for external scripts
 function stopMainLoop(){
   if (!_rafActive) return;
   cancelAnimationFrame(_rafHandle);
@@ -14470,13 +14473,15 @@ function setMode(next) {
       toggleFocusMode();
     }
     if (editorBar) {
-      editorBar.style.display = 'block';
-      if (editorBar.classList.contains('collapsed')) {
-        editorBar.classList.remove('collapsed');
-        try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
-        const cbtn = editorBar.querySelector('.collapse-btn');
-        if (cbtn) { cbtn.textContent = '≪'; cbtn.title = 'Collapse panel'; }
-      }
+      // Don't auto-show editor when switching to editor mode
+      // User must manually open it via button or keyboard shortcut
+      // editorBar.style.display = 'block';
+      // if (editorBar.classList.contains('collapsed')) {
+      //   editorBar.classList.remove('collapsed');
+      //   try { localStorage.setItem('rightbarCollapsed','0'); } catch {}
+      //   const cbtn = editorBar.querySelector('.collapse-btn');
+      //   if (cbtn) { cbtn.textContent = '≪'; cbtn.title = 'Collapse panel'; }
+      // }
       ensureEditorContentVisible();
       try { ensureSpawnPointsForEditor(); } catch {}
     }
@@ -14726,28 +14731,19 @@ const dragHandle = document.getElementById('dragHandle');
       localStorage.removeItem('editorBarCollapsed');
     }
   } catch {}
-  // restore state
+  // restore state - ALWAYS default to collapsed (hidden)
   try {
     const collapsed = localStorage.getItem(COLLAPSE_KEY);
-    if (collapsed === '1') rightbar.classList.add('collapsed');
+    // ALWAYS default to collapsed regardless of localStorage value
+    rightbar.classList.add('collapsed');
+    rightbar.style.display = 'none';
+    
     const size = JSON.parse(localStorage.getItem(SIZE_KEY) || 'null');
     // Only apply saved size if it's reasonable (not from collapsed state)
-    if (size && typeof size.w === 'number' && size.w >= MIN_W) rightbar.style.width = size.w + 'px';
-    if (size && typeof size.h === 'number' && size.h >= MIN_H) rightbar.style.height = size.h + 'px';
-    // set initial button glyph
-    const isCollapsed = rightbar.classList.contains('collapsed');
-    cbtn.textContent = isCollapsed ? '≫' : '≪';
-    cbtn.title = isCollapsed ? 'Expand panel' : 'Collapse panel';
-    // If collapsed on load, hide the panel entirely (reopen via HUD button)
-    rightbar.style.display = isCollapsed ? 'none' : 'block';
-  } catch {}
-  // Sync HUD open-editor button on init
-  try {
+    cbtn.textContent = '≫';
+    cbtn.title = 'Expand panel';
     const openBtn = document.getElementById('openEditorBtn');
-    if (openBtn) {
-      const isHidden = rightbar.classList.contains('collapsed') || getComputedStyle(rightbar).display === 'none';
-      openBtn.style.display = isHidden ? 'inline-block' : 'none';
-    }
+    if (openBtn) openBtn.style.display = 'inline-block';
   } catch {}
   cbtn.addEventListener('click', () => {
     rightbar.classList.toggle('collapsed');
@@ -14974,8 +14970,8 @@ setTimeout(() => {
   // }, 9000);
 }, 1000);
 
-// Initialize editor mode
-document.getElementById('editBtn').click();
+// Don't auto-click editBtn on page load - let Map Editor stay hidden by default
+// document.getElementById('editBtn').click();
 
 startMainLoop();
 });

@@ -641,6 +641,7 @@ function syncFanInspectorFrom(obj){
     }
   }
   function invalidateStaticLayer(){ staticLayerDirty = true; }
+  window.invalidateStaticLayer = invalidateStaticLayer; // Expose to window for external scripts
   
   // ===== HUD: fixed bottom under map (stretches to map width) =====
   const hudEl = document.getElementById('hud');
@@ -12769,6 +12770,8 @@ function startMainLoop(){
   _rafActive = true;
   _rafHandle = requestAnimationFrame(loop);
 }
+window.startMainLoop = startMainLoop; // Expose to window for external scripts
+window.drawMap = drawMap; // Expose to window for external scripts
 function stopMainLoop(){
   if (!_rafActive) return;
   cancelAnimationFrame(_rafHandle);
