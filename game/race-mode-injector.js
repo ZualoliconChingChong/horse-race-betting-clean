@@ -31,12 +31,53 @@
             clearInterval(checkReady);
             gameReady = true;
             
-            // Force hide editor bar immediately
+            // AGGRESSIVE HIDE: Use MutationObserver to prevent ANY code from showing editor
             const editorBar = document.getElementById('editorBar');
             if (editorBar) {
-                editorBar.style.display = 'none';
-                editorBar.classList.add('collapsed');
-                console.log('[Race Mode] Force-hidden editorBar');
+                // Force hide immediately
+                const forceHide = () => {
+                    editorBar.style.display = 'none';
+                    editorBar.style.visibility = 'hidden';
+                    editorBar.classList.add('collapsed');
+                };
+                
+                forceHide();
+                console.log('[Race Mode] ⚠️ AGGRESSIVE HIDE activated');
+                
+                // Watch for any attempts to show editor and block them
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        if (mutation.type === 'attributes') {
+                            const attr = mutation.attributeName;
+                            if (attr === 'style' || attr === 'class') {
+                                // Check if something tried to show it
+                                const currentDisplay = editorBar.style.display;
+                                const hasCollapsed = editorBar.classList.contains('collapsed');
+                                
+                                if (currentDisplay !== 'none' || !hasCollapsed) {
+                                    console.log('[Race Mode] 🚫 Blocked attempt to show editor');
+                                    forceHide();
+                                }
+                            }
+                        }
+                    });
+                });
+                
+                observer.observe(editorBar, {
+                    attributes: true,
+                    attributeFilter: ['style', 'class']
+                });
+                
+                // Also force hide every 500ms for first 5 seconds (brute force approach)
+                let hideCount = 0;
+                const hideInterval = setInterval(() => {
+                    forceHide();
+                    hideCount++;
+                    if (hideCount >= 10) {
+                        clearInterval(hideInterval);
+                        console.log('[Race Mode] ✅ Hide enforcement complete');
+                    }
+                }, 500);
             }
             
             initRaceMode();
