@@ -15,12 +15,30 @@
     
     const API_BASE = window.location.origin + '/api';
     
+    // Force hide Map Editor by setting localStorage to collapsed
+    try {
+        localStorage.setItem('rightbarCollapsed', '1');
+        localStorage.setItem('editorBarCollapsed', '1');
+        console.log('[Race Mode] Forced localStorage to collapsed state');
+    } catch (e) {
+        console.error('[Race Mode] Failed to set localStorage:', e);
+    }
+    
     // Wait for game to be ready
     let gameReady = false;
     const checkReady = setInterval(() => {
         if (window.mapDef && document.getElementById('editorBar')) {
             clearInterval(checkReady);
             gameReady = true;
+            
+            // Force hide editor bar immediately
+            const editorBar = document.getElementById('editorBar');
+            if (editorBar) {
+                editorBar.style.display = 'none';
+                editorBar.classList.add('collapsed');
+                console.log('[Race Mode] Force-hidden editorBar');
+            }
+            
             initRaceMode();
         }
     }, 100);
