@@ -22,15 +22,17 @@
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
     
-    // FORCE HIDE MAP EDITOR - Add aggressive hide mechanism
+    // FORCE HIDE MAP EDITOR - ULTIMATE AGGRESSIVE MECHANISM
     (function forceHideEditor() {
+        console.log('[Race Save] 🛡️ Starting ULTIMATE hide mechanism');
+        
         // Set localStorage to collapsed immediately
         try {
             localStorage.setItem('rightbarCollapsed', '1');
             localStorage.setItem('editorBarCollapsed', '1');
-            console.log('[Race Save] Forced localStorage to collapsed state');
+            console.log('[Race Save] ✅ Forced localStorage to collapsed state');
         } catch (e) {
-            console.error('[Race Save] Failed to set localStorage:', e);
+            console.error('[Race Save] ❌ Failed to set localStorage:', e);
         }
         
         // OVERRIDE setEditorVisible to prevent ANY code from showing editor
@@ -44,33 +46,50 @@
         };
         console.log('[Race Save] ✅ Overridden setEditorVisible function');
         
-        // Wait for editorBar to exist, then REMOVE IT FROM DOM entirely
-        const waitForEditor = setInterval(() => {
-            const editorBar = document.getElementById('editorBar');
-            if (editorBar) {
-                clearInterval(waitForEditor);
-                
-                // NUCLEAR OPTION: Remove editorBar from DOM completely
-                // Can't show what doesn't exist!
-                editorBar.remove();
-                console.log('[Race Save] 💣 REMOVED editorBar from DOM entirely');
-                
-                // Keep checking and removing if something tries to re-add it
-                let removeCount = 0;
-                const removeInterval = setInterval(() => {
-                    const editorBarCheck = document.getElementById('editorBar');
-                    if (editorBarCheck) {
-                        editorBarCheck.remove();
-                        console.log('[Race Save] 🚫 Removed re-added editorBar');
+        // IMMEDIATE CHECK: Remove if already exists
+        const existingEditor = document.getElementById('editorBar');
+        if (existingEditor) {
+            existingEditor.remove();
+            console.log('[Race Save] 💣 REMOVED existing editorBar immediately');
+        }
+        
+        // MUTATION OBSERVER: Watch document body for editorBar being added
+        const bodyObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    // Check if added node is editorBar or contains editorBar
+                    if (node.id === 'editorBar') {
+                        node.remove();
+                        console.log('[Race Save] 💣 MutationObserver REMOVED editorBar on add');
+                    } else if (node.querySelector && node.querySelector('#editorBar')) {
+                        const editor = node.querySelector('#editorBar');
+                        editor.remove();
+                        console.log('[Race Save] 💣 MutationObserver REMOVED nested editorBar');
                     }
-                    removeCount++;
-                    if (removeCount >= 10) {
-                        clearInterval(removeInterval);
-                        console.log('[Race Save] ✅ DOM removal enforcement complete');
-                    }
-                }, 500);
+                });
+            });
+        });
+        
+        bodyObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        console.log('[Race Save] 👁️ MutationObserver watching for editorBar');
+        
+        // POLLING FALLBACK: Keep checking and removing
+        let removeCount = 0;
+        const removeInterval = setInterval(() => {
+            const editorBarCheck = document.getElementById('editorBar');
+            if (editorBarCheck) {
+                editorBarCheck.remove();
+                console.log('[Race Save] � Polling removed editorBar (count: ' + removeCount + ')');
             }
-        }, 100);
+            removeCount++;
+            if (removeCount >= 20) {
+                clearInterval(removeInterval);
+                console.log('[Race Save] ✅ Polling complete (20 checks over 10 seconds)');
+            }
+        }, 500);
     })();
     
     // Create floating save button
