@@ -12772,6 +12772,15 @@ function startMainLoop(){
 }
 window.startMainLoop = startMainLoop; // Expose to window for external scripts
 window.drawMap = drawMap; // Expose to window for external scripts
+window.render = render; // Expose to window for external scripts
+// Force complete static layer rebuild - clears cache completely
+window.forceStaticLayerRebuild = function() {
+  staticLayerDirty = true;
+  if (staticLayerCtx) {
+    staticLayerCtx.clearRect(0, 0, staticLayerCanvas.width, staticLayerCanvas.height);
+  }
+  console.log('[Game] Force static layer rebuild triggered');
+};
 function stopMainLoop(){
   if (!_rafActive) return;
   cancelAnimationFrame(_rafHandle);

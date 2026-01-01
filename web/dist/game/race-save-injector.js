@@ -335,9 +335,16 @@
             if (mapData.borderDamageEnabled !== undefined) window.mapDef.borderDamageEnabled = mapData.borderDamageEnabled;
             if (mapData.borderDamageAmount !== undefined) window.mapDef.borderDamageAmount = mapData.borderDamageAmount;
             
-            // Redraw map - multiple times to ensure all elements render
+            // Redraw map - use forceStaticLayerRebuild for complete cache clear
             const forceRedraw = () => {
-                if (typeof window.invalidateStaticLayer === 'function') window.invalidateStaticLayer();
+                console.log('[Race Save] 🔄 Forcing redraw, brushes count:', window.mapDef?.brushes?.length || 0);
+                // Use the new aggressive rebuild function
+                if (typeof window.forceStaticLayerRebuild === 'function') {
+                    window.forceStaticLayerRebuild();
+                } else if (typeof window.invalidateStaticLayer === 'function') {
+                    window.invalidateStaticLayer();
+                }
+                if (typeof window.render === 'function') window.render();
                 if (typeof window.drawMap === 'function') window.drawMap();
                 if (typeof window.startMainLoop === 'function') window.startMainLoop();
             };
@@ -346,11 +353,12 @@
             forceRedraw();
             
             // Delayed redraws to ensure brushes render after all systems initialize
-            setTimeout(forceRedraw, 100);
+            setTimeout(forceRedraw, 200);
             setTimeout(forceRedraw, 500);
             setTimeout(forceRedraw, 1000);
+            setTimeout(forceRedraw, 2000);
             
-            console.log('[Race Save] ✅ Loaded saved map config');
+            console.log('[Race Save] ✅ Loaded saved map config with', mapData.brushes?.length || 0, 'brushes');
         } catch (error) {
             console.error('[Race Save] Failed to load saved config:', error);
         }
