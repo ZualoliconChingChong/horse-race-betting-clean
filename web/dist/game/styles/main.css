@@ -2046,7 +2046,7 @@ body.is-mobile .teb-dropdown-menu {
   overflow-y: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .game-hub {
     flex-wrap: wrap !important;
     gap: 2px !important;
