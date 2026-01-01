@@ -22,11 +22,11 @@
     const API_BASE = window.location.origin + '/api';
     let raceData = null;
     
-    // FORCE HIDE MAP EDITOR - CSS hiding without DOM removal to avoid breaking game
+    // FORCE HIDE MAP EDITOR - Wait for game to load first, then hide
     (function forceHideEditor() {
-        console.log('[Race Save] 🛡️ Starting SAFE hide mechanism');
+        console.log('[Race Save] ⏳ Waiting for game to fully load before hiding editor...');
         
-        // Set localStorage to collapsed immediately
+        // Set localStorage to collapsed immediately - this won't break anything
         try {
             localStorage.setItem('rightbarCollapsed', '1');
             localStorage.setItem('editorBarCollapsed', '1');
@@ -35,59 +35,74 @@
             console.error('[Race Save] ❌ Failed to set localStorage:', e);
         }
         
-        // OVERRIDE setEditorVisible to prevent ANY code from showing editor
-        const originalSetEditorVisible = window.setEditorVisible;
-        window.setEditorVisible = function(v) {
-            console.log('[Race Save] 🚫 Blocked setEditorVisible(' + v + ')');
-            // Force to always be false/hidden
-            if (originalSetEditorVisible) {
-                originalSetEditorVisible(false);
-            }
-        };
-        console.log('[Race Save] ✅ Overridden setEditorVisible function');
-        
-        // AGGRESSIVE HIDE with CSS - DON'T REMOVE from DOM to avoid breaking game
-        const forceHide = (element) => {
-            if (!element) return;
-            element.style.setProperty('display', 'none', 'important');
-            element.style.setProperty('visibility', 'hidden', 'important');
-            element.style.setProperty('opacity', '0', 'important');
-            element.style.setProperty('pointer-events', 'none', 'important');
-            element.classList.add('collapsed');
-        };
-        
-        // Wait for editorBar to exist, then hide it
-        const waitForEditor = setInterval(() => {
-            const editorBar = document.getElementById('editorBar');
-            if (editorBar) {
-                clearInterval(waitForEditor);
-                
-                forceHide(editorBar);
-                console.log('[Race Save] � HIDDEN editorBar with aggressive CSS');
-                
-                // MutationObserver to re-hide if anything tries to show it
-                const observer = new MutationObserver(() => {
+        // Wait for window to fully load AND game to initialize
+        const startHiding = () => {
+            console.log('[Race Save] 🎮 Game loaded, starting hide mechanism...');
+            
+            // OVERRIDE setEditorVisible to prevent ANY code from showing editor
+            const originalSetEditorVisible = window.setEditorVisible;
+            window.setEditorVisible = function(v) {
+                console.log('[Race Save] 🚫 Blocked setEditorVisible(' + v + ')');
+                // Force to always be false/hidden
+                if (originalSetEditorVisible) {
+                    originalSetEditorVisible(false);
+                }
+            };
+            console.log('[Race Save] ✅ Overridden setEditorVisible function');
+            
+            // AGGRESSIVE HIDE with CSS - DON'T REMOVE from DOM to avoid breaking game
+            const forceHide = (element) => {
+                if (!element) return;
+                element.style.setProperty('display', 'none', 'important');
+                element.style.setProperty('visibility', 'hidden', 'important');
+                element.style.setProperty('opacity', '0', 'important');
+                element.style.setProperty('pointer-events', 'none', 'important');
+                element.classList.add('collapsed');
+            };
+            
+            // Wait for editorBar to exist, then hide it
+            const waitForEditor = setInterval(() => {
+                const editorBar = document.getElementById('editorBar');
+                if (editorBar) {
+                    clearInterval(waitForEditor);
+                    
                     forceHide(editorBar);
-                });
-                
-                observer.observe(editorBar, {
-                    attributes: true,
-                    attributeFilter: ['style', 'class']
-                });
-                console.log('[Race Save] 👁️ MutationObserver watching editorBar styles');
-                
-                // Polling fallback
-                let hideCount = 0;
-                const hideInterval = setInterval(() => {
-                    forceHide(editorBar);
-                    hideCount++;
-                    if (hideCount >= 10) {
-                        clearInterval(hideInterval);
-                        console.log('[Race Save] ✅ Hide enforcement complete');
-                    }
-                }, 500);
-            }
-        }, 100);
+                    console.log('[Race Save] 👻 HIDDEN editorBar with aggressive CSS');
+                    
+                    // MutationObserver to re-hide if anything tries to show it
+                    const observer = new MutationObserver(() => {
+                        forceHide(editorBar);
+                    });
+                    
+                    observer.observe(editorBar, {
+                        attributes: true,
+                        attributeFilter: ['style', 'class']
+                    });
+                    console.log('[Race Save] 👁️ MutationObserver watching editorBar styles');
+                    
+                    // Polling fallback
+                    let hideCount = 0;
+                    const hideInterval = setInterval(() => {
+                        forceHide(editorBar);
+                        hideCount++;
+                        if (hideCount >= 10) {
+                            clearInterval(hideInterval);
+                            console.log('[Race Save] ✅ Hide enforcement complete');
+                        }
+                    }, 500);
+                }
+            }, 100);
+        };
+        
+        // Wait for page load
+        if (document.readyState === 'complete') {
+            // Already loaded
+            setTimeout(startHiding, 2000); // Wait 2 more seconds for game init
+        } else {
+            window.addEventListener('load', () => {
+                setTimeout(startHiding, 2000); // Wait 2 seconds after load for game init
+            });
+        }
     })();
     
     // Create floating save button
