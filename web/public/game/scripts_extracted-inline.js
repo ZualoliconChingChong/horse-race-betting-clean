@@ -1424,8 +1424,8 @@ if (editorBar) editorBar.style.display = "none"; // Hidden by default
   if (!Number.isNaN(h) && h >= MIN_H) editorBar.style.height = h + 'px';
 })();
 
-// Toggle show/hide editor
-let editorVisible = true;
+// Toggle show/hide editor - DEFAULT TO HIDDEN
+let editorVisible = false;
 function setEditorVisible(v){
   editorVisible = v;
   editorBar.style.display = v ? 'block' : 'none';

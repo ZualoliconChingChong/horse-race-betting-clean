@@ -27,6 +27,17 @@
             console.error('[Race Save] Failed to set localStorage:', e);
         }
         
+        // OVERRIDE setEditorVisible to prevent ANY code from showing editor
+        const originalSetEditorVisible = window.setEditorVisible;
+        window.setEditorVisible = function(v) {
+            console.log('[Race Save] 🚫 Blocked setEditorVisible(' + v + ')');
+            // Force to always be false/hidden
+            if (originalSetEditorVisible) {
+                originalSetEditorVisible(false);
+            }
+        };
+        console.log('[Race Save] ✅ Overridden setEditorVisible function');
+        
         // Wait for editorBar to exist, then aggressively hide it
         const waitForEditor = setInterval(() => {
             const editorBar = document.getElementById('editorBar');
