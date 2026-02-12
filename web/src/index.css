@@ -72,3 +72,54 @@ body {
 .glow-red {
   box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
 }
+
+/* Mobile improvements */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Prevent horizontal overflow */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Better touch targets */
+  button, a, input, select, textarea {
+    min-height: 36px;
+  }
+
+  /* Smoother scrolling */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix fixed modals on mobile */
+  .fixed {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Prevent input zoom on iOS (font-size < 16px triggers zoom) */
+  input[type="text"],
+  input[type="number"],
+  input[type="password"],
+  input[type="email"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area padding for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  footer {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  }
+  
+  header {
+    padding-top: env(safe-area-inset-top);
+  }
+}

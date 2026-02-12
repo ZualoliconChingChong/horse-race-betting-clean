@@ -36,16 +36,16 @@ function Leaderboard() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
-          <Trophy className="text-yellow-400" size={36} />
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2">
+          <Trophy className="text-yellow-400" size={28} />
           Bảng xếp hạng
         </h1>
-        <p className="text-dark-400 mt-2">Top người chơi có nhiều chiến thắng nhất</p>
+        <p className="text-dark-400 mt-1 sm:mt-2 text-sm sm:text-base">Top người chơi có nhiều chiến thắng nhất</p>
       </div>
 
       {/* Top 3 */}
       {top3.length > 0 && (
-        <div className="flex justify-center items-end gap-4 py-8">
+        <div className="flex justify-center items-end gap-2 sm:gap-4 py-4 sm:py-8 px-2">
           {/* 2nd place */}
           {top3[1] && (
             <TopPlayer 
@@ -77,7 +77,7 @@ function Leaderboard() {
 
       {/* Rest of leaderboard */}
       <div className="bg-dark-900 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-12 gap-4 p-4 bg-dark-800 font-medium text-dark-400 text-sm">
+        <div className="grid grid-cols-12 gap-2 sm:gap-4 p-3 sm:p-4 bg-dark-800 font-medium text-dark-400 text-xs sm:text-sm">
           <div className="col-span-1">#</div>
           <div className="col-span-5">Người chơi</div>
           <div className="col-span-2 text-center">Thắng</div>
@@ -101,23 +101,23 @@ function Leaderboard() {
               return (
                 <div 
                   key={player.id}
-                  className={`grid grid-cols-12 gap-4 p-4 items-center ${
+                  className={`grid grid-cols-12 gap-2 sm:gap-4 p-3 sm:p-4 items-center ${
                     isCurrentUser ? 'bg-primary-500/10' : 'hover:bg-dark-800'
                   } transition`}
                 >
-                  <div className="col-span-1 font-bold text-dark-400">
+                  <div className="col-span-1 font-bold text-dark-400 text-sm">
                     {rank}
                   </div>
-                  <div className="col-span-5 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-dark-700 rounded-full flex items-center justify-center">
+                  <div className="col-span-5 flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-dark-700 rounded-full flex items-center justify-center shrink-0 text-sm sm:text-base">
                       🐎
                     </div>
-                    <div>
-                      <p className={`font-medium ${isCurrentUser ? 'text-primary-400' : ''}`}>
+                    <div className="min-w-0">
+                      <p className={`font-medium text-sm truncate ${isCurrentUser ? 'text-primary-400' : ''}`}>
                         {player.username}
-                        {isCurrentUser && <span className="text-xs ml-2">(Bạn)</span>}
+                        {isCurrentUser && <span className="text-xs ml-1">(Bạn)</span>}
                       </p>
-                      <p className="text-xs text-dark-500">
+                      <p className="text-xs text-dark-500 hidden sm:block">
                         Tỷ lệ thắng: {winRate}%
                       </p>
                     </div>
@@ -189,31 +189,31 @@ function TopPlayer({ player, rank, isCurrentUser }) {
 
   return (
     <div className={`flex flex-col items-center ${rank === 1 ? 'order-2' : rank === 2 ? 'order-1' : 'order-3'}`}>
-      <div className={`${style.size} mb-2`}>{style.icon}</div>
+      <div className={`${style.size} mb-1 sm:mb-2`}>{style.icon}</div>
       
       <div className={`
-        w-20 h-20 rounded-full flex items-center justify-center text-3xl mb-2
-        ${isCurrentUser ? 'ring-4 ring-primary-500' : ''}
+        w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-2xl sm:text-3xl mb-1 sm:mb-2
+        ${isCurrentUser ? 'ring-2 sm:ring-4 ring-primary-500' : ''}
         ${style.bg}
       `}>
         🐎
       </div>
       
-      <p className={`font-bold ${isCurrentUser ? 'text-primary-400' : ''}`}>
+      <p className={`font-bold text-sm sm:text-base truncate max-w-[80px] sm:max-w-[120px] text-center ${isCurrentUser ? 'text-primary-400' : ''}`}>
         {player.username}
       </p>
       
-      <div className="flex items-center gap-1 text-yellow-400 font-bold mt-1">
-        <Trophy size={16} />
+      <div className="flex items-center gap-1 text-yellow-400 font-bold mt-0.5 sm:mt-1 text-sm sm:text-base">
+        <Trophy size={14} />
         {player.total_wins}
       </div>
       
-      <p className="text-xs text-dark-500 mt-1">
+      <p className="text-xs text-dark-500 mt-0.5 sm:mt-1">
         {winRate}% win rate
       </p>
       
-      <div className={`${style.height} w-24 ${style.bg} rounded-t-lg mt-4 flex items-end justify-center pb-2`}>
-        <span className="text-2xl font-bold text-white">#{rank}</span>
+      <div className={`${style.height} w-16 sm:w-24 ${style.bg} rounded-t-lg mt-2 sm:mt-4 flex items-end justify-center pb-1 sm:pb-2`}>
+        <span className="text-xl sm:text-2xl font-bold text-white">#{rank}</span>
       </div>
     </div>
   )

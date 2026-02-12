@@ -356,68 +356,67 @@ export default function RaceDetail() {
       )}
 
       {/* Race Info */}
-      <div className="bg-dark-900 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
           <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Race #{currentRace.id}</h1>
-              <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <h1 className="text-2xl sm:text-3xl font-bold">Race #{currentRace.id}</h1>
+              <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold ${
                 currentRace.game_mode === 'survival' 
                   ? 'bg-red-500/20 text-red-400 border border-red-500/50' 
                   : 'bg-green-500/20 text-green-400 border border-green-500/50'
               }`}>
                 {currentRace.game_mode === 'survival' ? '⚔️ Sống Còn' : '🥕 Cà Rốt'}
               </span>
+              <StatusBadge status={currentRace.status} />
             </div>
             {currentRace.name && (
-              <p className="text-gray-400 mt-1">{currentRace.name}</p>
+              <p className="text-gray-400 mt-1 text-sm sm:text-base">{currentRace.name}</p>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <StatusBadge status={currentRace.status} />
-            {/* Creator or Admin can manage race */}
-            {(user?.is_admin || currentRace.created_by === user?.id) && currentRace.status === 'registration' && (
-              <div className="flex gap-2">
+          {/* Creator or Admin can manage race */}
+          {(user?.is_admin || currentRace.created_by === user?.id) && currentRace.status === 'registration' && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => window.open(`/game/index.html?editor=true&raceId=${currentRace.id}`, '_blank')}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm"
+              >
+                ✏️ Editor
+              </button>
+              <button
+                onClick={() => {
+                  setNewRaceName(currentRace?.name || '')
+                  setEditNameModal(true)
+                }}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm"
+              >
+                ✏️ Đổi Tên
+              </button>
+              {/* Only Admin can Start Race */}
+              {user?.is_admin && participants.length >= 2 && (
                 <button
-                  onClick={() => window.open(`/game/index.html?editor=true&raceId=${currentRace.id}`, '_blank')}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium"
+                  onClick={handleStartRaceDirectly}
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium text-sm"
                 >
-                  ✏️ Editor
+                  🏁 Start
                 </button>
-                <button
-                  onClick={() => {
-                    setNewRaceName(currentRace?.name || '')
-                    setEditNameModal(true)
-                  }}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium"
-                >
-                  ✏️ Đổi Tên
-                </button>
-                {/* Only Admin can Start Race */}
-                {user?.is_admin && participants.length >= 2 && (
-                  <button
-                    onClick={handleStartRaceDirectly}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium"
-                  >
-                    🏁 Start Race
-                  </button>
+              )}
+              <button
+                onClick={handleCloseRace}
+                disabled={closingRace}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white rounded-lg font-medium flex items-center gap-1 sm:gap-2 text-sm"
+                title="Đóng/Hủy cuộc đua"
+              >
+                {closingRace ? (
+                  <Clock size={16} className="animate-spin" />
+                ) : (
+                  <XCircle size={16} />
                 )}
-                <button
-                  onClick={handleCloseRace}
-                  disabled={closingRace}
-                  className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-600 text-white rounded-lg font-medium flex items-center gap-2"
-                  title="Đóng/Hủy cuộc đua"
-                >
-                  {closingRace ? (
-                    <Clock size={18} className="animate-spin" />
-                  ) : (
-                    <XCircle size={18} />
-                  )}
-                  Đóng Lobby
-                </button>
-              </div>
-            )}
-          </div>
+                <span className="hidden sm:inline">Đóng Lobby</span>
+                <span className="sm:hidden">Đóng</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Map Preview */}
@@ -442,7 +441,7 @@ export default function RaceDetail() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <InfoCard icon={<Users />} label="Người chơi" value={`${participants.length}/${currentRace.maxParticipants || 12}`} />
           <InfoCard icon={<Coins className="text-yellow-400" />} label="Tổng giải" value={currentRace.total_pool?.toLocaleString() || '0'} />
           <InfoCard icon={<Coins className="text-primary-400" />} label="Cược tối thiểu" value={currentRace.minBet?.toLocaleString() || '500'} />
@@ -478,7 +477,7 @@ export default function RaceDetail() {
       </div>
 
       {/* Live Payout Table */}
-      <div className="bg-dark-900 rounded-2xl p-6">
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
             {currentRace.game_mode === 'survival' ? '📊 Bảng thưởng Realtime' : '🥕 Bảng thưởng Cà Rốt'}
@@ -569,25 +568,25 @@ export default function RaceDetail() {
       </div>
 
       {/* Participants */}
-      <div className="bg-dark-900 rounded-2xl p-6">
-        <h2 className="text-xl font-bold mb-4">Danh sách tham gia ({participants.length})</h2>
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Danh sách tham gia ({participants.length})</h2>
         
         {participants.length === 0 ? (
           <p className="text-center text-gray-500 py-8">Chưa có người tham gia</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             {participants.map((p, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-dark-600 transition">
+              <div key={idx} className="flex items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-dark-800 rounded-lg border border-dark-700 hover:border-dark-600 transition">
                 {/* Horse Avatar */}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <img 
                     src={`/assets/horses/${p.horse_sprite}.png`}
                     alt={p.horse_name}
-                    className="w-20 h-20 object-contain bg-dark-700 rounded-lg border-2 border-dark-600"
+                    className="w-14 h-14 sm:w-20 sm:h-20 object-contain bg-dark-700 rounded-lg border-2 border-dark-600"
                   />
                   {p.horse_label_color && (
                     <div 
-                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-dark-800"
+                      className="absolute -bottom-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-dark-800"
                       style={{ backgroundColor: p.horse_label_color }}
                       title={`Màu label: ${p.horse_label_color}`}
                     />
@@ -596,8 +595,8 @@ export default function RaceDetail() {
                 
                 {/* Horse Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-bold text-white text-lg truncate">{p.horse_name}</p>
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                    <p className="font-bold text-white text-sm sm:text-lg truncate">{p.horse_name}</p>
                     {p.isCurrentUser && (
                       <span className="px-2 py-0.5 bg-primary-500 text-white text-xs rounded font-medium">YOU</span>
                     )}
@@ -927,10 +926,10 @@ function StatusBadge({ status }) {
 
 function InfoCard({ icon, label, value }) {
   return (
-    <div className="bg-dark-800 rounded-lg p-4 text-center">
-      <div className="flex justify-center mb-2">{icon}</div>
-      <p className="text-xl font-bold">{value}</p>
-      <p className="text-xs text-gray-400 mt-1">{label}</p>
+    <div className="bg-dark-800 rounded-lg p-2.5 sm:p-4 text-center">
+      <div className="flex justify-center mb-1 sm:mb-2">{icon}</div>
+      <p className="text-base sm:text-xl font-bold">{value}</p>
+      <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1">{label}</p>
     </div>
   )
 }

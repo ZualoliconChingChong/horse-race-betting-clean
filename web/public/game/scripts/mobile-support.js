@@ -1,5 +1,5 @@
-// Mobile Support - Clean Implementation
-// Single-finger = mouse (draw/drag), 2-finger = zoom/pan
+// Mobile Support - Complete Rewrite for Gameplay + Editor
+// Handles: auto-fit canvas, touch-to-mouse, pinch zoom/pan, mobile HUD
 
 (function() {
   'use strict';
@@ -10,16 +10,19 @@
   
   console.log('[Mobile] Touch device detected, enabling mobile support');
   
-  // Wait for DOM ready
   function init() {
     const canvas = document.getElementById('cv');
     const stage = document.getElementById('stage');
     if (!canvas || !stage) {
-      console.warn('[Mobile] Canvas or stage not found');
+      console.warn('[Mobile] Canvas or stage not found, retrying...');
+      setTimeout(init, 300);
       return;
     }
     
-    // State
+    // Add body class for mobile-specific CSS
+    document.body.classList.add('is-mobile');
+    
+    // ===== STATE =====
     let lastTouchDistance = 0;
     let lastTouchCenter = { x: 0, y: 0 };
     let isTwoFinger = false;
@@ -29,40 +32,78 @@
     let translateX = 0;
     let translateY = 0;
     
-    // Long-press pan state (like middle mouse on PC)
+    // Long-press pan state
     let longPressTimer = null;
     let isLongPressPan = false;
     let panStartX = 0, panStartY = 0;
     let lastPanX = 0, lastPanY = 0;
     let hasStartedDrawing = false;
-    const LONG_PRESS_DELAY = 400; // ms
+    const LONG_PRESS_DELAY = 500;
+    
+    // ===== AUTO-FIT CANVAS TO VIEWPORT =====
+    function fitCanvasToScreen() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      
+      // Get actual canvas pixel dimensions
+      const cw = canvas.width || 1200;
+      const ch = canvas.height || 800;
+      
+      // Reserve space for top editor bar (~44px) and game hub (~36px)
+      const topBar = document.querySelector('.top-editor-bar');
+      const gameHub = document.querySelector('.game-hub');
+      const topHeight = topBar && !topBar.classList.contains('hidden') ? 44 : 0;
+      const bottomHeight = gameHub ? 36 : 0;
+      const availH = vh - topHeight - bottomHeight;
+      
+      // Calculate scale to fit
+      const scaleX = vw / cw;
+      const scaleY = availH / ch;
+      currentScale = Math.min(scaleX, scaleY);
+      currentScale = Math.max(0.1, Math.min(1.5, currentScale));
+      
+      // Center canvas
+      const scaledW = cw * currentScale;
+      const scaledH = ch * currentScale;
+      translateX = (vw - scaledW) / 2;
+      translateY = topHeight + (availH - scaledH) / 2;
+      
+      applyTransform();
+      console.log('[Mobile] fitCanvas: scale=' + currentScale.toFixed(3) + 
+                  ' canvas=' + cw + 'x' + ch + ' viewport=' + vw + 'x' + vh);
+    }
     
     // Apply CSS transform to stage
     function applyTransform() {
-      stage.style.transformOrigin = 'center center';
+      stage.style.transformOrigin = '0 0';
       stage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
     }
     
-    // Initialize with scale that fits screen
-    function initScale() {
-      const stageRect = stage.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      
-      // Calculate scale to fit canvas in viewport
-      const scaleX = viewportWidth / stageRect.width;
-      const scaleY = (viewportHeight - 100) / stageRect.height; // Leave room for UI
-      currentScale = Math.min(scaleX, scaleY, 1); // Don't scale up, only down
-      currentScale = Math.max(0.2, currentScale); // Minimum 20%
-      
-      applyTransform();
-      console.log('[Mobile] Initial scale:', currentScale);
+    // Reset view to fit screen
+    function resetView() {
+      fitCanvasToScreen();
+      showHint('🔄 View reset');
     }
     
-    // Initialize scale after a short delay to let layout settle
-    setTimeout(initScale, 500);
+    // Initial fit after layout settles
+    setTimeout(fitCanvasToScreen, 600);
+    setTimeout(fitCanvasToScreen, 1500); // Re-fit after map loads
     
-    // Convert touch to mouse event
+    // Re-fit on orientation change and resize
+    window.addEventListener('orientationchange', () => setTimeout(fitCanvasToScreen, 300));
+    window.addEventListener('resize', () => setTimeout(fitCanvasToScreen, 200));
+    
+    // Watch for canvas size changes (map load)
+    let lastCanvasW = 0, lastCanvasH = 0;
+    const canvasObserver = setInterval(() => {
+      if (canvas.width !== lastCanvasW || canvas.height !== lastCanvasH) {
+        lastCanvasW = canvas.width;
+        lastCanvasH = canvas.height;
+        fitCanvasToScreen();
+      }
+    }, 1000);
+    
+    // ===== TOUCH TO MOUSE CONVERSION =====
     function touchToMouse(type, touch, target) {
       const mouseType = {
         'touchstart': 'mousedown',
@@ -71,6 +112,14 @@
       }[type];
       
       if (!mouseType) return;
+      
+      // Convert screen coordinates to canvas coordinates accounting for CSS transform
+      const rect = canvas.getBoundingClientRect();
+      const scaleRatioX = canvas.width / rect.width;
+      const scaleRatioY = canvas.height / rect.height;
+      
+      const canvasX = (touch.clientX - rect.left) * scaleRatioX;
+      const canvasY = (touch.clientY - rect.top) * scaleRatioY;
       
       const mouseEvent = new MouseEvent(mouseType, {
         bubbles: true,
@@ -84,17 +133,20 @@
         buttons: type === 'touchend' ? 0 : 1
       });
       
+      // Store canvas-local coords for any code that reads them
+      mouseEvent._canvasX = canvasX;
+      mouseEvent._canvasY = canvasY;
+      
       target.dispatchEvent(mouseEvent);
     }
     
-    // Get distance between two touch points
+    // ===== GESTURE HELPERS =====
     function getTouchDistance(t1, t2) {
       const dx = t1.clientX - t2.clientX;
       const dy = t1.clientY - t2.clientY;
       return Math.sqrt(dx * dx + dy * dy);
     }
     
-    // Get center point between two touches
     function getTouchCenter(t1, t2) {
       return {
         x: (t1.clientX + t2.clientX) / 2,
@@ -102,7 +154,22 @@
       };
     }
     
-    // Show visual feedback for long-press pan mode
+    // ===== HINT OVERLAY =====
+    let hintTimeout = null;
+    function showHint(text) {
+      let hint = document.getElementById('mobile-zoom-hint');
+      if (!hint) {
+        hint = document.createElement('div');
+        hint.id = 'mobile-zoom-hint';
+        hint.className = 'mobile-zoom-hint';
+        document.body.appendChild(hint);
+      }
+      hint.textContent = text;
+      hint.classList.add('show');
+      clearTimeout(hintTimeout);
+      hintTimeout = setTimeout(() => hint.classList.remove('show'), 1500);
+    }
+    
     function showPanIndicator(show) {
       let indicator = document.getElementById('mobile-pan-indicator');
       if (show) {
@@ -119,7 +186,7 @@
       }
     }
     
-    // Canvas touch handlers - convert to mouse for drawing
+    // ===== CANVAS TOUCH HANDLERS =====
     canvas.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         const touch = e.touches[0];
@@ -129,7 +196,7 @@
         lastPanY = touch.clientY;
         hasStartedDrawing = false;
         
-        // Start long-press timer
+        // Long-press for pan (editor mode)
         longPressTimer = setTimeout(() => {
           if (!hasStartedDrawing) {
             isLongPressPan = true;
@@ -138,17 +205,17 @@
           }
         }, LONG_PRESS_DELAY);
         
-        // Send mousedown immediately for drawing
+        // Forward as mouse event
         touchToMouse('touchstart', touch, canvas);
         e.preventDefault();
       } else if (e.touches.length === 2) {
-        // Cancel long-press timer and drawing
+        // Cancel long-press and drawing
         clearTimeout(longPressTimer);
         isLongPressPan = false;
         hasStartedDrawing = false;
         showPanIndicator(false);
         
-        // 2-finger - start zoom/pan
+        // Start pinch zoom/pan
         isTwoFinger = true;
         lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
         lastTouchCenter = getTouchCenter(e.touches[0], e.touches[1]);
@@ -164,37 +231,44 @@
           Math.pow(touch.clientY - panStartY, 2)
         );
         
-        // If moved, mark as drawing started (cancels potential long-press)
         if (moveDistance > 5) {
           hasStartedDrawing = true;
           clearTimeout(longPressTimer);
         }
         
         if (isLongPressPan) {
-          // Long-press pan mode - scroll the page like middle mouse
+          // Pan mode - move the stage view
           const dx = touch.clientX - lastPanX;
           const dy = touch.clientY - lastPanY;
-          window.scrollBy(-dx, -dy);
+          translateX += dx;
+          translateY += dy;
+          applyTransform();
           lastPanX = touch.clientX;
           lastPanY = touch.clientY;
         } else if (!isTwoFinger) {
-          // Normal drawing
+          // Normal touch interaction (drawing/clicking)
           touchToMouse('touchmove', touch, canvas);
         }
         e.preventDefault();
       } else if (e.touches.length === 2) {
-        // 2-finger zoom/pan using CSS transform
+        // Pinch zoom + pan
         const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
         const currentCenter = getTouchCenter(e.touches[0], e.touches[1]);
         
-        // Pinch zoom using CSS transform
         if (lastTouchDistance > 0) {
           const scaleFactor = currentDistance / lastTouchDistance;
-          const newScale = Math.max(0.15, Math.min(3, currentScale * scaleFactor));
+          const newScale = Math.max(0.1, Math.min(3, currentScale * scaleFactor));
+          
+          // Zoom towards pinch center
+          const cx = currentCenter.x;
+          const cy = currentCenter.y;
+          const ratio = newScale / currentScale;
+          translateX = cx - ratio * (cx - translateX);
+          translateY = cy - ratio * (cy - translateY);
           currentScale = newScale;
         }
         
-        // Pan using CSS transform
+        // Pan
         const dx = currentCenter.x - lastTouchCenter.x;
         const dy = currentCenter.y - lastTouchCenter.y;
         translateX += dx;
@@ -213,72 +287,81 @@
       
       if (e.touches.length === 0) {
         if (isLongPressPan) {
-          // End pan mode
           isLongPressPan = false;
           showPanIndicator(false);
         } else if (!isTwoFinger) {
-          // Single finger ended - send mouseup
           touchToMouse('touchend', e.changedTouches[0], canvas);
         }
         isTwoFinger = false;
         hasStartedDrawing = false;
         lastTouchDistance = 0;
       } else if (e.touches.length === 1) {
-        // Went from 2 fingers to 1
         isTwoFinger = false;
       }
       e.preventDefault();
     }, { passive: false });
     
-    // Make Map Editor panel draggable on mobile
-    const mapEditor = document.querySelector('.map-editor');
-    if (mapEditor) {
-      let isDraggingPanel = false;
-      let panelStartX = 0, panelStartY = 0;
-      let panelOrigX = 0, panelOrigY = 0;
-      
-      const header = mapEditor.querySelector('.me-header');
-      if (header) {
-        header.addEventListener('touchstart', (e) => {
-          if (e.touches.length === 1) {
-            isDraggingPanel = true;
-            panelStartX = e.touches[0].clientX;
-            panelStartY = e.touches[0].clientY;
-            const rect = mapEditor.getBoundingClientRect();
-            panelOrigX = rect.left;
-            panelOrigY = rect.top;
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        document.addEventListener('touchmove', (e) => {
-          if (isDraggingPanel && e.touches.length === 1) {
-            const dx = e.touches[0].clientX - panelStartX;
-            const dy = e.touches[0].clientY - panelStartY;
-            mapEditor.style.position = 'fixed';
-            mapEditor.style.left = (panelOrigX + dx) + 'px';
-            mapEditor.style.top = (panelOrigY + dy) + 'px';
-            mapEditor.style.right = 'auto';
-            e.preventDefault();
-          }
-        }, { passive: false });
-        
-        document.addEventListener('touchend', () => {
-          isDraggingPanel = false;
-        });
+    // ===== DOUBLE-TAP TO RESET VIEW =====
+    let lastTap = 0;
+    canvas.addEventListener('touchend', (e) => {
+      if (e.changedTouches.length === 1 && e.touches.length === 0) {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          resetView();
+        }
+        lastTap = now;
       }
-    }
+    });
     
-    console.log('[Mobile] Touch handlers attached');
+    // ===== FULLSCREEN BUTTON =====
+    const fsBtn = document.createElement('button');
+    fsBtn.className = 'mobile-fullscreen-btn';
+    fsBtn.innerHTML = '⛶';
+    fsBtn.title = 'Fit to screen';
+    fsBtn.addEventListener('click', () => {
+      resetView();
+    });
+    document.body.appendChild(fsBtn);
     
-    // Add body class for mobile-specific CSS
-    document.body.classList.add('is-mobile');
+    // ===== PREVENT DEFAULT BROWSER BEHAVIORS =====
+    // Prevent pull-to-refresh and rubber-band scrolling
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.target === canvas || canvas.contains(e.target)) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+    
+    // Prevent double-tap zoom on body
+    let lastBodyTap = 0;
+    document.body.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastBodyTap < 300) {
+        e.preventDefault();
+      }
+      lastBodyTap = now;
+    }, { passive: false });
+    
+    // ===== SHOW INITIAL HINT =====
+    setTimeout(() => {
+      showHint('📱 2 ngón: zoom/pan • 2x tap: reset view');
+    }, 2000);
+    
+    // ===== EXPOSE API =====
+    window.MobileSupport = {
+      fitToScreen: fitCanvasToScreen,
+      resetView: resetView,
+      getScale: () => currentScale,
+      isMobile: true
+    };
+    
+    console.log('[Mobile] Touch handlers attached, auto-fit enabled');
   }
   
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    init();
+    // Small delay to ensure canvas is initialized
+    setTimeout(init, 100);
   }
 })();

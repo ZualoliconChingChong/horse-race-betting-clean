@@ -8,14 +8,14 @@ function Home() {
   return (
     <div className="space-y-12">
       {/* Hero Section */}
-      <section className="text-center py-12">
+      <section className="text-center py-6 sm:py-12">
         <h1 className="text-5xl md:text-7xl font-bold mb-4">
           <span className="text-6xl md:text-8xl">🐎</span>
         </h1>
         <h2 className="text-3xl md:text-5xl font-bold mb-4">
           <span className="text-primary-500">Horse Race</span> Betting
         </h2>
-        <p className="text-xl text-dark-300 mb-8 max-w-2xl mx-auto">
+        <p className="text-base sm:text-xl text-dark-300 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
           Đặt cược đua ngựa online - Nhận <span className="text-yellow-400 font-bold">500 coin miễn phí</span> mỗi ngày!
         </p>
         
@@ -69,9 +69,9 @@ function Home() {
       </section>
 
       {/* How it works */}
-      <section className="bg-dark-900 rounded-2xl p-8">
+      <section className="bg-dark-900 rounded-2xl p-4 sm:p-8">
         <h3 className="text-2xl font-bold mb-6 text-center">Cách chơi</h3>
-        <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
           <Step number={1} title="Đăng ký" desc="Tạo tài khoản miễn phí" />
           <Step number={2} title="Nhận coin" desc="500 coin mỗi ngày đăng nhập" />
           <Step number={3} title="Đặt cược" desc="Chọn race và đặt cược ngựa" />
@@ -82,7 +82,7 @@ function Home() {
       {/* Prize pool */}
       <section className="text-center">
         <h3 className="text-2xl font-bold mb-6">Cơ cấu giải thưởng</h3>
-        <div className="flex flex-wrap justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
           <PrizeCard place="🥇" position="1st" percent="50%" color="text-yellow-400" />
           <PrizeCard place="🥈" position="2nd" percent="30%" color="text-gray-300" />
           <PrizeCard place="🥉" position="3rd" percent="15%" color="text-orange-400" />
@@ -117,10 +117,10 @@ function Step({ number, title, desc }) {
 
 function PrizeCard({ place, position, percent, color }) {
   return (
-    <div className="bg-dark-900 rounded-xl p-6 min-w-[150px]">
-      <div className="text-4xl mb-2">{place}</div>
-      <div className="text-dark-400 text-sm">{position}</div>
-      <div className={`text-2xl font-bold ${color}`}>{percent}</div>
+    <div className="bg-dark-900 rounded-xl p-4 sm:p-6 min-w-[110px] sm:min-w-[150px]">
+      <div className="text-3xl sm:text-4xl mb-1 sm:mb-2">{place}</div>
+      <div className="text-dark-400 text-xs sm:text-sm">{position}</div>
+      <div className={`text-xl sm:text-2xl font-bold ${color}`}>{percent}</div>
     </div>
   )
 }

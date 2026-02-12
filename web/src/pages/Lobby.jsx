@@ -195,23 +195,24 @@ function Lobby() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">🏇 Lobby</h1>
-          <p className="text-dark-400">Chọn cuộc đua để tham gia</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">🏇 Lobby</h1>
+          <p className="text-dark-400 text-sm sm:text-base">Chọn cuộc đua để tham gia</p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
           {user && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition flex items-center gap-2"
+              className="px-3 sm:px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition flex items-center gap-1.5 sm:gap-2 text-sm sm:text-base"
             >
-              <Plus size={18} />
-              Tạo Cuộc Đua
+              <Plus size={16} />
+              <span className="hidden xs:inline">Tạo Cuộc Đua</span>
+              <span className="xs:hidden">Tạo</span>
             </button>
           )}
-          <div className="flex items-center gap-2 text-dark-300">
-            <Users size={18} className="text-green-400" />
+          <div className="flex items-center gap-1.5 text-dark-300 text-sm">
+            <Users size={16} className="text-green-400" />
             <span>{onlineUsers} online</span>
           </div>
           <button 
@@ -219,23 +220,23 @@ function Lobby() {
             className="p-2 hover:bg-dark-800 rounded-lg transition"
             title="Làm mới"
           >
-            <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
+            <RefreshCw size={18} className={isLoading ? 'animate-spin' : ''} />
           </button>
         </div>
       </div>
 
       {/* User stats */}
-      <div className="bg-dark-900 rounded-xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-2xl">👋</span>
-          <div>
-            <p className="font-bold">{user?.username}</p>
-            <p className="text-sm text-dark-400">Sẵn sàng đặt cược!</p>
+      <div className="bg-dark-900 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <span className="text-xl sm:text-2xl shrink-0">👋</span>
+          <div className="min-w-0">
+            <p className="font-bold text-sm sm:text-base truncate">{user?.username}</p>
+            <p className="text-xs sm:text-sm text-dark-400">Sẵn sàng đặt cược!</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-dark-800 rounded-lg">
-          <Coins size={20} className="text-yellow-400" />
-          <span className="text-xl font-bold text-yellow-400">
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-dark-800 rounded-lg shrink-0">
+          <Coins size={16} className="text-yellow-400" />
+          <span className="text-base sm:text-xl font-bold text-yellow-400">
             {user?.coins?.toLocaleString()}
           </span>
         </div>
@@ -255,7 +256,7 @@ function Lobby() {
             <p className="text-dark-500 text-sm mt-2">Hãy chờ admin tạo race mới!</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {activeRaces.map(race => (
               <RaceCard key={race.id} race={race} />
             ))}
@@ -266,11 +267,11 @@ function Lobby() {
       {/* Waiting Races */}
       {waitingRaces.length > 0 && (
         <section>
-          <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <Clock className="text-yellow-400" size={24} />
+          <h2 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+            <Clock className="text-yellow-400" size={22} />
             Sắp mở ({waitingRaces.length})
           </h2>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
             {waitingRaces.map(race => (
               <RaceCard key={race.id} race={race} />
             ))}
@@ -284,7 +285,7 @@ function Lobby() {
           <Trophy className="text-primary-400" size={20} />
           Thống kê của bạn
         </h3>
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
           <div>
             <p className="text-2xl font-bold text-primary-400">{user?.total_wins || 0}</p>
             <p className="text-dark-400 text-sm">Chiến thắng</p>

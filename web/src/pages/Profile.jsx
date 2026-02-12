@@ -44,34 +44,34 @@ function Profile() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Profile Card */}
-      <div className="bg-dark-900 rounded-2xl p-6">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-primary-500 rounded-full flex items-center justify-center text-3xl">
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-500 rounded-full flex items-center justify-center text-2xl sm:text-3xl shrink-0">
             {user?.avatar || '🐎'}
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <User size={24} />
+          <div className="flex-1 text-center sm:text-left min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold flex items-center justify-center sm:justify-start gap-2">
+              <User size={20} className="hidden sm:block" />
               {user?.username}
             </h1>
-            <p className="text-dark-400">
+            <p className="text-dark-400 text-sm">
               Tham gia từ {new Date(user?.created_at).toLocaleDateString('vi-VN')}
             </p>
           </div>
-          <div className="text-right">
-            <div className="flex items-center gap-2 text-2xl font-bold text-yellow-400">
-              <Coins size={28} />
+          <div className="text-center sm:text-right shrink-0">
+            <div className="flex items-center gap-2 text-xl sm:text-2xl font-bold text-yellow-400 justify-center sm:justify-end">
+              <Coins size={22} />
               {user?.coins?.toLocaleString()}
             </div>
-            <p className="text-dark-400 text-sm">Số dư hiện tại</p>
+            <p className="text-dark-400 text-xs sm:text-sm">Số dư hiện tại</p>
           </div>
         </div>
       </div>
 
       {/* Avatar section */}
-      <div className="bg-dark-900 rounded-2xl p-6 space-y-4">
-        <h2 className="text-xl font-bold mb-2">Ảnh đại diện</h2>
-        <p className="text-dark-400 text-sm mb-2">Chọn một biểu tượng để làm avatar của bạn.</p>
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+        <h2 className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">Ảnh đại diện</h2>
+        <p className="text-dark-400 text-xs sm:text-sm mb-2">Chọn một biểu tượng để làm avatar của bạn.</p>
         <div className="flex flex-wrap gap-3">
           {avatarOptions.map((a) => {
             const selected = user?.avatar === a
@@ -97,8 +97,8 @@ function Profile() {
       </div>
 
       {/* Change password section */}
-      <div className="bg-dark-900 rounded-2xl p-6 space-y-4">
-        <h2 className="text-xl font-bold mb-2">Đổi mật khẩu</h2>
+      <div className="bg-dark-900 rounded-2xl p-4 sm:p-6 space-y-4">
+        <h2 className="text-lg sm:text-xl font-bold mb-2">Đổi mật khẩu</h2>
         {pwError && (
           <div className="bg-red-500/10 border border-red-500 text-red-400 px-3 py-2 rounded text-sm">
             {pwError}
@@ -109,7 +109,7 @@ function Profile() {
             {pwMessage}
           </div>
         )}
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
           <div className="flex flex-col gap-1">
             <label className="text-sm text-dark-300">Mật khẩu hiện tại</label>
             <input

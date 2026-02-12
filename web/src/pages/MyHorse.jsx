@@ -226,10 +226,10 @@ export default function MyHorse() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Ngựa của tôi</h1>
-          <p className="text-gray-400">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Ngựa của tôi</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             Bạn có {horses.length} con ngựa. 
             {horses.length === 0 ? ' Tạo ngựa đầu tiên miễn phí!' : ` Tạo ngựa mới tốn ${CREATION_FEE} coins.`}
           </p>
@@ -237,7 +237,7 @@ export default function MyHorse() {
         {!showCreateForm && (
           <button
             onClick={() => setShowCreateForm(true)}
-            className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition"
+            className="px-3 sm:px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition text-sm sm:text-base shrink-0"
           >
             + Tạo ngựa mới
           </button>
@@ -258,7 +258,7 @@ export default function MyHorse() {
 
       {/* Create/Edit Form */}
       {showCreateForm && (
-        <div className="bg-dark-900 rounded-2xl p-6 space-y-6 border-2 border-primary-500">
+        <div className="bg-dark-900 rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-primary-500">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-white">
               {editingHorse ? `Sửa: ${editingHorse.horse_name}` : 'Tạo ngựa mới'}
@@ -293,7 +293,7 @@ export default function MyHorse() {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Sprite (hình dáng ngựa) - {sprites.length} sprites có sẵn
             </label>
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-3 max-h-[500px] overflow-y-auto p-4 bg-dark-800 rounded-lg">
+            <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-2 sm:gap-3 max-h-[350px] sm:max-h-[500px] overflow-y-auto p-2 sm:p-4 bg-dark-800 rounded-lg">
               {sprites.map((sprite) => {
                 const isSelected = spriteKey === sprite.key
                 return (
@@ -395,18 +395,18 @@ export default function MyHorse() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
             <button
               onClick={closeForm}
               disabled={saving}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition text-sm sm:text-base"
             >
               Hủy
             </button>
             <button
               onClick={editingHorse ? handleUpdateHorse : handleCreateHorse}
               disabled={saving}
-              className="px-6 py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 text-white rounded-lg font-medium transition"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-primary-500 hover:bg-primary-600 disabled:bg-gray-600 text-white rounded-lg font-medium transition text-sm sm:text-base"
             >
               {saving ? 'Đang lưu...' : (editingHorse ? 'Cập nhật' : `Tạo${horses.length > 0 ? ` (-${CREATION_FEE} coins)` : ' (Miễn phí)'}`)}
             </button>
@@ -416,23 +416,23 @@ export default function MyHorse() {
 
       {/* Active Horse Display */}
       {activeHorse && (
-        <div className="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-6 border border-primary-500/30">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-2xl">⭐</span> Ngựa đang sử dụng
+        <div className="bg-gradient-to-br from-primary-500/20 to-purple-500/20 rounded-2xl p-4 sm:p-6 border border-primary-500/30">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">⭐</span> Ngựa đang sử dụng
           </h2>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <img 
               src={`/assets/horses/${activeHorse.sprite_key}.png`}
               alt={activeHorse.horse_name}
-              className="w-32 h-32 object-contain bg-dark-900/50 rounded-lg border-2 border-primary-500"
+              className="w-20 h-20 sm:w-32 sm:h-32 object-contain bg-dark-900/50 rounded-lg border-2 border-primary-500 shrink-0"
             />
-            <div className="flex-1 space-y-2">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-2xl font-bold text-white">{activeHorse.horse_name}</h3>
-                  <p className="text-gray-400">{skills.find(s => s.key === activeHorse.skill_key)?.name || activeHorse.skill_key}</p>
+            <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1">
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-2xl font-bold text-white truncate">{activeHorse.horse_name}</h3>
+                  <p className="text-gray-400 text-sm">{skills.find(s => s.key === activeHorse.skill_key)?.name || activeHorse.skill_key}</p>
                 </div>
-                <span className="px-3 py-1 bg-primary-500 text-white text-sm rounded-full">ACTIVE</span>
+                <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-primary-500 text-white text-xs sm:text-sm rounded-full self-start shrink-0">ACTIVE</span>
               </div>
               <div className="text-xs text-gray-500">
                 Tạo: {new Date(activeHorse.created_at).toLocaleDateString('vi-VN')}
@@ -457,7 +457,7 @@ export default function MyHorse() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {horses.map((horse) => {
               const isActive = horse.is_active === 1
               return (
