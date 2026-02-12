@@ -162,6 +162,37 @@
       lastTapTime = now;
     }, { passive: false });
     
+    // ===== LANDSCAPE EDITOR BAR TOGGLE =====
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'mobile-editor-toggle';
+    toggleBtn.innerHTML = '🛠️ Editor';
+    document.body.appendChild(toggleBtn);
+    
+    toggleBtn.addEventListener('click', () => {
+      const topBar = stage.querySelector('.top-editor-bar');
+      if (!topBar) return;
+      const isOpen = topBar.classList.toggle('mobile-bar-open');
+      toggleBtn.classList.toggle('bar-open', isOpen);
+      toggleBtn.innerHTML = isOpen ? '✕ Đóng' : '🛠️ Editor';
+      // Re-clear canvas style so CSS recalculates max-height
+      canvas.removeAttribute('style');
+      void canvas.offsetHeight;
+    });
+    
+    // Close editor bar when switching to landscape (start clean)
+    function onOrientationUpdate() {
+      const topBar = stage.querySelector('.top-editor-bar');
+      if (topBar) {
+        topBar.classList.remove('mobile-bar-open');
+        toggleBtn.classList.remove('bar-open');
+        toggleBtn.innerHTML = '🛠️ Editor';
+      }
+    }
+    
+    // Hook into orientation change
+    window.addEventListener('orientationchange', () => setTimeout(onOrientationUpdate, 350));
+    window.addEventListener('resize', () => setTimeout(onOrientationUpdate, 200));
+    
     // ===== EXPOSE API =====
     window.MobileSupport = {
       refit: onViewportChange,

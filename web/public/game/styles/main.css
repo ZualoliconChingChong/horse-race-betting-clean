@@ -2118,12 +2118,33 @@ body.is-mobile .notification-bar {
 }
 
 /* ===== LANDSCAPE: Canvas gets maximum space ===== */
+/* Editor bar collapsed by default in landscape, toggled via JS button */
 body.mobile-landscape .stage.fake-fullscreen .top-editor-bar {
-  display: none !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-height 0.2s, opacity 0.2s, padding 0.2s;
+}
+
+body.mobile-landscape .stage.fake-fullscreen .top-editor-bar.mobile-bar-open {
+  max-height: 36px !important;
+  min-height: 36px !important;
+  padding: 3px 6px !important;
+  overflow-x: auto !important;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 body.mobile-landscape .stage.fake-fullscreen canvas {
   max-height: calc(100vh - 28px) !important; /* Only game hub at bottom */
+}
+
+/* When bar is open in landscape, shrink canvas to fit */
+body.mobile-landscape .stage.fake-fullscreen .top-editor-bar.mobile-bar-open ~ canvas {
+  max-height: calc(100vh - 36px - 28px) !important;
 }
 
 body.mobile-landscape .stage.fake-fullscreen .notification-bar {
@@ -2142,6 +2163,36 @@ body.mobile-landscape .stage.fake-fullscreen .hub-btn {
 
 body.mobile-landscape .stage.fake-fullscreen .hub-item {
   transform: scale(0.65) !important;
+}
+
+/* Mobile editor toggle button */
+.mobile-editor-toggle {
+  position: fixed;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000000;
+  background: rgba(30, 30, 30, 0.85);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0 0 8px 8px;
+  padding: 2px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+body.mobile-landscape .mobile-editor-toggle {
+  display: flex;
+}
+
+.mobile-editor-toggle.bar-open {
+  background: rgba(60, 130, 255, 0.85);
 }
 
 /* ===== PORTRAIT: Show compact top bar ===== */
