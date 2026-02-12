@@ -1840,8 +1840,8 @@ try {
     if (!window.config.physics) window.config.physics = {};
     if (!window.config.physics.collision) window.config.physics.collision = {};
     
-    // Load from localStorage first
-    let savedState = false;
+    // Load from localStorage first, default to ON (true)
+    let savedState = true;
     try {
       const saved = localStorage.getItem('preventCollisionSpeedChange');
       if (saved !== null) {

@@ -109,7 +109,8 @@ const CONFIG = {
       wallBounce: 0.8,
       horseBounce: 0.6,
       detectionBuffer: 2,
-      minSeparation: 1
+      minSeparation: 1,
+      preventSpeedChange: true
     },
     
     movement: {
