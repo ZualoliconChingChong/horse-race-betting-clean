@@ -2088,13 +2088,11 @@
     }
   });
   
-  // Hide top editor bar when game is running (but respect user choice)
+  // Hide top editor bar when game is in play mode (but respect user choice)
   function updateTopEditorBarVisibility() {
-    const isRunning = window.horses && window.horses.length > 0 && 
-                      document.getElementById('pauseBtnHUD')?.style.display !== 'none';
+    const isPlayMode = window.mode === 'play';
     if (topEditorBar) {
-      // Only auto-hide when running, don't auto-show if user collapsed
-      if (isRunning) {
+      if (isPlayMode) {
         topEditorBar.classList.add('hidden');
       } else if (!userCollapsedTopBar) {
         topEditorBar.classList.remove('hidden');
